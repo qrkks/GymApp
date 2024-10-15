@@ -43,8 +43,11 @@ class WorkoutSet(models.Model):
     workout = models.ForeignKey(
         Workout, on_delete=models.CASCADE, related_name='workout_sets')  # 训练日
     exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE)  # 具体的训练动作
-    reps = models.IntegerField()  # 每组的重复次数
-    weight = models.FloatField()  # 负重量
+    reps = models.IntegerField(null=True, blank=True)  # 每组的重复次数
+    weight = models.FloatField(null=True, blank=True)  # 负重量
+
+    class Meta:
+        unique_together = ('workout', 'exercise')
 
     def __str__(self):
         return f"{self.exercise.name}: {self.reps} reps at {self.weight} kg"

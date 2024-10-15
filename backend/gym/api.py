@@ -175,7 +175,63 @@ def get_all_exercise(request):
     exercises = Exercise.objects.all()
     return exercises
 
+
 @router.delete('/exercise')
 def delete_all_exercise(request):
     Exercise.objects.all().delete()
     return 'ok'
+
+
+class WorkoutSetInSchema(Schema):
+    workout_date: date
+    exercise_name: str
+    reps: Optional[int] = None
+    weight: Optional[float] = None
+
+
+class WorkoutSetOutSchema(Schema):
+    id: int
+    workout: WorkoutOutSchema
+    exercise: ExerciseOutSchema
+    reps: Optional[int] = None
+    weight: Optional[float] = None
+    created: Optional[bool] = None
+
+
+@router.post('/workoutset', response=WorkoutSetOutSchema)
+def create_workoutset(request, data: WorkoutSetInSchema):
+    # 获取 workout 和 exercise 对象
+    workout = get_object_or_404(Workout, date=data.workout_date)
+    exercise = get_object_or_404(Exercise, name=data.exercise_name)
+
+    # 手动查询是否有相同的 workout 和 exercise 的记录
+    try:
+        workoutset = WorkoutSet.objects.get(workout=workout, exercise=exercise)
+
+        # 如果找到记录，检查是否需要更新
+        if workoutset.reps != data.reps or workoutset.weight != data.weight:
+            workoutset.reps = data.reps
+            workoutset.weight = data.weight
+            workoutset.save()  # 更新记录
+            created = False  # 不是新创建的，而是更新的
+        else:
+            created = False  # 没有变化，也不是新创建的
+
+    except WorkoutSet.DoesNotExist:
+        # 如果没有找到，创建新的 WorkoutSet
+        workoutset = WorkoutSet.objects.create(
+            workout=workout,
+            exercise=exercise,
+            reps=data.reps,
+            weight=data.weight
+        )
+        created = True
+
+    workoutset.created = created
+    return workoutset
+
+
+@router.get('/workoutset', response=list[WorkoutSetOutSchema])
+def get_all_workoutset(request):
+    workoutsets = WorkoutSet.objects.all()
+    return workoutsets

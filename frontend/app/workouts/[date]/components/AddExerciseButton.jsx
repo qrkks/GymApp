@@ -2,9 +2,9 @@ import {CirclePlus} from "lucide-react";
 import SheetContainer from "@/components/SheetContainer";
 import useSWR from "swr";
 import ExerciseSelectInput from "./ExerciseSelectInput";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 
-function AddExerciseButton({part}) {
+function AddExerciseButton({part, date}) {
   const [selectedExercise, setSelectedExercise] = useState("");
 
   const fetcher = (url) => fetch(url).then((res) => res.json());
@@ -14,15 +14,33 @@ function AddExerciseButton({part}) {
     mutate: mutateExcercises,
   } = useSWR(`http://127.0.0.1:8000/api/exercise`, fetcher);
 
+
+
   if (excercisesError) return <div>Failed to load data</div>;
 
   const handleSubmit = () => {
     console.log("submit", selectedExercise);
+    fetch(`http://127.0.0.1:8000/api/workoutset`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        workout_date: date,
+        exercise_name: selectedExercise,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
   };
 
   function handleSelectChange(value) {
     if (value === "new") {
       const newExercise = prompt("请输入新的训练动作");
+      if (!newExercise) return;
       const newDescription = prompt("请输入新的训练动作描述");
       if (newExercise) {
         fetch("http://127.0.0.1:8000/api/exercise", {
@@ -44,12 +62,11 @@ function AddExerciseButton({part}) {
           .catch((error) => {
             console.error("Error:", error);
           });
-      } else {
-        setSelectedExercise(value);
       }
+    } else {
+      setSelectedExercise(value);
     }
   }
-  
 
   return (
     <>

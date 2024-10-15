@@ -6,7 +6,7 @@ function ExersiceSet({part, date, mutate}) {
       <h3>{part.name}</h3>
       <div className="flex items-center gap-1">
         <BodyPartRemoveButton part={part} date={date} mutate={mutate} />
-        <AddExerciseButton part={part} />
+        <AddExerciseButton part={part} date={date} />
       </div>
     </div>
   );
