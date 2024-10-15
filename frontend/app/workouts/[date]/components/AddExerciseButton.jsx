@@ -4,7 +4,7 @@ import useSWR from "swr";
 import ExerciseSelectInput from "./ExerciseSelectInput";
 import {useEffect, useState} from "react";
 
-function AddExerciseButton({part, date}) {
+function AddExerciseButton({part, date, setAddedExercise}) {
   const [selectedExercise, setSelectedExercise] = useState("");
 
   const fetcher = (url) => fetch(url).then((res) => res.json());
@@ -20,6 +20,7 @@ function AddExerciseButton({part, date}) {
 
   const handleSubmit = () => {
     console.log("submit", selectedExercise);
+    setAddedExercise(selectedExercise);
     fetch(`http://127.0.0.1:8000/api/workoutset`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},

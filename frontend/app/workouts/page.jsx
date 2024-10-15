@@ -1,7 +1,8 @@
 "use client";
-import StartBodyPart from "./[date]/components/StartBodyPart";
 import StartWorkout from "./components/StartWorkout";
-import {useState} from "react";
+import React, {useState} from "react";
+import {Calendar} from "@/components/ui/calendar";
+import {useRouter} from "next/navigation";
 
 function Workouts() {
   // const [trainingStatus, setTrainingStatus] = useState('before');
@@ -10,10 +11,27 @@ function Workouts() {
   // const startTraining = () => setTrainingStatus("training");
   // const endTraining = () => setTrainingStatus("finished");
   // const pauseTraining = () => setTrainingStatus("pause");
+  // 如果你确定要传递一个 Date 对象，去掉类型定义
+  const [date, setDate] = useState(new Date());
+  const router = useRouter();
+
+  function handleSelect(value) {
+    // router.push(`/workouts/${date.toISOString().slice(0, 10)}`);
+    setDate(value);
+    console.log(value.toISOString().slice(0, 10));
+  }
 
   return (
     <div className="flex flex-col gap-4">
       <StartWorkout />
+      <Calendar
+        mode="single"
+        selected={date}
+        onSelect={handleSelect}
+        // onSelect={setDate}
+        className="border rounded-md shadow"
+      />
+      <div>{JSON.stringify(date)}</div>
     </div>
   );
 }

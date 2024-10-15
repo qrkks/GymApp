@@ -1,6 +1,5 @@
 import {CircleX} from "lucide-react";
-import {mutate} from "swr";
-function ExersiceSetButtonRemove({part, date, mutate}) {
+function ExersiceSetButtonRemove({part, date, mutateWorkout}) {
   function handleClick() {
     const isConfirmed = window.confirm(`确定要删除 ${part.name} 吗？`);
     if (!isConfirmed) return;
@@ -15,7 +14,7 @@ function ExersiceSetButtonRemove({part, date, mutate}) {
         console.log("api response:", data);
       })
       .then(() => {
-        mutate();
+        mutateWorkout();
       })
       .catch((error) => {
         console.error("Error:", error);
