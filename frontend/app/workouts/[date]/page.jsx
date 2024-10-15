@@ -2,6 +2,8 @@
 
 import StartBodyPart from "./components/StartBodyPart";
 import {useEffect, useState} from "react";
+import useSWR from "swr";
+import WorkoutSet from "./components/WorkoutSet";
 
 function WorkoutById({params}) {
   const [resData, setResData] = useState({});
@@ -29,11 +31,29 @@ function WorkoutById({params}) {
     }
   }, [params?.date]); // 添加依赖项，监听 params.date 的变化
 
+  const fetcher = (url) => fetch(url).then((res) => res.json());
+  const {
+    data: workoutData,
+    error: workoutError,
+    mutate: mutateWorkout,
+  } = useSWR(`http://127.0.0.1:8000/api/workout/${params.date}`, fetcher);
+
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <h2>{params.date}</h2>
       {/* <pre>{JSON.stringify(resData, null, 2)}</pre> */}
-      <StartBodyPart date={params.date} />
+      <StartBodyPart date={params.date} mutateWorkout={mutateWorkout} />
+      <pre className="m-auto text-foreground">
+        {JSON.stringify(workoutData, null, 2)}
+      </pre>
+      {workoutData?.body_parts?.map((part) => (
+        <WorkoutSet
+          key={part.id}
+          part={part}
+          date={params.date}
+          mutateWorkout={mutateWorkout}
+        />
+      ))}
     </div>
   );
 }

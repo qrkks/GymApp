@@ -3,7 +3,7 @@ from datetime import datetime, date
 from typing import Optional
 from django.shortcuts import get_object_or_404
 from ninja import Router, Schema
-from .models import Workout, Exercise, BodyPart,  WorkoutSet
+from .models import Workout, Exercise, BodyPart,  WorkoutSet, Set
 
 
 router = Router()
@@ -182,19 +182,31 @@ def delete_all_exercise(request):
     return 'ok'
 
 
+# Set schema
+class SetInSchema(Schema):
+    reps: int
+    weight: float
+
+
+class SetOutSchema(Schema):
+    id: int
+    reps: int
+    weight: float
+
+# WorkoutSet schema
+
+
 class WorkoutSetInSchema(Schema):
     workout_date: date
     exercise_name: str
-    reps: Optional[int] = None
-    weight: Optional[float] = None
+    sets: list[SetInSchema]  # 引用 SetInSchema
 
 
 class WorkoutSetOutSchema(Schema):
     id: int
     workout: WorkoutOutSchema
     exercise: ExerciseOutSchema
-    reps: Optional[int] = None
-    weight: Optional[float] = None
+    sets: list[SetOutSchema]  # 返回时包含多个 SetOutSchema
     created: Optional[bool] = None
 
 
@@ -204,34 +216,90 @@ def create_workoutset(request, data: WorkoutSetInSchema):
     workout = get_object_or_404(Workout, date=data.workout_date)
     exercise = get_object_or_404(Exercise, name=data.exercise_name)
 
-    # 手动查询是否有相同的 workout 和 exercise 的记录
-    try:
-        workoutset = WorkoutSet.objects.get(workout=workout, exercise=exercise)
+    # 查找是否有相同的 workout 和 exercise 的 WorkoutSet
+    workoutset, created = WorkoutSet.objects.get_or_create(
+        workout=workout,
+        exercise=exercise
+    )
 
-        # 如果找到记录，检查是否需要更新
-        if workoutset.reps != data.reps or workoutset.weight != data.weight:
-            workoutset.reps = data.reps
-            workoutset.weight = data.weight
-            workoutset.save()  # 更新记录
-            created = False  # 不是新创建的，而是更新的
-        else:
-            created = False  # 没有变化，也不是新创建的
-
-    except WorkoutSet.DoesNotExist:
-        # 如果没有找到，创建新的 WorkoutSet
-        workoutset = WorkoutSet.objects.create(
-            workout=workout,
-            exercise=exercise,
-            reps=data.reps,
-            weight=data.weight
+    # 创建或更新每个 Set
+    sets_to_return = []
+    for set_data in data.sets:
+        set_obj, set_created = Set.objects.update_or_create(
+            workout_set=workoutset,
+            reps=set_data.reps,
+            defaults={'weight': set_data.weight}
         )
-        created = True
+        sets_to_return.append({
+            'id': set_obj.id,
+            'reps': set_obj.reps,
+            'weight': set_obj.weight
+        })
 
-    workoutset.created = created
-    return workoutset
+    # 返回创建或更新的 WorkoutSet 和相关的 Sets
+    return {
+        "id": workoutset.id,
+        "workout": workoutset.workout,
+        "exercise": workoutset.exercise,
+        "sets": sets_to_return,
+        "created": created
+    }
 
 
 @router.get('/workoutset', response=list[WorkoutSetOutSchema])
 def get_all_workoutset(request):
-    workoutsets = WorkoutSet.objects.all()
-    return workoutsets
+    workoutsets = WorkoutSet.objects.prefetch_related('sets').all()
+    result = []
+    for workoutset in workoutsets:
+        result.append({
+            "id": workoutset.id,
+            "workout": workoutset.workout,
+            "exercise": workoutset.exercise,
+            "sets": [
+                {
+                    "id": set.id,
+                    "reps": set.reps,
+                    "weight": set.weight
+                } for set in workoutset.sets.all()
+            ]
+        })
+    return result
+
+
+@router.put('/workoutset', response=WorkoutSetOutSchema)
+def update_workout_set(request, payload: WorkoutSetInSchema):
+    # 根据日期获取 workout
+    workout = get_object_or_404(Workout, date=payload.workout_date)
+
+    # 根据名称获取 exercise
+    exercise = get_object_or_404(Exercise, name=payload.exercise_name)
+
+    # 查找现有的 WorkoutSet
+    try:
+        workout_set = WorkoutSet.objects.get(
+            workout=workout, exercise=exercise)
+    except WorkoutSet.DoesNotExist:
+        return {"error": "WorkoutSet not found"}, 404
+
+    # 更新关联的 sets
+    sets_to_return = []
+    for set_data in payload.sets:
+        set_obj, created = Set.objects.update_or_create(
+            workout_set=workout_set,
+            reps=set_data.reps,
+            defaults={'weight': set_data.weight}
+        )
+        sets_to_return.append({
+            'id': set_obj.id,
+            'reps': set_obj.reps,
+            'weight': set_obj.weight
+        })
+
+    # 返回更新后的 WorkoutSet 对象
+    return {
+        "id": workout_set.id,
+        "workout": workout_set.workout,
+        "exercise": workout_set.exercise,
+        "sets": sets_to_return,
+        "created": False  # 更新操作，设置为 False
+    }

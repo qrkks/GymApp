@@ -3,10 +3,9 @@ import SelectInput from "@/components/SelectInput";
 import SheetContainer from "@/components/SheetContainer";
 import {useState} from "react";
 import useSWR from "swr";
-import WorkoutSet from "./WorkoutSet";
 import {Button} from "@/components/ui/button";
 
-function StartBodyPart({date}) {
+function StartBodyPart({date, mutateWorkout}) {
   const [selectedValue, setSelectedValue] = useState(null);
 
   const fetcher = (url) => fetch(url).then((res) => res.json());
@@ -16,13 +15,7 @@ function StartBodyPart({date}) {
     mutate: mutateBodyParts,
   } = useSWR("http://127.0.0.1:8000/api/bodypart", fetcher);
 
-  const {
-    data: workoutData,
-    error: workoutError,
-    mutate: mutateWorkout,
-  } = useSWR(`http://127.0.0.1:8000/api/workout/${date}`, fetcher);
-  
-  if (bodyPartsError || workoutError) return <div>Failed to load data</div>;
+  if (bodyPartsError) return <div>Failed to load data</div>;
 
   function handleSubmit() {
     console.log("selectedValue", selectedValue);
@@ -69,19 +62,6 @@ function StartBodyPart({date}) {
           />
         </form>
       </SheetContainer>
-      <div className="flex flex-col items-center justify-between">
-        <pre className="m-auto text-foreground">
-          {JSON.stringify(workoutData, null, 2)}
-        </pre>
-        {workoutData?.body_parts?.map((part) => (
-          <WorkoutSet
-            key={part.id}
-            part={part}
-            date={date}
-            mutate={mutateWorkout}
-          />
-        ))}
-      </div>
     </>
   );
 }
