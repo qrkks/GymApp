@@ -1,8 +1,9 @@
 "use client";
 import StartWorkout from "./components/StartWorkout";
-import React, { useState, useEffect } from "react";
-import { Calendar } from "@/components/ui/calendar";
-import { useRouter } from "next/navigation";
+import React, {useState, useEffect} from "react";
+import {Calendar} from "@/components/ui/calendar";
+import {useRouter} from "next/navigation";
+import {Button} from "@/components/ui/button";
 
 function Workouts() {
   const [date, setDate] = useState(null); // 初始化为空，避免服务器端渲染和客户端渲染不一致
@@ -15,23 +16,32 @@ function Workouts() {
 
   function handleSelect(selectedDate) {
     setDate(selectedDate);
-    console.log(selectedDate.toISOString().slice(0, 10));
+    console.log(selectedDate && selectedDate.toLocaleDateString().slice(0, 10));
+  }
+
+  function handleClick() {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // 月份从0开始，所以加1
+    const day = String(date.getDate()).padStart(2, "0"); // 确保日是两位数
+
+    const formattedDate = `${year}-${month}-${day}`;
+
+    router.push(`/workouts/${formattedDate}`);
   }
 
   return (
     <div className="flex flex-col gap-4">
       <StartWorkout />
-      {date ? (
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={handleSelect}
-          className="border rounded-md shadow"
-        />
-      ) : (
-        <div>Loading...</div> // 在 date 尚未被初始化时显示 Loading
-      )}
-      <div>{JSON.stringify(date)}</div>
+      <Calendar
+        mode="single"
+        selected={date}
+        onSelect={handleSelect}
+        className="border rounded-md shadow"
+      />
+      <Button onClick={handleClick}>
+        {date ? `前往 ${date.toLocaleDateString()}` : "没有选择日期"}
+      </Button>
+      {/* <div>{JSON.stringify(date)}</div> */}
     </div>
   );
 }
