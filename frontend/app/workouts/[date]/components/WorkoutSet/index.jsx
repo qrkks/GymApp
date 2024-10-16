@@ -1,6 +1,6 @@
 import BodyPartRemoveButton from "./BodyPartRemoveButton";
 import AddExerciseButton from "./AddExerciseButton";
-import ExerciseGroup from "./ExerciseGroup";
+import ExerciseGroup from "../ExerciseGroup";
 import {useState} from "react";
 
 function WorkoutSet({part, date, mutateWorkout}) {
