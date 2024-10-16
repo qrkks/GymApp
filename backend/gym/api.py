@@ -272,6 +272,9 @@ def get_all_workoutset(request):
     return result
 
 
+from ninja.errors import HttpError
+from ninja import Router
+
 @router.put('/workoutset', response=WorkoutSetOutSchema)
 def update_workout_set(request, payload: WorkoutSetInSchema):
     # 根据日期获取 workout
@@ -282,10 +285,10 @@ def update_workout_set(request, payload: WorkoutSetInSchema):
 
     # 查找现有的 WorkoutSet
     try:
-        workout_set = WorkoutSet.objects.get(
-            workout=workout, exercise=exercise)
+        workout_set = WorkoutSet.objects.get(workout=workout, exercise=exercise)
     except WorkoutSet.DoesNotExist:
-        return {"error": "WorkoutSet not found"}, 404
+        # Raise a 404 error in a way that Django Ninja can handle
+        raise HttpError(404, "WorkoutSet not found")
 
     # 更新关联的 sets
     sets_to_return = []
