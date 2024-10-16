@@ -12,7 +12,7 @@ function AddExerciseButton({part, date, setAddedExercise}) {
     data: excercisesData,
     error: excercisesError,
     mutate: mutateExcercises,
-  } = useSWR(`http://127.0.0.1:8000/api/exercise`, fetcher);
+  } = useSWR(`http://127.0.0.1:8000/api/exercise?body_part_name=${part.name}`, fetcher);
 
 
 
@@ -20,6 +20,7 @@ function AddExerciseButton({part, date, setAddedExercise}) {
 
   const handleSubmit = () => {
     console.log("submit", selectedExercise);
+    console.log("date", date);
     setAddedExercise(selectedExercise);
     fetch(`http://127.0.0.1:8000/api/workoutset`, {
       method: "POST",
