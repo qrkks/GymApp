@@ -1,3 +1,5 @@
+from django.db.models import Max
+from ninja.errors import HttpError
 from django.db import transaction
 from datetime import datetime, date
 from typing import Optional
@@ -74,6 +76,7 @@ def get_workout_by_date(request, date: date):
 def delete_all_workout(request):
     Workout.objects.all().delete()
     return 'ok'
+
 
 @router.delete('/workout/{date}')
 def delete_workout_by_date(request, date: date):
@@ -177,9 +180,23 @@ def create_exercise(request, data: ExerciseInSchema):
 
 
 @router.get('/exercise', response=list[ExerciseOutSchema])
-def get_all_exercise(request):
-    exercises = Exercise.objects.all()
+def get_exercise(request, body_part_name: str = None):
+    if body_part_name:
+        # 如果提供了查询参数 body_part_name，则进行过滤
+        body_part = get_object_or_404(BodyPart, name=body_part_name)
+        exercises = Exercise.objects.filter(body_part=body_part)
+    else:
+        # 否则，返回所有的 Exercise
+        exercises = Exercise.objects.all()
+
     return exercises
+
+
+@router.get('/exercise/{body_part_name}', response=ExerciseOutSchema)
+def get_exercise_by_body_part(request, body_part_name: str):
+    body_part = get_object_or_404(BodyPart, name=body_part_name)
+    exercise = get_object_or_404(Exercise, body_part=body_part)
+    return exercise
 
 
 @router.delete('/exercise')
@@ -205,56 +222,36 @@ class SetOutSchema(Schema):
 class WorkoutSetInSchema(Schema):
     workout_date: date
     exercise_name: str
-    sets: list[SetInSchema]  # 引用 SetInSchema
+    sets: Optional[list[SetInSchema]] = None   # 引用 SetInSchema
 
 
 class WorkoutSetOutSchema(Schema):
     id: int
     workout: WorkoutOutSchema
     exercise: ExerciseOutSchema
-    sets: list[SetOutSchema]  # 返回时包含多个 SetOutSchema
+    sets: Optional[list[SetOutSchema]]  # 返回时包含多个 SetOutSchema
     created: Optional[bool] = None
 
 
-@router.post('/workoutset', response=WorkoutSetOutSchema)
-def create_workoutset(request, data: WorkoutSetInSchema):
-    # 获取 workout 和 exercise 对象
-    workout = get_object_or_404(Workout, date=data.workout_date)
-    exercise = get_object_or_404(Exercise, name=data.exercise_name)
-
-    # 查找是否有相同的 workout 和 exercise 的 WorkoutSet
-    workoutset, created = WorkoutSet.objects.get_or_create(
-        workout=workout,
-        exercise=exercise
-    )
-
-    # 创建或更新每个 Set
-    sets_to_return = []
-    for set_data in data.sets:
-        set_obj, set_created = Set.objects.update_or_create(
-            workout_set=workoutset,
-            reps=set_data.reps,
-            defaults={'weight': set_data.weight}
-        )
-        sets_to_return.append({
-            'id': set_obj.id,
-            'reps': set_obj.reps,
-            'weight': set_obj.weight
-        })
-
-    # 返回创建或更新的 WorkoutSet 和相关的 Sets
-    return {
-        "id": workoutset.id,
-        "workout": workoutset.workout,
-        "exercise": workoutset.exercise,
-        "sets": sets_to_return,
-        "created": created
-    }
-
-
 @router.get('/workoutset', response=list[WorkoutSetOutSchema])
-def get_all_workoutset(request):
+def get_workoutsets(request, workout_date: date = None, exercise_name: str = None, body_part_name: str = None):
+    # 初始化 queryset
     workoutsets = WorkoutSet.objects.prefetch_related('sets').all()
+
+    # 根据日期过滤（如果提供了 date）
+    if workout_date:
+        workoutsets = workoutsets.filter(workout__date=workout_date)
+
+    # 根据训练动作名称过滤（如果提供了 exercise_name）
+    if exercise_name:
+        workoutsets = workoutsets.filter(exercise__name=exercise_name)
+
+    # 根据身体部位名称过滤（如果提供了 body_part_name）
+    if body_part_name:
+        workoutsets = workoutsets.filter(
+            exercise__body_part__name=body_part_name)
+
+    # 构造返回结果
     result = []
     for workoutset in workoutsets:
         result.append({
@@ -269,23 +266,60 @@ def get_all_workoutset(request):
                 } for set in workoutset.sets.all()
             ]
         })
+
     return result
 
 
-from ninja.errors import HttpError
-from ninja import Router
+@router.get('/workoutset', response=list[WorkoutSetOutSchema])
+def get_workoutsets(request, workout_date: date = None, exercise_name: str = None):
+    # 初始化 queryset
+    workoutsets = WorkoutSet.objects.prefetch_related('sets').all()
+
+    # 根据日期过滤（如果提供了 date）
+    if workout_date:
+        workoutsets = workoutsets.filter(workout__date=workout_date)
+
+    # 根据训练动作名称过滤（如果提供了 exercise_name）
+    if exercise_name:
+        workoutsets = workoutsets.filter(exercise__name=exercise_name)
+
+    # 构造返回结果
+    result = []
+    for workoutset in workoutsets:
+        result.append({
+            "id": workoutset.id,
+            "workout": workoutset.workout,
+            "exercise": workoutset.exercise,
+            "sets": [
+                {
+                    "id": set.id,
+                    "reps": set.reps,
+                    "weight": set.weight
+                } for set in workoutset.sets.all()
+            ]
+        })
+
+    return result
+
 
 @router.put('/workoutset', response=WorkoutSetOutSchema)
 def update_workout_set(request, payload: WorkoutSetInSchema):
     # 根据日期获取 workout
     workout = get_object_or_404(Workout, date=payload.workout_date)
+    if not workout:
+        # Raise a 404 error in a way that Django Ninja can handle
+        raise HttpError(404, "Workout not found")
 
     # 根据名称获取 exercise
     exercise = get_object_or_404(Exercise, name=payload.exercise_name)
+    if not exercise:
+        # Raise a 404 error in a way that Django Ninja can handle
+        raise HttpError(404, "Exercise not found")
 
     # 查找现有的 WorkoutSet
     try:
-        workout_set = WorkoutSet.objects.get(workout=workout, exercise=exercise)
+        workout_set = WorkoutSet.objects.get(
+            workout=workout, exercise=exercise)
     except WorkoutSet.DoesNotExist:
         # Raise a 404 error in a way that Django Ninja can handle
         raise HttpError(404, "WorkoutSet not found")
@@ -312,3 +346,34 @@ def update_workout_set(request, payload: WorkoutSetInSchema):
         "sets": sets_to_return,
         "created": False  # 更新操作，设置为 False
     }
+
+
+@router.delete('/workoutset')
+def delete_all_workoutset(request):
+    WorkoutSet.objects.all().delete()
+    return 'ok'
+
+
+@router.get('/sets', response=list[SetOutSchema])
+def get_sets_by_workout_and_exercise(request, workout_date: date, exercise_name: str):
+    # 根据 workout_date 和 exercise_name 过滤 WorkoutSet
+    workout = get_object_or_404(Workout, date=workout_date)
+    exercise = get_object_or_404(Exercise, name=exercise_name)
+
+    # 根据 workout 和 exercise 获取对应的 WorkoutSet
+    workoutset = get_object_or_404(
+        WorkoutSet, workout=workout, exercise=exercise)
+
+    # 获取与该 WorkoutSet 相关的所有 Set
+    sets = Set.objects.filter(workout_set=workoutset)
+
+    # 构造返回结果
+    result = []
+    for set_obj in sets:
+        result.append({
+            "id": set_obj.id,
+            "reps": set_obj.reps,
+            "weight": set_obj.weight,
+        })
+
+    return result

@@ -54,5 +54,6 @@ class WorkoutSet(models.Model):
 class Set(models.Model):
     workout_set = models.ForeignKey(
         WorkoutSet, related_name='sets', on_delete=models.CASCADE)
+    set_number = models.IntegerField()
     reps = models.IntegerField()
     weight = models.FloatField()
