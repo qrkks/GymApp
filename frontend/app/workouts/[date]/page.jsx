@@ -1,6 +1,6 @@
 "use client";
 
-import StartBodyPart from "./components/StartBodyPart";
+import StartBodyPart from "./components/WorkoutSet/StartBodyPart";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 import WorkoutSet from "./components/WorkoutSet";
