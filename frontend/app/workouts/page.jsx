@@ -15,11 +15,15 @@ function Workouts() {
   const [date, setDate] = useState(new Date());
   const router = useRouter();
 
-  function handleSelect(value) {
+  function handleSelect(date) {
     // router.push(`/workouts/${date.toISOString().slice(0, 10)}`);
-    setDate(value);
-    console.log(value.toISOString().slice(0, 10));
+    setDate(date);
+    console.log(date.toISOString().slice(0, 10));
   }
+
+  // function handleDoubleClick(value) {
+  //   router.push(`/workouts/${value.toISOString().slice(0, 10)}`);
+  // }
 
   return (
     <div className="flex flex-col gap-4">
@@ -28,6 +32,7 @@ function Workouts() {
         mode="single"
         selected={date}
         onSelect={handleSelect}
+        // onDoubleClick={handleDoubleClick}
         // onSelect={setDate}
         className="border rounded-md shadow"
       />

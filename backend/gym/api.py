@@ -75,6 +75,12 @@ def delete_all_workout(request):
     Workout.objects.all().delete()
     return 'ok'
 
+@router.delete('/workout/{date}')
+def delete_workout_by_date(request, date: date):
+    workout = get_object_or_404(Workout, date=date)
+    workout.delete()
+    return 'ok'
+
 
 class ChangeBodyPartInWorkoutSchema(Schema):
     body_part_names: list[str]
