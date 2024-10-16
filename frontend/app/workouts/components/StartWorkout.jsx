@@ -22,7 +22,7 @@ function StartWorkout({onStart}) {
   return (
     <>
       {resData.date && <p>{resData.date}</p>}
-      <Button onClick={handleClick}>开始训练</Button>
+      <Button onClick={handleClick}>开始今日训练</Button>
     </>
   );
 }
