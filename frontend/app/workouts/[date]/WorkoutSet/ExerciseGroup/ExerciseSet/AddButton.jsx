@@ -4,7 +4,7 @@ import useSWR from "swr";
 import {use, useEffect, useState} from "react";
 import {Input} from "@/components/ui/input";
 
-function AddButton() {
+function AddButton({date, set, part,  mutateWorkoutSet}) {
   const [formData, setFormData] = useState({
     weight: "",
     reps: "",
@@ -17,9 +17,39 @@ function AddButton() {
     });
   }
 
-  useEffect(() => {
+  function handleSubmit() {
     console.log("formData", formData);
-  }, [formData]);
+    console.log({
+      workout_date: date,
+      exercise_name: set.exercise.name,
+      sets: [
+        {
+          weight: formData.weight,
+          reps: formData.reps,
+        },
+      ],
+    });
+
+    fetch(`http://127.0.0.1:8000/api/workoutset`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        workout_date: date,
+        exercise_name: set.exercise.name,
+        sets: [
+          {
+            weight: formData.weight,
+            reps: formData.reps,
+          },
+        ],
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        // console.log(data);
+        mutateWorkoutSet();
+      });
+  }
 
   return (
     <>
@@ -32,6 +62,7 @@ function AddButton() {
           </button>
         }
         submitButtonText="确定"
+        onHandleSubmit={handleSubmit}
       >
         <form className="flex flex-col items-center justify-center w-full gap-2">
           <Input

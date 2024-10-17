@@ -1,9 +1,9 @@
 "use client";
 
-import StartBodyPart from "./components/WorkoutSet/StartBodyPart";
+import StartBodyPart from "./WorkoutSet/StartBodyPart";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
-import WorkoutSet from "./components/WorkoutSet";
+import WorkoutSet from "./WorkoutSet";
 import { Button } from "@/components/ui/button";
 
 function WorkoutById({ params }) {
@@ -98,9 +98,9 @@ function WorkoutById({ params }) {
       {isWorkoutCreated && (
         <>
           <StartBodyPart date={params.date} mutateWorkout={mutateWorkout} />
-          <pre className="m-auto text-foreground">
+          {/* <pre className="m-auto text-foreground">
             {JSON.stringify(workoutData, null, 2)}
-          </pre>
+          </pre> */}
           {workoutData?.body_parts?.map((part) => (
             <WorkoutSet
               key={part.id}
