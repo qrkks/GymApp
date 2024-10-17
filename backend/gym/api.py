@@ -222,6 +222,7 @@ class SetInSchema(Schema):
 
 class SetOutSchema(Schema):
     id: int
+    set_number: int
     reps: int
     weight: float
 
@@ -244,8 +245,9 @@ class WorkoutSetOutSchema(Schema):
 
 @router.get('/workoutset', response=list[WorkoutSetOutSchema])
 def get_workoutsets(request, workout_date: date = None, exercise_name: str = None, body_part_name: str = None):
-    # 初始化 queryset
-    workoutsets = WorkoutSet.objects.prefetch_related('sets').all()
+    # 初始化 queryset，并进行相关的预加载
+    workoutsets = WorkoutSet.objects.prefetch_related(
+        'sets').select_related('workout', 'exercise')
 
     # 根据日期过滤（如果提供了 date）
     if workout_date:
@@ -260,23 +262,8 @@ def get_workoutsets(request, workout_date: date = None, exercise_name: str = Non
         workoutsets = workoutsets.filter(
             exercise__body_part__name=body_part_name)
 
-    # 构造返回结果
-    result = []
-    for workoutset in workoutsets:
-        result.append({
-            "id": workoutset.id,
-            "workout": workoutset.workout,
-            "exercise": workoutset.exercise,
-            "sets": [
-                {
-                    "id": set.id,
-                    "reps": set.reps,
-                    "weight": set.weight
-                } for set in workoutset.sets.all()
-            ]
-        })
-
-    return result
+    # Ninja 和 Pydantic 将会根据你的 Schema 自动转换结果，不需要手动构造 JSON
+    return workoutsets
 
 
 @router.post('/workoutset', response=WorkoutSetOutSchema)
@@ -291,19 +278,27 @@ def create_workoutset(request, data: WorkoutSetInSchema):
         exercise=exercise
     )
 
-    # 创建或更新每个 Set
+    # 创建每个 Set
     sets_to_return = []
     if data.sets:
         for set_data in data.sets:
-            set_obj, set_created = Set.objects.update_or_create(
+            # 获取当前 workoutset 中最大的 set_number
+            max_set_number = Set.objects.filter(workout_set=workoutset).aggregate(
+                Max('set_number'))['set_number__max']
+            next_set_number = (max_set_number or 0) + 1  # 如果没有 set，默认为 1
+
+            # 直接创建 set
+            set_obj = Set.objects.create(
                 workout_set=workoutset,
+                set_number=next_set_number,  # 自动计算 set_number
                 reps=set_data.reps,
-                defaults={'weight': set_data.weight}
+                weight=set_data.weight
             )
             sets_to_return.append({
                 'id': set_obj.id,
                 'reps': set_obj.reps,
-                'weight': set_obj.weight
+                'weight': set_obj.weight,
+                'set_number': set_obj.set_number  # 返回 set_number
             })
 
     # 返回创建或更新的 WorkoutSet 和相关的 Sets
@@ -403,3 +398,21 @@ def get_sets_by_workout_and_exercise(request, workout_date: date, exercise_name:
         })
 
     return result
+
+
+@router.delete("/set/{set_id}")
+def delete_set(request, set_id: int):
+    # 1. 获取要删除的Set对象并删除
+    set_to_delete = get_object_or_404(Set, id=set_id)
+    workout_set = set_to_delete.workout_set  # 获取所属的workout_set
+    set_to_delete.delete()  # 删除该组
+
+    # 2. 获取剩余的组并按set_number重排
+    remaining_sets = workout_set.sets.order_by('set_number')
+
+    # 重新更新 set_number
+    for i, set_obj in enumerate(remaining_sets):
+        set_obj.set_number = i + 1
+        set_obj.save()
+
+    return {"success": True, "message": "Set deleted and numbers reordered"}
