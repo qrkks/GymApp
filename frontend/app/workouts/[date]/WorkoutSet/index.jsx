@@ -1,5 +1,6 @@
 import BodyPartRemoveButton from "./BodyPartRemoveButton";
 import AddExerciseButton from "./AddExerciseButton";
+import BodyPartEditPopover from "./BodyPartEditPopover";
 import ExerciseGroup from "./ExerciseGroup";
 import {useState} from "react";
 
@@ -12,6 +13,11 @@ function WorkoutSet({part, date, mutateWorkout}) {
         <h3>{part.name}</h3>
         <div className="flex items-center gap-1">
           <BodyPartRemoveButton
+            part={part}
+            date={date}
+            mutateWorkout={mutateWorkout}
+          />
+          <BodyPartEditPopover
             part={part}
             date={date}
             mutateWorkout={mutateWorkout}

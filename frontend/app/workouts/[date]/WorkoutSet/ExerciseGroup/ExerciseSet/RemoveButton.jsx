@@ -1,5 +1,5 @@
 import {CircleX} from "lucide-react";
-function ExersiceSetButtonRemove({ date, mutateWorkout,set}) {
+function ExersiceSetButtonRemove({ date, mutateWorkoutSet,set}) {
   function handleClick() {
     console.log("remove", set.exercise.name,'date',date);
 
@@ -14,7 +14,7 @@ function ExersiceSetButtonRemove({ date, mutateWorkout,set}) {
         if (!res.ok) {
           throw new Error(`HTTP error! Status: ${res.status}`);
         }
-        mutateWorkout();
+        mutateWorkoutSet();
       })
       .catch((error) => {
         console.error("Fetch error:", error);

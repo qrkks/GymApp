@@ -5,7 +5,7 @@ from django.db import transaction
 from datetime import datetime, date
 from typing import Optional
 from django.shortcuts import get_object_or_404
-from ninja import Router, Schema
+from ninja import Body, Router, Schema
 from .models import Workout, Exercise, BodyPart,  WorkoutSet, Set
 
 
@@ -148,6 +148,16 @@ def create_bodypart(request, data: BodyPartInSchema):
     return bodypart
 
 
+class BodyPartPatchSchema(Schema):
+    bodypart_name: str
+
+@router.patch('/bodypart/{id}', response=BodyPartOutSchema)
+def patch_bodypart_name(request, id: int, payload: BodyPartPatchSchema):
+    bodypart = get_object_or_404(BodyPart, id=id)
+    bodypart.name = payload.bodypart_name
+    bodypart.save()
+    return bodypart
+
 @router.get('/bodypart', response=list[BodyPartOutSchema])
 def get_bodypart(request):
     bodyparts = BodyPart.objects.all()
@@ -187,6 +197,16 @@ def create_exercise(request, data: ExerciseInSchema):
 
     return exercise
 
+class ExercisePatchSchema(Schema):
+    exercise_name: str
+
+@router.patch('/exercise/{exercise_id}', response=ExerciseOutSchema)
+def update_exercise_name(request, exercise_id: int, payload: ExercisePatchSchema):
+    exercise = get_object_or_404(Exercise, id=exercise_id)
+    exercise.name = payload.exercise_name
+    exercise.save()
+    return exercise
+
 
 @router.get('/exercise', response=list[ExerciseOutSchema])
 def get_exercise(request, body_part_name: str = None):
@@ -216,15 +236,15 @@ def delete_all_exercise(request):
 
 # Set schema
 class SetInSchema(Schema):
-    reps: int
     weight: float
+    reps: int
 
 
 class SetOutSchema(Schema):
     id: int
     set_number: int
-    reps: int
     weight: float
+    reps: int
 
 # WorkoutSet schema
 
@@ -416,3 +436,11 @@ def delete_set(request, set_id: int):
         set_obj.save()
 
     return {"success": True, "message": "Set deleted and numbers reordered"}
+
+@router.put("/set/{set_id}", response=SetOutSchema)
+def update_set(request, set_id: int, payload: SetInSchema):
+    set_obj = get_object_or_404(Set, id=set_id)
+    set_obj.reps = payload.reps
+    set_obj.weight = payload.weight
+    set_obj.save()
+    return set_obj
