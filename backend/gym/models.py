@@ -37,7 +37,7 @@ class Workout(models.Model):
         return f"Workout on {self.date}"
 
 # 4. 训练组表（记录每次做的动作）
-
+# WorkoutSet 本质上是一个特定训练日（Workout）中针对某个训练动作（Exercise）的记录。如果 Exercise 被移除，那么这条记录就不再有任何价值。
 
 class WorkoutSet(models.Model):
     workout = models.ForeignKey(
