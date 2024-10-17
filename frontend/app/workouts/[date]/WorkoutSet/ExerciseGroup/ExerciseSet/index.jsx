@@ -1,7 +1,6 @@
 import AddButton from "./AddButton";
 import RemoveButton from "./RemoveButton";
 import ExerciseItem from "./ExerciseItem";
-import useSWR from "swr";
 import SetTableContainer from "./SetTableContainer";
 import BodyPartEditPopover from "./ExerciseEditPopover";
 
@@ -17,7 +16,12 @@ function ExerciseSet({set, part, date, mutateWorkoutSet}) {
             date={date}
             mutateWorkoutSet={mutateWorkoutSet}
           />
-          <BodyPartEditPopover set={set} part={part} date={date} mutateWorkoutSet={mutateWorkoutSet} />
+          <BodyPartEditPopover
+            set={set}
+            part={part}
+            date={date}
+            mutateWorkoutSet={mutateWorkoutSet}
+          />
           <AddButton
             set={set}
             part={part}
