@@ -1,10 +1,10 @@
 import {CirclePlus} from "lucide-react";
 import SheetContainer from "@/components/SheetContainer";
-import useSWR from "swr";
-import {use, useEffect, useState} from "react";
+import {useState} from "react";
 import {Input} from "@/components/ui/input";
+import authStore from "@/app/store/authStore";
 
-function AddButton({date, set, part,  mutateWorkoutSet}) {
+function AddButton({date, set, part, mutateWorkoutSet}) {
   const [formData, setFormData] = useState({
     weight: "",
     reps: "",
@@ -32,7 +32,11 @@ function AddButton({date, set, part,  mutateWorkoutSet}) {
 
     fetch(`http://127.0.0.1:8000/api/workoutset`, {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": authStore.getCookie("csrftoken"),
+      },
+      credentials: "include",
       body: JSON.stringify({
         workout_date: date,
         exercise_name: set.exercise.name,
