@@ -5,7 +5,7 @@ import {useEffect, useState} from "react";
 import useSWR from "swr";
 import WorkoutSet from "./WorkoutSet";
 import {Button} from "@/components/ui/button";
-import cookieStore from "@/app/store/cookieStore";
+import authStore from "@/app/store/authStore";
 
 function WorkoutById({params}) {
   const [resData, setResData] = useState({});
@@ -42,7 +42,7 @@ function WorkoutById({params}) {
   }, [workoutData]);
 
   function handleCreateWorkout() {
-    console.log(cookieStore.getCookie("csrftoken"));
+    // console.log(authStore.getCookie("csrftoken"));
     // 仅当用户主动点击按钮时才创建当天的 Workout
     if (params?.date && !isWorkoutCreated) {
       fetch("http://127.0.0.1:8000/api/workout/create", {
@@ -50,7 +50,7 @@ function WorkoutById({params}) {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": cookieStore.getCookie("csrftoken"),
+          "X-CSRFToken": authStore.getCookie("csrftoken"),
         },
         body: JSON.stringify({date: params.date}),
       })
@@ -79,7 +79,10 @@ function WorkoutById({params}) {
 
       fetch(`http://127.0.0.1:8000/api/workout/${params.date}`, {
         method: "DELETE",
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": authStore.getCookie("csrftoken"),
+        },
         credentials: "include",
       })
         .then((res) => {

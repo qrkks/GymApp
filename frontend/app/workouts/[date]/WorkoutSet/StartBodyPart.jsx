@@ -4,11 +4,13 @@ import SheetContainer from "@/components/SheetContainer";
 import {useState} from "react";
 import useSWR from "swr";
 import {Button} from "@/components/ui/button";
+import authStore from "@/app/store/authStore";
 
 function StartBodyPart({date, mutateWorkout}) {
   const [selectedValue, setSelectedValue] = useState(null);
 
-  const fetcher = (url) => fetch(url).then((res) => res.json());
+  const fetcher = (url) =>
+    fetch(url, {credentials: "include"}).then((res) => res.json());
   const {
     data: bodyPartsDataForSelect,
     error: bodyPartsError,
@@ -27,7 +29,11 @@ function StartBodyPart({date, mutateWorkout}) {
 
     fetch(`http://127.0.0.1:8000/api/workout/add-body-parts/${date}`, {
       method: "PUT",
-      headers: {"Content-Type": "application/json"},
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": authStore.getCookie("csrftoken"),
+      },
       body: JSON.stringify({body_part_names: [selectedValue]}),
     })
       .then((response) => response.json())

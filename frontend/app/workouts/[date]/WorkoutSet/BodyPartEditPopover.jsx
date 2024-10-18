@@ -4,6 +4,7 @@ import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {useState} from "react";
+import authStore from "@/app/store/authStore";
 
 export default function PopoverButton({set, part, date, mutateWorkout}) {
   const key = "部位名称";
@@ -16,7 +17,11 @@ export default function PopoverButton({set, part, date, mutateWorkout}) {
     console.log(bodypart_name);
     fetch(`http://127.0.0.1:8000/api/bodypart/${part.id}`, {
       method: "PATCH",
-      headers: {"Content-Type": "application/json"},
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": authStore.getCookie("csrftoken"),
+      },
+      credentials: "include",
       body: JSON.stringify({bodypart_name: bodypart_name}),
     })
       .then((res) => {
