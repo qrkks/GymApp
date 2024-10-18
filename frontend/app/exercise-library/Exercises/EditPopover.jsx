@@ -6,34 +6,46 @@ import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {useState} from "react";
 import authStore from "@/app/store/authStore";
 
-export default function PopoverButton({set, part, date, mutateWorkoutSet}) {
-  const key = "训练动作";
+export default function PopoverButton({exercise,  mutate}) {
   // console.log(item, "in edit popover");
+  const key = exercise.name;
+  const value = exercise.name;
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
   function handleSubmit(e) {
-    setIsPopoverOpen(false);
     e.preventDefault();
-    const exercise_name = e.target[0].value;
-    console.log(exercise_name);
-    fetch(`http://127.0.0.1:8000/api/exercise/${set.exercise.id}/patch`, {
+    setIsPopoverOpen(false);
+
+    const formData = new FormData(e.target);
+    const formDataObj = Object.fromEntries(formData);
+
+    console.log(formDataObj);
+
+    fetch(`http://127.0.0.1:8000/api/exercise/${exercise.id}/patch`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": authStore.getCookie("csrftoken"),
       },
       credentials: "include",
-      body: JSON.stringify({exercise_name: exercise_name}),
+      body: JSON.stringify(formDataObj),
     })
       .then((res) => {
         if (!res.ok) {
           throw new Error(`HTTP error! Status: ${res.status}`);
         }
-        mutateWorkoutSet();
+        return res.json(); // 返回一个 promise
+      })
+      .then((data) => {
+        // console.log(data, "in edit popover");
+        // 在数据获取成功后调用 mutate 函数
+        mutate();
       })
       .catch((error) => {
         console.error("Fetch error:", error);
       });
   }
+
   return (
     <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
       <PopoverTrigger asChild>
@@ -48,35 +60,19 @@ export default function PopoverButton({set, part, date, mutateWorkoutSet}) {
             <p className="text-sm text-muted-foreground"></p>
           </div>
           <div className="grid gap-2">
-            <div key={key} className="grid items-center grid-cols-3 gap-4">
-              <Label htmlFor={key}>{key}</Label>
-              <Input
-                name={key}
-                defaultValue={set.exercise.name}
-                className="h-8 col-span-2"
-                type="text"
-                min="0"
-              />
-            </div>
-            {/* {Object.entries(part.name)?.map(
-              ([key, value]) =>
-                key !== "id" &&
-                key !== "set_number" && (
                   <div
                     key={key}
                     className="grid items-center grid-cols-3 gap-4"
                   >
                     <Label htmlFor={key}>{key}</Label>
                     <Input
-                      name={key}
+                      name='exercise_name'
                       defaultValue={value}
                       className="h-8 col-span-2"
-                      type="number"
+                      type="text"
                       min="0"
                     />
                   </div>
-                )
-            )} */}
           </div>
           <div className="flex justify-end gap-2">
             <Button

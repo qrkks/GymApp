@@ -16,12 +16,12 @@ function ExerciseSet({set, part, date, mutateWorkoutSet}) {
             date={date}
             mutateWorkoutSet={mutateWorkoutSet}
           />
-          <BodyPartEditPopover
+          {/* <BodyPartEditPopover
             set={set}
             part={part}
             date={date}
             mutateWorkoutSet={mutateWorkoutSet}
-          />
+          /> */}
           <AddButton
             set={set}
             part={part}
@@ -33,12 +33,15 @@ function ExerciseSet({set, part, date, mutateWorkoutSet}) {
       {/* <pre>{JSON.stringify(set.sets, null, 2)}</pre> */}
       <SetTableContainer set={set} mutateWorkoutSet={mutateWorkoutSet}>
         {set.sets.map((item) => (
+          <>
+          {/* <pre>{JSON.stringify(item.id, null, 2)}</pre> */}
           <ExerciseItem
             set={set}
             key={item.id}
             item={item}
             mutateWorkoutSet={mutateWorkoutSet}
-          />
+            />
+            </>
         ))}
       </SetTableContainer>
     </div>
