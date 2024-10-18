@@ -2,7 +2,12 @@
 import useSWR from "swr";
 
 export default function Home() {
-  const { data, error } = useSWR("http://127.0.0.1:8000/api", (url) => fetch(url).then((res) => res.json()));
+  const {data, error} = useSWR("http://127.0.0.1:8000/api", (url) =>
+    fetch(url, {
+      method: "GET",
+      credentials: "include",
+    }).then((res) => res.json())
+  );
   return (
     <div>
       <p>Hello World</p>
