@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {useState} from "react";
+import authStore from "@/app/store/authStore";
 
 export default function SelectInput({placeholder, entries, mutate, onSelectChange}) {
   const [selectValue, setSelectValue] = useState("");
@@ -18,8 +19,10 @@ export default function SelectInput({placeholder, entries, mutate, onSelectChang
       if (newEntry) {
         fetch("http://127.0.0.1:8000/api/bodypart", {
           method: "POST",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
+            "X-CSRFToken": authStore.getCookie("csrftoken"),
           },
           body: JSON.stringify({
             name: newEntry,

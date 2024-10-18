@@ -30,7 +30,12 @@ function WorkoutSet({part, date, mutateWorkout}) {
           />
         </div>
       </div>
-      <ExerciseGroup part={part} date={date} addedExercise={addedExercise} />
+      <ExerciseGroup
+        part={part}
+        date={date}
+        addedExercise={addedExercise}
+        mutateWorkout={mutateWorkout}
+      />
     </div>
   );
 }
