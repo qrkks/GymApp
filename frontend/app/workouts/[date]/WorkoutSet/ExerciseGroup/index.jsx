@@ -1,6 +1,7 @@
 import useSWR from "swr";
 import ExerciseSet from "./ExerciseSet";
 import authStore from "@/app/store/authStore";
+import {useEffect} from "react";
 
 function ExerciseGroup({part, date, addedExercise}) {
   // console.log('in ExerciseGroup', 'date ', date, 'part', part, 'addedExercise', addedExercise);
@@ -15,9 +16,15 @@ function ExerciseGroup({part, date, addedExercise}) {
     error: workoutSetError,
     mutate: mutateWorkoutSet,
   } = useSWR(
-    `http://127.0.0.1:8000/api/workoutset?workout_date=${date}&exercise_name=${addedExercise}&body_part_name=${part.name}`,
+    `http://127.0.0.1:8000/api/workoutset?workout_date=${date}&body_part_name=${part.name}`,
     fetcher
   );
+
+  useEffect(() => {
+    if (addedExercise) {
+      mutateWorkoutSet();
+    }
+  }, [addedExercise]);
 
   if (workoutSetError) return <div>Failed to load data in ExerciseGroup</div>;
 

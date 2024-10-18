@@ -160,6 +160,13 @@ def delete_all_bodypart(request):
     return 'ok'
 
 
+@router.delete('/bodypart/{id}')
+def delete_bodypart(request, id: int):
+    bodypart = get_object_or_404(
+        BodyPart, user=request.user, id=id)  # Filter by user
+    bodypart.delete()
+    return 'ok'
+
 class ExerciseInSchema(Schema):
     name: str
     description: str
@@ -197,13 +204,21 @@ def get_exercise_by_body_part(request, body_part_name: str):
     return exercises
 
 
-@router.patch('/exercise/{exercise_id}', response=ExerciseOutSchema)
+@router.patch('/exercise/{exercise_id}/patch', response=ExerciseOutSchema)
 def update_exercise_name(request, exercise_id: int, payload: ExercisePatchSchema):
     exercise = get_object_or_404(
         Exercise, user=request.user, id=exercise_id)  # Filter by user
     exercise.name = payload.exercise_name
     exercise.save()
     return exercise
+
+
+@router.delete('/exercise/{exercise_id}/delete', response={204: None})
+def delete_exercise(request, exercise_id: int):
+    exercise = get_object_or_404(
+        Exercise, user=request.user, id=exercise_id)  # Filter by user
+    exercise.delete()
+    return HttpResponse(status=204)
 
 
 @router.get('/exercise', response=list[ExerciseOutSchema])
@@ -408,3 +423,61 @@ def update_set(request, set_id: int, payload: SetInSchema):
     set_obj.weight = payload.weight
     set_obj.save()
     return set_obj
+
+
+# 功能
+
+@router.get('/last-workout-first-set/{exercise_name}', response=dict)
+def get_last_workout_previous_set_first_set(request, exercise_name: str):
+    # 获取用户上一次（不是今天）包含该练习动作的训练集
+    workout_set_previous = WorkoutSet.objects.filter(
+        workout__user=request.user,
+        exercise__name=exercise_name
+    ).exclude(workout__date=date.today()).order_by('-workout__date').first()
+
+    if not workout_set_previous:
+        raise Http404(f"未找到包含该练习动作的上一次训练数据：{exercise_name}")
+
+    # 获取上一次训练的第一组数据
+    first_set_previous = Set.objects.filter(workout_set=workout_set_previous).order_by('set_number').first()
+
+    if not first_set_previous:
+        raise Http404(f"未找到该练习的训练组数据：{exercise_name}")
+
+    return {
+        "weight": first_set_previous.weight,
+        "reps": first_set_previous.reps,
+        "date": workout_set_previous.workout.date
+    }
+
+@router.get('/last-workout-all-sets/{exercise_name}', response=dict)
+def get_last_workout_all_sets(request, exercise_name: str):
+    # 查找上一次包含指定练习动作的训练集，排除今天的数据
+    workout_set_previous = WorkoutSet.objects.filter(
+        workout__user=request.user,
+        exercise__name=exercise_name
+    ).exclude(workout__date=date.today()).order_by('-workout__date').first()
+
+    if not workout_set_previous:
+        raise Http404(f"未找到包含该练习动作的上一次训练数据：{exercise_name}")
+
+    # 获取上一次训练的所有组数据
+    all_sets_previous = Set.objects.filter(workout_set=workout_set_previous).order_by('set_number')
+
+    if not all_sets_previous.exists():
+        raise Http404(f"未找到该练习的训练组数据：{exercise_name}")
+
+    # 构造返回的数据，包括每一组的重量和次数，以及训练的日期
+    result = {
+        "date": workout_set_previous.workout.date,
+        "sets": []
+    }
+
+    for set_obj in all_sets_previous:
+        result["sets"].append({
+            "set_number": set_obj.set_number,
+            "weight": set_obj.weight,
+            "reps": set_obj.reps
+        })
+
+    return result
