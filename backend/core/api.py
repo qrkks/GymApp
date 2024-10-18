@@ -1,7 +1,9 @@
 from ninja import NinjaAPI
 from gym.api import router as gym_router
+from ninja.security import django_auth
 
-api = NinjaAPI()
+
+api = NinjaAPI(auth=django_auth)
 
 api.add_router('/', gym_router)
 
