@@ -11,6 +11,11 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
   const fetcher = (url) =>
     fetch(url, {
       credentials: "include",
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": authStore.getCookie("csrftoken"),
+      },
     }).then((res) => res.json());
   const {
     data: excercisesData,
@@ -27,6 +32,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
     console.log("submit", selectedExercise);
     console.log("date", date);
     setAddedExercise(selectedExercise);
+
     fetch(`http://127.0.0.1:8000/api/workoutset`, {
       method: "POST",
       credentials: "include",
@@ -42,6 +48,8 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
       .then((res) => res.json())
       .then((data) => {
         console.log(data);
+        // 重新获取所有训练动作的数据
+        mutateWorkout(); // 强制重新获取所有训练动作，确保显示完整列表
       })
       .catch((error) => {
         console.error("Error:", error);
@@ -68,8 +76,12 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
           }),
         })
           .then((res) => res.json())
-          .then(() => {
-            mutateExcercises();
+          .then((newExerciseData) => {
+            // 在这里更新 SWR 缓存
+            mutateExcercises(
+              (currentData) => [...currentData, newExerciseData],
+              false
+            );
             setSelectedExercise(newExercise); // 立即选择新创建的动作
           })
           .catch((error) => {
