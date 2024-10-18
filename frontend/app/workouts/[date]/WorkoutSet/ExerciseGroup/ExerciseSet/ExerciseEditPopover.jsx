@@ -4,6 +4,8 @@ import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {useState} from "react";
+import authStore from "@/app/store/authStore";
+
 export default function PopoverButton({set, part, date, mutateWorkoutSet}) {
   const key = "训练动作";
   // console.log(item, "in edit popover");
@@ -15,7 +17,11 @@ export default function PopoverButton({set, part, date, mutateWorkoutSet}) {
     console.log(exercise_name);
     fetch(`http://127.0.0.1:8000/api/exercise/${set.exercise.id}`, {
       method: "PATCH",
-      headers: {"Content-Type": "application/json"},
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": authStore.getCookie("csrftoken"),
+      },
+      credentials: "include",
       body: JSON.stringify({exercise_name: exercise_name}),
     })
       .then((res) => {

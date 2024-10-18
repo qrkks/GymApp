@@ -2,19 +2,24 @@ import {CirclePlus} from "lucide-react";
 import SheetContainer from "@/components/SheetContainer";
 import useSWR from "swr";
 import ExerciseSelectInput from "./ExerciseSelectInput";
-import {useEffect, useState} from "react";
+import {useState} from "react";
+import authStore from "@/app/store/authStore";
 
-function AddExerciseButton({part, date, setAddedExercise}) {
+function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
   const [selectedExercise, setSelectedExercise] = useState("");
 
-  const fetcher = (url) => fetch(url).then((res) => res.json());
+  const fetcher = (url) =>
+    fetch(url, {
+      credentials: "include",
+    }).then((res) => res.json());
   const {
     data: excercisesData,
     error: excercisesError,
     mutate: mutateExcercises,
-  } = useSWR(`http://127.0.0.1:8000/api/exercise?body_part_name=${part.name}`, fetcher);
-
-
+  } = useSWR(
+    `http://127.0.0.1:8000/api/exercise?body_part_name=${part.name}`,
+    fetcher
+  );
 
   if (excercisesError) return <div>Failed to load data</div>;
 
@@ -24,7 +29,11 @@ function AddExerciseButton({part, date, setAddedExercise}) {
     setAddedExercise(selectedExercise);
     fetch(`http://127.0.0.1:8000/api/workoutset`, {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": authStore.getCookie("csrftoken"),
+      },
       body: JSON.stringify({
         workout_date: date,
         exercise_name: selectedExercise,
@@ -49,7 +58,9 @@ function AddExerciseButton({part, date, setAddedExercise}) {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "X-CSRFToken": authStore.getCookie("csrftoken"),
           },
+          credentials: "include",
           body: JSON.stringify({
             name: newExercise,
             description: newDescription,
