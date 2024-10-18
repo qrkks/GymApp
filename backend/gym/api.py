@@ -1,5 +1,5 @@
 from django.db.models import Max
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from ninja.errors import HttpError
 from django.db import transaction
 from datetime import datetime, date
@@ -186,6 +186,17 @@ class ExercisePatchSchema(Schema):
     exercise_name: str
 
 
+@router.get('/exercise/{body_part_name}', response=list[ExerciseOutSchema])
+def get_exercise_by_body_part(request, body_part_name: str):
+    body_part = get_object_or_404(
+        BodyPart, user=request.user, name=body_part_name)  # 根据用户过滤
+    exercises = Exercise.objects.filter(
+        user=request.user, body_part=body_part)  # 允许有多个结果
+    if not exercises.exists():
+        raise Http404("No exercises found for this body part.")
+    return exercises
+
+
 @router.patch('/exercise/{exercise_id}', response=ExerciseOutSchema)
 def update_exercise_name(request, exercise_id: int, payload: ExercisePatchSchema):
     exercise = get_object_or_404(
@@ -206,15 +217,6 @@ def get_exercise(request, body_part_name: str = None):
         exercises = Exercise.objects.filter(user=request.user)
 
     return exercises
-
-
-@router.get('/exercise/{body_part_name}', response=ExerciseOutSchema)
-def get_exercise_by_body_part(request, body_part_name: str):
-    body_part = get_object_or_404(
-        BodyPart, user=request.user, name=body_part_name)  # Filter by user
-    exercise = get_object_or_404(
-        Exercise, user=request.user, body_part=body_part)
-    return exercise
 
 
 @router.delete('/exercise')
@@ -271,8 +273,10 @@ def get_workoutsets(request, workout_date: date = None, exercise_name: str = Non
 @router.post('/workoutset', response=WorkoutSetOutSchema)
 def create_workoutset(request, data: WorkoutSetInSchema):
     # 获取用户的 workout 和 exercise 对象
-    workout = get_object_or_404(Workout, user=request.user, date=data.workout_date)
-    exercise = get_object_or_404(Exercise, user=request.user, name=data.exercise_name)
+    workout = get_object_or_404(
+        Workout, user=request.user, date=data.workout_date)
+    exercise = get_object_or_404(
+        Exercise, user=request.user, name=data.exercise_name)
 
     # 创建或获取 WorkoutSet 对象，确保关联到用户
     workoutset, created = WorkoutSet.objects.get_or_create(
@@ -285,7 +289,8 @@ def create_workoutset(request, data: WorkoutSetInSchema):
     if data.sets:
         for set_data in data.sets:
             # 获取该 WorkoutSet 中当前最大的 set_number
-            max_set_number = Set.objects.filter(workout_set=workoutset).aggregate(Max('set_number'))['set_number__max']
+            max_set_number = Set.objects.filter(workout_set=workoutset).aggregate(
+                Max('set_number'))['set_number__max']
             next_set_number = (max_set_number or 0) + 1
 
             # 创建新的 Set 对象并将其关联到用户
