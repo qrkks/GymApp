@@ -19,7 +19,7 @@ import os
 IN_DOCKER = os.path.exists('/.dockerenv')
 
 # if IN_DOCKER:
-config = Config(RepositoryEnv('.env.development'))
+config = Config(RepositoryEnv('.env'))
 # else:
 #     config = Config(RepositoryEnv('.env.development'))
 
