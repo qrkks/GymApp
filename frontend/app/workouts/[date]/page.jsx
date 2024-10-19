@@ -6,8 +6,11 @@ import useSWR from "swr";
 import WorkoutSet from "./WorkoutSet";
 import {Button} from "@/components/ui/button";
 import authStore from "@/app/store/authStore";
+import {CircleArrowLeft, CircleArrowRight} from "lucide-react";
+import config from "@/utils/config";
 
 function WorkoutById({params}) {
+  const { apiUrl} = config
   const [resData, setResData] = useState({});
   const [isWorkoutCreated, setIsWorkoutCreated] = useState(false);
 
@@ -30,7 +33,7 @@ function WorkoutById({params}) {
     data: workoutData,
     error: workoutError,
     mutate: mutateWorkout,
-  } = useSWR(`http://127.0.0.1:8000/api/workout/${params.date}`, fetcher);
+  } = useSWR(`${apiUrl}/workout/${params.date}`, fetcher);
 
   useEffect(() => {
     // 检查当天是否有 Workout 数据
@@ -45,7 +48,7 @@ function WorkoutById({params}) {
     // console.log(authStore.getCookie("csrftoken"));
     // 仅当用户主动点击按钮时才创建当天的 Workout
     if (params?.date && !isWorkoutCreated) {
-      fetch("http://127.0.0.1:8000/api/workout/create", {
+      fetch(`${apiUrl}/workout/create`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -77,7 +80,7 @@ function WorkoutById({params}) {
       const isConfirmed = window.confirm("你确定要删除今日的训练吗？");
       if (!isConfirmed) return; // 如果用户取消，退出函数
 
-      fetch(`http://127.0.0.1:8000/api/workout/${params.date}`, {
+      fetch(`${apiUrl}/workout/${params.date}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -100,10 +103,13 @@ function WorkoutById({params}) {
 
   return (
     <div className="flex flex-col items-center justify-center gap-4">
-      <h2>{params.date}</h2>
+      <div className="flex items-center gap-4">
+        <CircleArrowLeft  className="w-4 text-gray-500"/>
+        <h2>{params.date}</h2>
+        <CircleArrowRight className="w-4 text-gray-500" />
+      </div>
 
       {!isWorkoutCreated && (
-        
         <Button onClick={handleCreateWorkout} className="btn btn-primary">
           开始今日训练
         </Button>

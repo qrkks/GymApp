@@ -5,8 +5,10 @@ import {useState} from "react";
 import useSWR from "swr";
 import {Button} from "@/components/ui/button";
 import authStore from "@/app/store/authStore";
+import config from "@/utils/config";
 
 function StartBodyPart({date, mutateWorkout}) {
+  const {apiUrl} = config;
   const [selectedValue, setSelectedValue] = useState(null);
 
   const fetcher = (url) =>
@@ -15,7 +17,7 @@ function StartBodyPart({date, mutateWorkout}) {
     data: bodyPartsDataForSelect,
     error: bodyPartsError,
     mutate: mutateBodyParts,
-  } = useSWR("http://127.0.0.1:8000/api/bodypart", fetcher);
+  } = useSWR(`${apiUrl}/bodypart`, fetcher);
 
   if (bodyPartsError) return <div>Failed to load data</div>;
 
@@ -27,7 +29,7 @@ function StartBodyPart({date, mutateWorkout}) {
       return;
     }
 
-    fetch(`http://127.0.0.1:8000/api/workout/add-body-parts/${date}`, {
+    fetch(`${apiUrl}/workout/add-body-parts/${date}`, {
       method: "PUT",
       credentials: "include",
       headers: {
@@ -77,7 +79,7 @@ export default StartBodyPart;
 // 这一页的逻辑是一个前端 React 组件，用于在一个训练应用中让用户选择和提交当天的训练部位。它通过与后端 API 通信，获取可用的训练部位列表，并将选中的训练部位提交到服务器端，更新当天的训练数据。具体来说，核心逻辑可以分为几个部分：
 
 // ### 1. **`useSWR` 数据获取：**
-// 组件使用 `useSWR`（一个用于数据请求的 hook）从后端 API（`http://127.0.0.1:8000/api/bodypart`）获取训练部位的列表数据。`SWR` 是一个用于处理数据请求、缓存、重新验证等功能的库。
+// 组件使用 `useSWR`（一个用于数据请求的 hook）从后端 API（`${apiUrl}/bodypart`）获取训练部位的列表数据。`SWR` 是一个用于处理数据请求、缓存、重新验证等功能的库。
 
 // - `fetcher`：通过这个函数从 API 获取数据，返回 JSON 格式的数据。
 // - `bodyPartsDataForSelect`：这是获取到的训练部位数据，传递给组件以供选择。
@@ -99,7 +101,7 @@ export default StartBodyPart;
 
 // - **`handleSubmit` 函数：**
 //   - 检查 `selectedValue` 是否为空，如果为空则返回并给出错误提示。
-//   - 如果有选中的训练部位，发起 `PUT` 请求到后端 API（`http://127.0.0.1:8000/api/workout/add-body-parts/${date}`），提交选中的训练部位数据。
+//   - 如果有选中的训练部位，发起 `PUT` 请求到后端 API（`${apiUrl}/workout/add-body-parts/${date}`），提交选中的训练部位数据。
 //   - `body`：请求体为一个 JSON 数据，包含选中的训练部位名。
 //   - 提交后，成功处理 API 响应并刷新当前 Workout 数据（通过调用 `mutateWorkout`）。
 

@@ -1,7 +1,9 @@
 import {CircleX} from "lucide-react";
 import authStore from "@/app/store/authStore";
+import config from "@/utils/config";
 
 function RemoveButton({exercise, mutate}) {
+  const {apiUrl} = config;
   // console.log(item);
   function handleClick() {
     const isConfirmed = window.confirm(
@@ -9,7 +11,7 @@ function RemoveButton({exercise, mutate}) {
     );
     if (!isConfirmed) return;
 
-    fetch(`http://127.0.0.1:8000/api/exercise/${exercise.id}/delete`, {
+    fetch(`${apiUrl}/exercise/${exercise.id}/delete`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",

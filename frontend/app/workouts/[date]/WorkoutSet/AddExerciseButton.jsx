@@ -7,6 +7,7 @@ import useSWR from "swr";
 import authStore from "@/app/store/authStore";
 import LastWorkout from "./LastWorkout";
 import { makeAutoObservable } from "mobx";
+import config from "@/utils/config";
 
 class Store {
   constructor() {
@@ -31,6 +32,7 @@ export const store = new Store();
 
 
 function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
+  const {apiUrl} = config
   const fetcher = (url) =>
     fetch(url, {
       credentials: "include",
@@ -46,14 +48,14 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
     error: exercisesError,
     mutate: mutateExercises,
   } = useSWR(
-    `http://127.0.0.1:8000/api/exercise?body_part_name=${part.name}`,
+    `${apiUrl}/exercise?body_part_name=${part.name}`,
     fetcher
   );
 
   useEffect(() => {
     if (store.currentSelectedExercise) {
       fetch(
-        `http://127.0.0.1:8000/api/last-workout-all-sets?exercise_name=${store.currentSelectedExercise}`,
+        `${apiUrl}/last-workout-all-sets?exercise_name=${store.currentSelectedExercise}`,
         {
           credentials: "include",
           method: "GET",
@@ -80,7 +82,7 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
     console.log("date", date);
     setAddedExercise(store.currentSelectedExercise);
 
-    fetch(`http://127.0.0.1:8000/api/workoutset`, {
+    fetch(`${apiUrl}/workoutset`, {
       method: "POST",
       credentials: "include",
       headers: {
@@ -107,8 +109,9 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
       const newExercise = prompt("请输入新的训练动作");
       if (!newExercise) return;
       const newDescription = prompt("请输入新的训练动作描述");
+      console.log(newExercise, newDescription);
       if (newExercise) {
-        fetch("http://127.0.0.1:8000/api/exercise", {
+        fetch(`${apiUrl}/exercise`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
