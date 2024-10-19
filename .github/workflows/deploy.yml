@@ -50,24 +50,15 @@ jobs:
             mkdir -p /home/${{ secrets.SERVER_USER }}/app/
             chmod 755 /home/${{ secrets.SERVER_USER }}/app/
 
-      - name: Transfer gymapp-backend.tar to server
+      - name: Transfer files to server
         uses: appleboy/scp-action@v0.1.7
         with:
-          source: "./backend/gymapp-backend.tar"
+          source: "./backend/gymapp-backend.tar,./backend/.env"
           target: "/home/${{ secrets.SERVER_USER }}/app/"
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          debug: true
-
-      - name: Transfer .env file to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          source: "./backend/.env"
-          target: "/home/${{ secrets.SERVER_USER }}/app/"
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
+          strip_components: 1
           debug: true
 
       - name: Deploy to Server
@@ -89,12 +80,10 @@ jobs:
               echo "Error: gymapp-backend.tar not found after waiting."
               exit 1
             fi
-
             if [ ! -f /home/${{ secrets.SERVER_USER }}/app/.env ]; then
               echo "Error: .env file not found!"
               exit 1
             fi
-
             docker load -i /home/${{ secrets.SERVER_USER }}/app/gymapp-backend.tar
             docker stop gymapp-backend || true
             docker rm gymapp-backend || true
