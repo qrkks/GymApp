@@ -40,6 +40,11 @@ jobs:
           sudo chown $USER:$USER gymapp-backend.tar .env
           chmod 644 gymapp-backend.tar .env
 
+      - name: Move files to root directory
+        run: |
+          mv ./backend/gymapp-backend.tar .
+          mv ./backend/.env .
+
       - name: Ensure Target Directory Exists on Server
         uses: appleboy/ssh-action@v0.1.8
         with:
@@ -53,12 +58,11 @@ jobs:
       - name: Transfer files to server
         uses: appleboy/scp-action@v0.1.7
         with:
-          source: "./backend/gymapp-backend.tar,./backend/.env"
+          source: "gymapp-backend.tar,.env"
           target: "/home/${{ secrets.SERVER_USER }}/app/"
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          strip_components: 1
           debug: true
 
       - name: Deploy to Server
