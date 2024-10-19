@@ -38,17 +38,26 @@ jobs:
         working-directory: ./backend
         run: docker save -o gymapp-backend.tar gymapp-backend:latest
 
-      # Step 6: Transfer Docker tar file to server
+      # Step 6: Change permissions for tar file
+      - name: Change permissions for tar file
+        working-directory: ./backend
+        run: chmod 644 gymapp-backend.tar
+
+      # Step 7: Move tar file to /tmp directory for easier access
+      - name: Move tar file to /tmp directory
+        run: mv ./backend/gymapp-backend.tar /tmp/gymapp-backend.tar
+
+      # Step 8: Transfer Docker tar file to server
       - name: Transfer Docker tar file to server
         uses: appleboy/scp-action@v0.1.6
         with:
-          source: "./backend/gymapp-backend.tar"
+          source: "/tmp/gymapp-backend.tar"
           target: "/home/${{ secrets.SERVER_USER }}/app/"
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
 
-      # Step 7: Deploy to Server
+      # Step 9: Deploy to Server
       - name: Deploy to Server
         uses: appleboy/ssh-action@v0.1.6
         with:
