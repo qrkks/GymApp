@@ -3,12 +3,22 @@ import SheetContainer from "@/components/SheetContainer";
 import {useState} from "react";
 import {Input} from "@/components/ui/input";
 import authStore from "@/app/store/authStore";
+import LastWorkout from "../../LastWorkout";
+import {observer} from "mobx-react-lite";
+import useSWR from "swr";
 
 function AddButton({date, set, part, mutateWorkoutSet}) {
   const [formData, setFormData] = useState({
     weight: "",
     reps: "",
   });
+
+  const fetcher = (url) =>
+    fetch(url, {credentials: "include"}).then((res) => res.json());
+  const {data: lastWorkoutData} = useSWR(
+    `http://127.0.0.1:8000/api/last-workout-all-sets?exercise_id=${set.exercise.id}`,
+    fetcher
+  );
 
   function handleChange(event) {
     setFormData({
@@ -18,17 +28,19 @@ function AddButton({date, set, part, mutateWorkoutSet}) {
   }
 
   function handleSubmit() {
-    console.log("formData", formData);
-    console.log({
-      workout_date: date,
-      exercise_name: set.exercise.name,
-      sets: [
-        {
-          weight: formData.weight,
-          reps: formData.reps,
-        },
-      ],
-    });
+    // console.log("formData", formData);
+    // console.log({
+    //   workout_date: date,
+    //   exercise_name: set.exercise.name,
+    //   sets: [
+    //     {
+    //       weight: formData.weight,
+    //       reps: formData.reps,
+    //     },
+    //   ],
+    // });
+    // console.log(set.exercise.name);
+    // console.log(set);
 
     fetch(`http://127.0.0.1:8000/api/workoutset`, {
       method: "POST",
@@ -85,10 +97,14 @@ function AddButton({date, set, part, mutateWorkoutSet}) {
             value={formData.reps || ""}
             onChange={handleChange}
           />
+          <LastWorkout
+            selectedExercise={set.exercise.name}
+            lastWorkoutData={lastWorkoutData}
+          />
         </form>
       </SheetContainer>
     </>
   );
 }
 
-export default AddButton;
+export default observer(AddButton);
