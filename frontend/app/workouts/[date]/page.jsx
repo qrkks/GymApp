@@ -103,6 +103,7 @@ function WorkoutById({params}) {
       <h2>{params.date}</h2>
 
       {!isWorkoutCreated && (
+        
         <Button onClick={handleCreateWorkout} className="btn btn-primary">
           开始今日训练
         </Button>

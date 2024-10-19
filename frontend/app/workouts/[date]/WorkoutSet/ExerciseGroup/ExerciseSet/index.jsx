@@ -3,8 +3,10 @@ import RemoveButton from "./RemoveButton";
 import ExerciseItem from "./ExerciseItem";
 import SetTableContainer from "./SetTableContainer";
 import BodyPartEditPopover from "./ExerciseEditPopover";
+import useSWR from "swr";
 
 function ExerciseSet({set, part, date, mutateWorkoutSet}) {
+
   return (
     <div className="flex flex-col items-center">
       <div className="flex items-center gap-2">
@@ -33,15 +35,12 @@ function ExerciseSet({set, part, date, mutateWorkoutSet}) {
       {/* <pre>{JSON.stringify(set.sets, null, 2)}</pre> */}
       <SetTableContainer set={set} mutateWorkoutSet={mutateWorkoutSet}>
         {set.sets.map((item) => (
-          <>
-          {/* <pre>{JSON.stringify(item.id, null, 2)}</pre> */}
           <ExerciseItem
             set={set}
             key={item.id}
             item={item}
             mutateWorkoutSet={mutateWorkoutSet}
-            />
-            </>
+          />
         ))}
       </SetTableContainer>
     </div>

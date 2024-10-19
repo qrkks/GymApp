@@ -1,3 +1,5 @@
+from django.utils.timezone import localdate
+import logging
 from django.db.models import Max
 from django.http import Http404, HttpResponse
 from ninja.errors import HttpError
@@ -8,6 +10,8 @@ from django.shortcuts import get_object_or_404
 from ninja import Body, Router, Schema
 from .models import Workout, Exercise, BodyPart, WorkoutSet, Set
 from django.contrib.auth.models import User
+
+logger = logging.getLogger(__name__)
 
 router = Router()
 
@@ -166,6 +170,7 @@ def delete_bodypart(request, id: int):
         BodyPart, user=request.user, id=id)  # Filter by user
     bodypart.delete()
     return 'ok'
+
 
 class ExerciseInSchema(Schema):
     name: str
@@ -427,22 +432,35 @@ def update_set(request, set_id: int, payload: SetInSchema):
 
 # 功能
 
-@router.get('/last-workout-first-set/{exercise_name}', response=dict)
-def get_last_workout_previous_set_first_set(request, exercise_name: str):
-    # 获取用户上一次（不是今天）包含该练习动作的训练集
-    workout_set_previous = WorkoutSet.objects.filter(
-        workout__user=request.user,
-        exercise__name=exercise_name
-    ).exclude(workout__date=date.today()).order_by('-workout__date').first()
+
+@router.get('/last-workout-first-set', response=dict)
+def get_last_workout_previous_set_first_set(
+    request,
+    exercise_id: Optional[int] = None,
+    exercise_name: Optional[str] = None
+):
+    # 根据传入的参数类型选择查询方式
+    if exercise_id is not None:
+        workout_set_previous = WorkoutSet.objects.filter(
+            workout__user=request.user,
+            exercise__id=exercise_id
+        ).exclude(workout__date=localdate()).order_by('-workout__date').first()
+    elif exercise_name is not None:
+        workout_set_previous = WorkoutSet.objects.filter(
+            workout__user=request.user,
+            exercise__name=exercise_name
+        ).exclude(workout__date=localdate()).order_by('-workout__date').first()
+    else:
+        raise Http404("请提供练习的 ID 或名称来查询数据")
 
     if not workout_set_previous:
-        raise Http404(f"未找到包含该练习动作的上一次训练数据：{exercise_name}")
+        raise Http404("未找到包含该练习动作的上一次训练数据")
 
     # 获取上一次训练的第一组数据
     first_set_previous = Set.objects.filter(workout_set=workout_set_previous).order_by('set_number').first()
 
     if not first_set_previous:
-        raise Http404(f"未找到该练习的训练组数据：{exercise_name}")
+        raise Http404("未找到该练习的训练组数据")
 
     return {
         "weight": first_set_previous.weight,
@@ -450,22 +468,34 @@ def get_last_workout_previous_set_first_set(request, exercise_name: str):
         "date": workout_set_previous.workout.date
     }
 
-@router.get('/last-workout-all-sets/{exercise_name}', response=dict)
-def get_last_workout_all_sets(request, exercise_name: str):
-    # 查找上一次包含指定练习动作的训练集，排除今天的数据
-    workout_set_previous = WorkoutSet.objects.filter(
-        workout__user=request.user,
-        exercise__name=exercise_name
-    ).exclude(workout__date=date.today()).order_by('-workout__date').first()
+@router.get('/last-workout-all-sets', response=dict)
+def get_last_workout_all_sets(
+    request,
+    exercise_id: Optional[int] = None,
+    exercise_name: Optional[str] = None
+):
+    # 根据传入的参数类型选择查询方式
+    if exercise_id is not None:
+        workout_set_previous = WorkoutSet.objects.filter(
+            workout__user=request.user,
+            exercise__id=exercise_id
+        ).exclude(workout__date=localdate()).order_by('-workout__date').first()
+    elif exercise_name is not None:
+        workout_set_previous = WorkoutSet.objects.filter(
+            workout__user=request.user,
+            exercise__name=exercise_name
+        ).exclude(workout__date=localdate()).order_by('-workout__date').first()
+    else:
+        raise Http404("请提供练习的 ID 或名称来查询数据")
 
     if not workout_set_previous:
-        raise Http404(f"未找到包含该练习动作的上一次训练数据：{exercise_name}")
+        raise Http404("未找到包含该练习动作的上一次训练数据")
 
     # 获取上一次训练的所有组数据
     all_sets_previous = Set.objects.filter(workout_set=workout_set_previous).order_by('set_number')
 
     if not all_sets_previous.exists():
-        raise Http404(f"未找到该练习的训练组数据：{exercise_name}")
+        raise Http404("未找到该练习的训练组数据")
 
     # 构造返回的数据，包括每一组的重量和次数，以及训练的日期
     result = {

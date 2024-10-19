@@ -1,13 +1,36 @@
-import {CirclePlus} from "lucide-react";
+import React, { useEffect } from "react";
+import { CirclePlus } from "lucide-react";
+import { observer } from "mobx-react-lite";
 import SheetContainer from "@/components/SheetContainer";
-import useSWR from "swr";
 import ExerciseSelectInput from "./ExerciseSelectInput";
-import {useState} from "react";
+import useSWR from "swr";
 import authStore from "@/app/store/authStore";
+import LastWorkout from "./LastWorkout";
+import { makeAutoObservable } from "mobx";
 
-function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
-  const [selectedExercise, setSelectedExercise] = useState("");
+class Store {
+  constructor() {
+    makeAutoObservable(this);
+  }
 
+  // 可观察属性
+  previousWorkout = null;
+  currentSelectedExercise = null;
+
+  // Action 方法
+  setPreviousWorkout(workout) {
+    this.previousWorkout = workout;
+  }
+
+  setCurrentExercise(exercise) {
+    this.currentSelectedExercise = exercise;
+  }
+}
+
+export const store = new Store();
+
+
+function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
   const fetcher = (url) =>
     fetch(url, {
       credentials: "include",
@@ -17,21 +40,45 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
         "X-CSRFToken": authStore.getCookie("csrftoken"),
       },
     }).then((res) => res.json());
+
   const {
-    data: excercisesData,
-    error: excercisesError,
-    mutate: mutateExcercises,
+    data: exercisesData,
+    error: exercisesError,
+    mutate: mutateExercises,
   } = useSWR(
     `http://127.0.0.1:8000/api/exercise?body_part_name=${part.name}`,
     fetcher
   );
 
-  if (excercisesError) return <div>Failed to load data</div>;
+  useEffect(() => {
+    if (store.currentSelectedExercise) {
+      fetch(
+        `http://127.0.0.1:8000/api/last-workout-all-sets?exercise_name=${store.currentSelectedExercise}`,
+        {
+          credentials: "include",
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": authStore.getCookie("csrftoken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          store.setPreviousWorkout(data);
+        })
+        .catch((error) => {
+          console.error("获取上次训练数据时出错:", error);
+        });
+    }
+  }, [store.currentSelectedExercise]);
+
+  if (exercisesError) return <div>Failed to load data</div>;
 
   const handleSubmit = () => {
-    console.log("submit", selectedExercise);
+    console.log("submit", store.currentSelectedExercise);
     console.log("date", date);
-    setAddedExercise(selectedExercise);
+    setAddedExercise(store.currentSelectedExercise);
 
     fetch(`http://127.0.0.1:8000/api/workoutset`, {
       method: "POST",
@@ -42,14 +89,13 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
       },
       body: JSON.stringify({
         workout_date: date,
-        exercise_name: selectedExercise,
+        exercise_name: store.currentSelectedExercise,
       }),
     })
       .then((res) => res.json())
       .then((data) => {
         console.log(data);
-        // 重新获取所有训练动作的数据
-        mutateWorkout(); // 强制重新获取所有训练动作，确保显示完整列表
+        mutateWorkout(); // 重新获取所有训练动作，确保显示完整列表
       })
       .catch((error) => {
         console.error("Error:", error);
@@ -77,19 +123,18 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
         })
           .then((res) => res.json())
           .then((newExerciseData) => {
-            // 在这里更新 SWR 缓存
-            mutateExcercises(
+            mutateExercises(
               (currentData) => [...currentData, newExerciseData],
               false
             );
-            setSelectedExercise(newExercise); // 立即选择新创建的动作
+            store.setCurrentExercise(newExercise); // 立即选择新创建的动作
           })
           .catch((error) => {
             console.error("Error:", error);
           });
       }
     } else {
-      setSelectedExercise(value);
+      store.setCurrentExercise(value);
     }
   }
 
@@ -99,22 +144,26 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
         title="添加训练动作"
         description="添加训练动作"
         triggerButton={
-          <button onClick={() => setSelectedExercise("")}>
+          <button onClick={() => store.setCurrentExercise("")}>
             <CirclePlus className="w-4 text-gray-400" />
           </button>
         }
         submitButtonText="确定"
         onHandleSubmit={handleSubmit}
       >
-        <form className="flex items-center w-full space-x-2">
+        <form className="flex flex-col items-center w-full gap-2 space-x-2">
           <ExerciseSelectInput
-            entries={excercisesData || []}
+            entries={exercisesData || []}
             className="w-2/3"
             placeholder="训练动作"
             name="exercise"
-            mutate={mutateExcercises}
-            selectedExercise={selectedExercise}
+            mutate={mutateExercises}
+            selectedExercise={store.currentSelectedExercise}
             onSelectChange={handleSelectChange}
+          />
+          <LastWorkout
+            selectedExercise={store.currentSelectedExercise}
+            lastWorkoutData={store.previousWorkout}
           />
         </form>
       </SheetContainer>
@@ -122,4 +171,4 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
   );
 }
 
-export default AddExerciseButton;
+export default observer(AddExerciseButton);
