@@ -85,46 +85,46 @@ jobs:
       - name: Transfer Backend files to server
         uses: appleboy/scp-action@v0.1.7
         with:
-          source: "./backend/gymapp-backend.tar"
+          source: "gymapp-backend.tar"
           target: "/home/${{ secrets.SERVER_USER }}/app/backend/"
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          strip_components: 1
+          workdir: "./backend"
           debug: true
 
       - name: Transfer Backend .env file to server
         uses: appleboy/scp-action@v0.1.7
         with:
-          source: "./backend/.env"
+          source: ".env"
           target: "/home/${{ secrets.SERVER_USER }}/app/backend/"
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          strip_components: 1
+          workdir: "./backend"
           debug: true
 
       # 传输前端文件到服务器
       - name: Transfer Frontend files to server
         uses: appleboy/scp-action@v0.1.7
         with:
-          source: "./frontend/gymapp-frontend.tar"
+          source: "gymapp-frontend.tar"
           target: "/home/${{ secrets.SERVER_USER }}/app/frontend/"
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          strip_components: 1
+          workdir: "./frontend"
           debug: true
 
       - name: Transfer Frontend .env file to server
         uses: appleboy/scp-action@v0.1.7
         with:
-          source: "./frontend/.env"
+          source: ".env"
           target: "/home/${{ secrets.SERVER_USER }}/app/frontend/"
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          strip_components: 1
+          workdir: "./frontend"
           debug: true
 
       # 部署后端到服务器
