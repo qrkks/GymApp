@@ -29,6 +29,18 @@ jobs:
         working-directory: ./backend
         run: docker save -o gymapp-backend.tar gymapp-backend:latest
 
+      - name: List files after saving Docker tar
+        working-directory: ./backend
+        run: ls -l
+
+      - name: Change ownership of tar file
+        working-directory: ./backend
+        run: sudo chown $USER:$USER gymapp-backend.tar
+
+      - name: Change permissions for tar file
+        working-directory: ./backend
+        run: chmod 644 gymapp-backend.tar
+
       - name: Transfer Docker tar file to server
         uses: appleboy/scp-action@v0.1.7
         with:
