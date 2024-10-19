@@ -41,6 +41,11 @@ jobs:
           sudo chown $USER:$USER gymapp-backend.tar .env
           chmod 644 gymapp-backend.tar .env
 
+      - name: Move Backend files to root directory
+        run: |
+          mv ./backend/gymapp-backend.tar .
+          mv ./backend/.env .
+
       # 前端步骤
       - name: Verify Frontend Dockerfile exists
         working-directory: ./frontend
@@ -69,6 +74,11 @@ jobs:
           sudo chown $USER:$USER gymapp-frontend.tar .env
           chmod 644 gymapp-frontend.tar .env
 
+      - name: Move Frontend files to root directory
+        run: |
+          mv ./frontend/gymapp-frontend.tar .
+          mv ./frontend/.env .
+
       # 确保服务器上的目标目录存在
       - name: Ensure Target Directories Exist on Server
         uses: appleboy/ssh-action@v0.1.8
@@ -90,7 +100,6 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          workdir: "./backend"
           debug: true
 
       - name: Transfer Backend .env file to server
@@ -101,7 +110,6 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          workdir: "./backend"
           debug: true
 
       # 传输前端文件到服务器
@@ -113,7 +121,6 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          workdir: "./frontend"
           debug: true
 
       - name: Transfer Frontend .env file to server
@@ -124,7 +131,6 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          workdir: "./frontend"
           debug: true
 
       # 部署后端到服务器
