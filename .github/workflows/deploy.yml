@@ -58,6 +58,7 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
+          debug: true
 
       - name: Deploy to Server
         uses: appleboy/ssh-action@v0.1.8
@@ -66,14 +67,24 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
+            # 等待文件传输完成
+            max_retries=5
+            counter=0
+            while [ ! -f /home/${{ secrets.SERVER_USER }}/app/gymapp-backend.tar ] && [ $counter -lt $max_retries ]; do
+              echo "Waiting for gymapp-backend.tar to be available..."
+              sleep 2
+              counter=$((counter+1))
+            done
             if [ ! -f /home/${{ secrets.SERVER_USER }}/app/gymapp-backend.tar ]; then
-              echo "Error: gymapp-backend.tar not found!"
+              echo "Error: gymapp-backend.tar not found after waiting."
               exit 1
             fi
+
             if [ ! -f /home/${{ secrets.SERVER_USER }}/app/.env ]; then
               echo "Error: .env file not found!"
               exit 1
             fi
+
             docker load -i /home/${{ secrets.SERVER_USER }}/app/gymapp-backend.tar
             docker stop gymapp-backend || true
             docker rm gymapp-backend || true
