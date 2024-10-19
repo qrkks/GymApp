@@ -29,23 +29,17 @@ jobs:
         working-directory: ./backend
         run: docker save -o gymapp-backend.tar gymapp-backend:latest
 
-      - name: List files after saving Docker tar
+      - name: Change ownership and permissions of tar file
         working-directory: ./backend
-        run: ls -l
-
-      - name: Change ownership of tar file
-        working-directory: ./backend
-        run: sudo chown $USER:$USER gymapp-backend.tar
-
-      - name: Change permissions for tar file
-        working-directory: ./backend
-        run: chmod 644 gymapp-backend.tar
+        run: |
+          sudo chown $USER:$USER gymapp-backend.tar
+          chmod 644 gymapp-backend.tar
 
       - name: Transfer Docker tar file to server
         uses: appleboy/scp-action@v0.1.7
         with:
           source: "./backend/gymapp-backend.tar"
-          target: "/home/${{ secrets.SERVER_USER }}/app/"
+          target: "/home/${{ secrets.SERVER_USER }}/app/gymapp-backend.tar"
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
@@ -57,7 +51,16 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
+            if [ ! -f /home/${{ secrets.SERVER_USER }}/app/gymapp-backend.tar ]; then
+              echo "Error: gymapp-backend.tar not found!"
+              exit 1
+            fi
             docker load -i /home/${{ secrets.SERVER_USER }}/app/gymapp-backend.tar
             docker stop gymapp-backend || true
             docker rm gymapp-backend || true
+            # 确保 /home/${{ secrets.SERVER_USER }}/app/.env 是一个文件而非目录
+            if [ -d "/home/${{ secrets.SERVER_USER }}/app/.env" ]; then
+              echo "Error: /home/${{ secrets.SERVER_USER }}/app/.env is a directory."
+              exit 1
+            fi
             docker run -d --name gymapp-backend -p 8000:8000 --env-file /home/${{ secrets.SERVER_USER }}/app/.env gymapp-backend:latest
