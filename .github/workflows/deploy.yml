@@ -1,0 +1,65 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main  # 当推送到 main 分支时触发
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Docker Buildx (multi-platform builds)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Step 3: Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      # Step 4: Build and push the frontend Docker image
+      - name: Build and push Frontend Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/gymapp-frontend:latest
+
+      # Step 5: Build and push the backend Docker image
+      - name: Build and push Backend Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/gymapp-backend:latest
+
+      # Step 6: Deploy to the server
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Pull the latest Docker images from Docker Hub
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/gymapp-frontend:latest
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/gymapp-backend:latest
+            
+            # Stop and remove the old containers (if any)
+            docker stop gymapp-frontend || true
+            docker rm gymapp-frontend || true
+            docker stop gymapp-backend || true
+            docker rm gymapp-backend || true
+            
+            # Run the new containers
+            docker run -d --name gymapp-frontend -p 3000:3000 ${{ secrets.DOCKER_HUB_USERNAME }}/gymapp-frontend:latest
+            docker run -d --name gymapp-backend -p 8000:8000 --env-file /path/to/.env.production ${{ secrets.DOCKER_HUB_USERNAME }}/gymapp-backend:latest
+
