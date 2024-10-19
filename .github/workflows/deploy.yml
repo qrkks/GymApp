@@ -40,11 +40,6 @@ jobs:
           sudo chown $USER:$USER gymapp-backend.tar .env
           chmod 644 gymapp-backend.tar .env
 
-      - name: Move files to root directory
-        run: |
-          mv ./backend/gymapp-backend.tar .
-          mv ./backend/.env .
-
       - name: Ensure Target Directory Exists on Server
         uses: appleboy/ssh-action@v0.1.8
         with:
@@ -58,7 +53,7 @@ jobs:
       - name: Transfer files to server
         uses: appleboy/scp-action@v0.1.7
         with:
-          source: "gymapp-backend.tar,.env"
+          source: "./backend/gymapp-backend.tar,./backend/.env"
           target: "/home/${{ secrets.SERVER_USER }}/app/"
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
@@ -72,23 +67,23 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            # 等待文件传输完成
+            # 文件在 /home/${{ secrets.SERVER_USER }}/app/backend/ 目录下
             max_retries=5
             counter=0
-            while [ ! -f /home/${{ secrets.SERVER_USER }}/app/gymapp-backend.tar ] && [ $counter -lt $max_retries ]; do
+            while [ ! -f /home/${{ secrets.SERVER_USER }}/app/backend/gymapp-backend.tar ] && [ $counter -lt $max_retries ]; do
               echo "Waiting for gymapp-backend.tar to be available..."
               sleep 2
               counter=$((counter+1))
             done
-            if [ ! -f /home/${{ secrets.SERVER_USER }}/app/gymapp-backend.tar ]; then
+            if [ ! -f /home/${{ secrets.SERVER_USER }}/app/backend/gymapp-backend.tar ]; then
               echo "Error: gymapp-backend.tar not found after waiting."
               exit 1
             fi
-            if [ ! -f /home/${{ secrets.SERVER_USER }}/app/.env ]; then
+            if [ ! -f /home/${{ secrets.SERVER_USER }}/app/backend/.env ]; then
               echo "Error: .env file not found!"
               exit 1
             fi
-            docker load -i /home/${{ secrets.SERVER_USER }}/app/gymapp-backend.tar
+            docker load -i /home/${{ secrets.SERVER_USER }}/app/backend/gymapp-backend.tar
             docker stop gymapp-backend || true
             docker rm gymapp-backend || true
-            docker run -d --name gymapp-backend -p 8000:8000 --env-file /home/${{ secrets.SERVER_USER }}/app/.env gymapp-backend:latest
+            docker run -d --name gymapp-backend -p 8000:8000 --env-file /home/${{ secrets.SERVER_USER }}/app/backend/.env gymapp-backend:latest
