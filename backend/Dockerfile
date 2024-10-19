@@ -19,7 +19,7 @@ COPY . .
 ENV PYTHONUNBUFFERED=1
 
 # 运行 Django 迁移命令
-RUN python manage.py migrate
+# RUN python manage.py migrate
 
 # 暴露端口
 EXPOSE 8000
