@@ -18,10 +18,10 @@ import os
 # 通过环境变量决定使用哪个配置文件
 IN_DOCKER = os.path.exists('/.dockerenv')
 
-if IN_DOCKER:
-    config = Config(RepositoryEnv('.env'))
-else:
-    config = Config(RepositoryEnv('.env.development'))
+# if IN_DOCKER:
+config = Config(RepositoryEnv('.env'))
+# else:
+#     config = Config(RepositoryEnv('.env.development'))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
