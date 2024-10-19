@@ -4,13 +4,15 @@ import Exercises from "./Exercises";
 import useSWR from "swr";
 import BodyPartEditPopover from "./../workouts/[date]/WorkoutSet/BodyPartEditPopover.jsx";
 import RemoveButton from "./RemoveButton";
+import config from "@/utils/config";
 
 function page() {
+  const {apiUrl} = config;
   const {
     data: bodyParts,
     error,
     mutate,
-  } = useSWR("http://127.0.0.1:8000/api/bodypart", (url) =>
+  } = useSWR(`${apiUrl}/bodypart`, (url) =>
     fetch(url, {
       credentials: "include",
       headers: {"X-CSRFToken": authStore.getCookie("csrftoken")},

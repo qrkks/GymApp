@@ -1,14 +1,16 @@
 import {CircleX} from "lucide-react";
 import authStore from "@/app/store/authStore";
+import config from "@/utils/config";
 
 function ExersiceSetButtonRemove({date, mutateWorkoutSet, set}) {
+  const { apiUrl } = config;
   function handleClick() {
     console.log("remove", set.exercise.name, "date", date);
 
     const isConfirmed = window.confirm(`确定要删除 ${set.exercise.name} 吗？`);
     if (!isConfirmed) return;
 
-    fetch(`http://127.0.0.1:8000/api/workoutset/${date}/${set.exercise.name}`, {
+    fetch(`${apiUrl}/workoutset/${date}/${set.exercise.name}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",

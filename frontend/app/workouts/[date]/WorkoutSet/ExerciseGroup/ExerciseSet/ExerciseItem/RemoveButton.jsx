@@ -1,7 +1,9 @@
 import {CircleX} from "lucide-react";
 import authStore from "@/app/store/authStore";
+import config from "@/utils/config";
 
 function ExersiceSetButtonRemove({item, mutateWorkoutSet}) {
+  const { apiUrl } = config;
   // console.log(item);
   function handleClick() {
     const isConfirmed = window.confirm(
@@ -9,7 +11,7 @@ function ExersiceSetButtonRemove({item, mutateWorkoutSet}) {
     );
     if (!isConfirmed) return;
 
-    fetch(`http://127.0.0.1:8000/api/set/${item.id}`, {
+    fetch(`${apiUrl}/set/${item.id}`, {
       method: "DELETE",
       headers: {"Content-Type": "application/json", "X-CSRFToken": authStore.getCookie("csrftoken")},
       credentials: "include",

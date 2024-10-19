@@ -6,8 +6,10 @@ import authStore from "@/app/store/authStore";
 import LastWorkout from "../../LastWorkout";
 import {observer} from "mobx-react-lite";
 import useSWR from "swr";
+import config from "@/utils/config";
 
 function AddButton({date, set, part, mutateWorkoutSet}) {
+  const {apiUrl} = config;
   const [formData, setFormData] = useState({
     weight: "",
     reps: "",
@@ -16,7 +18,7 @@ function AddButton({date, set, part, mutateWorkoutSet}) {
   const fetcher = (url) =>
     fetch(url, {credentials: "include"}).then((res) => res.json());
   const {data: lastWorkoutData} = useSWR(
-    `http://127.0.0.1:8000/api/last-workout-all-sets?exercise_id=${set.exercise.id}`,
+    `${apiUrl}/last-workout-all-sets?exercise_id=${set.exercise.id}`,
     fetcher
   );
 
@@ -42,7 +44,7 @@ function AddButton({date, set, part, mutateWorkoutSet}) {
     // console.log(set.exercise.name);
     // console.log(set);
 
-    fetch(`http://127.0.0.1:8000/api/workoutset`, {
+    fetch(`${apiUrl}/workoutset`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

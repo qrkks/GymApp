@@ -1,8 +1,10 @@
 "use client";
 import useSWR from "swr";
+import config from "@/utils/config";
 
 export default function Home() {
-  const {data, error} = useSWR("http://127.0.0.1:8000/api", (url) =>
+  const {apiUrl} = config;
+  const {data, error} = useSWR(`${apiUrl}`, (url) =>
     fetch(url, {
       method: "GET",
       credentials: "include",

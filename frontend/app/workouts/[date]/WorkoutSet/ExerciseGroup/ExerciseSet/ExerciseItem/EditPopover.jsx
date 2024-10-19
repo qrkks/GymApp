@@ -5,8 +5,10 @@ import {Label} from "@/components/ui/label";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {useState} from "react";
 import authStore from "@/app/store/authStore";
+import config from "@/utils/config";
 
 export default function PopoverButton({item, mutateWorkoutSet}) {
+  const {apiUrl} = config;
   // console.log(item, "in edit popover");
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
@@ -17,7 +19,7 @@ export default function PopoverButton({item, mutateWorkoutSet}) {
     const formData = new FormData(e.target);
     const formDataObj = Object.fromEntries(formData);
 
-    fetch(`http://127.0.0.1:8000/api/set/${item.id}`, {
+    fetch(`${apiUrl}/set/${item.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

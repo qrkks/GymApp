@@ -11,6 +11,17 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from decouple import Config, RepositoryEnv
+
+import os
+
+# 通过环境变量决定使用哪个配置文件
+IN_DOCKER = os.path.exists('/.dockerenv')
+
+if IN_DOCKER:
+    config = Config(RepositoryEnv('.env'))
+else:
+    config = Config(RepositoryEnv('.dev.env'))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +31,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-6s78e-sr_d=51copa78cg-4cz8*zvl#2!!&1y1qfx*4(h_6xx)'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
 
 
 # Application definition
@@ -84,8 +95,8 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.add_user.sqlite3',
+        'ENGINE': config('DATABASE_ENGINE', default='django.db.backends.sqlite3'),
+        'NAME': config('DATABASE_NAME', default=os.path.join(BASE_DIR, 'db.sqlite3')),
     }
 }
 
@@ -136,33 +147,8 @@ SESSION_COOKIE_SAMESITE = 'None'  # 必须为 'None'，以便允许跨域发送 
 SESSION_COOKIE_SECURE = True  # 如果你使用 HTTPS，确保设置为 True
 
 # 允许的跨域源
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',  # 前端的开发环境域名
-    'http://127.0.0.1:3000',  # 你可以根据不同的前端地址添加
-]
+# 从环境变量中读取 CORS 和 CSRF 相关的配置
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='').split(',')
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='').split(',')
 
 CORS_ALLOW_CREDENTIALS = True  # 允许发送凭证（Cookie）
-
-# COSRS_ALLOW_HEADERS = [
-#     'accept',
-#     'accept-encoding',
-#     'authorization',
-#     'content-type',
-#     'dnt',
-#     'origin',
-#     'user-agent',
-#     'x-csrftoken',
-#     'x-requested-with',
-# ]
-
-# CORS_ALLOWED_METHODS = [
-#     'DELETE',
-#     'GET',
-#     'OPTIONS',
-#     'PATCH',
-#     'POST',
-#     'PUT',
-# ]
-
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000',
-                        'http://127.0.0.1:3000']

@@ -5,8 +5,10 @@ import {Label} from "@/components/ui/label";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {useState} from "react";
 import authStore from "@/app/store/authStore";
+import config from "@/utils/config";
 
 export default function PopoverButton({set, part, date, mutateWorkout}) {
+  const {apiUrl} = config;
   const key = "部位名称";
   // console.log(item, "in edit popover");
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -15,7 +17,7 @@ export default function PopoverButton({set, part, date, mutateWorkout}) {
     e.preventDefault();
     const bodypart_name = e.target[0].value;
     console.log(bodypart_name);
-    fetch(`http://127.0.0.1:8000/api/bodypart/${part.id}`, {
+    fetch(`${apiUrl}/bodypart/${part.id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",

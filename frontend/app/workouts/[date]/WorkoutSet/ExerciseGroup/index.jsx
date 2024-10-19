@@ -2,8 +2,10 @@ import useSWR from "swr";
 import ExerciseSet from "./ExerciseSet";
 import authStore from "@/app/store/authStore";
 import {useEffect} from "react";
+import config from "@/utils/config";
 
 function ExerciseGroup({part, date, addedExercise}) {
+  const {apiUrl} = config;
   // console.log('in ExerciseGroup', 'date ', date, 'part', part, 'addedExercise', addedExercise);
   const fetcher = (url) =>
     fetch(url, {
@@ -16,7 +18,7 @@ function ExerciseGroup({part, date, addedExercise}) {
     error: workoutSetError,
     mutate: mutateWorkoutSet,
   } = useSWR(
-    `http://127.0.0.1:8000/api/workoutset?workout_date=${date}&body_part_name=${part.name}`,
+    `${apiUrl}/workoutset?workout_date=${date}&body_part_name=${part.name}`,
     fetcher
   );
 

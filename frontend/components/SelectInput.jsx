@@ -9,15 +9,17 @@ import {
 } from "@/components/ui/select";
 import {useState} from "react";
 import authStore from "@/app/store/authStore";
+import config from "@/utils/config";
 
 export default function SelectInput({placeholder, entries, mutate, onSelectChange}) {
+  const {apiUrl} = config;
   const [selectValue, setSelectValue] = useState("");
 
   function handleValueChange(value) {
     if (value === "new") {
       const newEntry = prompt("请输入新建的部位：");
       if (newEntry) {
-        fetch("http://127.0.0.1:8000/api/bodypart", {
+        fetch(`${apiUrl}/bodypart`, {
           method: "POST",
           credentials: "include",
           headers: {
