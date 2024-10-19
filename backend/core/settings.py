@@ -21,7 +21,7 @@ IN_DOCKER = os.path.exists('/.dockerenv')
 if IN_DOCKER:
     config = Config(RepositoryEnv('.env'))
 else:
-    config = Config(RepositoryEnv('.dev.env'))
+    config = Config(RepositoryEnv('.env.development'))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
