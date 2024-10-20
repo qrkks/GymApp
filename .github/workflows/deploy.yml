@@ -161,7 +161,7 @@ jobs:
             docker stop gymapp-backend || true
             docker rm gymapp-backend || true
             docker run -d --name gymapp-backend -p 8000:8000 --env-file /home/${{ secrets.SERVER_USER }}/app/backend/.env gymapp-backend:latest
-
+ 
       # 部署前端到服务器
       - name: Deploy Frontend on Server
         uses: appleboy/ssh-action@v0.1.8
