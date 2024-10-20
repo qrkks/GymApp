@@ -176,4 +176,3 @@ jobs:
             docker stop gymapp-frontend || true
             docker rm gymapp-frontend || true
             docker run -d --name gymapp-frontend -p 3000:3000 --env-file /home/${{ secrets.SERVER_USER }}/app/frontend/.env gymapp-frontend:latest
-  
