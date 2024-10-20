@@ -13,6 +13,41 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 在服务器上创建 .env 文件
+      - name: Create Backend .env File on Server
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            # 检查是否已经存在 .env 文件
+            if [ -f /home/${{ secrets.SERVER_USER }}/app/backend/.env ]; then
+              echo ".env file already exists. Creating a backup."
+              timestamp=$(date +"%Y%m%d%H%M%S")
+              mv /home/${{ secrets.SERVER_USER }}/app/backend/.env /home/${{ secrets.SERVER_USER }}/app/backend/.env.bak.$timestamp
+            fi
+            # 在服务器上创建 .env 文件
+            echo "${{ secrets.ENV_FILE_CONTENT }}" > /home/${{ secrets.SERVER_USER }}/app/backend/.env
+            if [ ! -f /home/${{ secrets.SERVER_USER }}/app/backend/.env ]; then
+              echo "Error: Failed to create .env file!"
+              exit 1
+            fi
+
+      # 保证目标目录存在并删除旧文件
+      - name: Ensure Target Directories Exist on Server
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            mkdir -p /home/${{ secrets.SERVER_USER }}/app/backend
+            mkdir -p /home/${{ secrets.SERVER_USER }}/app/frontend
+            # 删除旧的后端和前端文件
+            rm -f /home/${{ secrets.SERVER_USER }}/app/backend/gymapp-backend.tar
+            rm -f /home/${{ secrets.SERVER_USER }}/app/frontend/gymapp-frontend.tar
+
       # 后端步骤
       - name: Verify Backend Dockerfile exists
         working-directory: ./backend
@@ -34,7 +69,6 @@ jobs:
         working-directory: ./backend
         run: |
           sudo chown $USER:$USER gymapp-backend.tar
-          chmod 644 gymapp-backend.tar
 
       - name: Move Backend files to root directory
         run: |
@@ -61,27 +95,10 @@ jobs:
         working-directory: ./frontend
         run: |
           sudo chown $USER:$USER gymapp-frontend.tar
-          chmod 644 gymapp-frontend.tar
 
       - name: Move Frontend files to root directory
         run: |
           mv ./frontend/gymapp-frontend.tar .
-
-      # 保证目标目录存在并删除旧文件
-      - name: Ensure Target Directories Exist on Server
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          script: |
-            mkdir -p /home/${{ secrets.SERVER_USER }}/app/backend
-            mkdir -p /home/${{ secrets.SERVER_USER }}/app/frontend
-            chmod 755 /home/${{ secrets.SERVER_USER }}/app
-            # 删除旧的后端和前端文件
-            rm -f /home/${{ secrets.SERVER_USER }}/app/backend/gymapp-backend.tar
-            rm -f /home/${{ secrets.SERVER_USER }}/app/backend/.env
-            rm -f /home/${{ secrets.SERVER_USER }}/app/frontend/gymapp-frontend.tar
 
       # 传输后端 tar 文件到服务器
       - name: Transfer Backend tar file to server
@@ -104,18 +121,6 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           debug: true
-
-      # 在服务器上创建 .env 文件
-      - name: Create Backend .env File on Server
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          script: |
-            # 在服务器上创建 .env 文件
-            echo "${{ secrets.ENV_FILE_CONTENT }}" > /home/${{ secrets.SERVER_USER }}/app/backend/.env
-            chmod 600 /home/${{ secrets.SERVER_USER }}/app/backend/.env
 
       # 部署后端到服务器
       - name: Deploy Backend on Server
