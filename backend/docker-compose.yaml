@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  backend:
+    image: gymapp-backend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    networks:
+      - nginx-network
+    volumes:
+      - ./db.production.sqlite3:/app/db.production.sqlite3
+      - ./backend/.env:/app/.env
+
+networks:
+  nginx-network:
+    external: true
