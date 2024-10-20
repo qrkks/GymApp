@@ -47,8 +47,10 @@ jobs:
               timestamp=$(date +"%Y%m%d%H%M%S")
               mv /home/${{ secrets.SERVER_USER }}/app/backend/.env /home/${{ secrets.SERVER_USER }}/app/backend/.env.bak.$timestamp
             fi
-            # 在服务器上创建 .env 文件
-            echo "${{ secrets.ENV_FILE_CONTENT }}" > /home/${{ secrets.SERVER_USER }}/app/backend/.env
+            # 在服务器上使用 cat 创建 .env 文件
+            cat <<EOF > /home/${{ secrets.SERVER_USER }}/app/backend/.env
+      ${{ secrets.ENV_FILE_CONTENT }}
+      EOF
             if [ ! -f /home/${{ secrets.SERVER_USER }}/app/backend/.env ]; then
               echo "Error: Failed to create .env file!"
               exit 1
