@@ -160,7 +160,7 @@ jobs:
               docker logs gymapp-backend
               exit 1
             fi
-
+ 
       # 部署前端到服务器
       - name: Deploy Frontend on Server
         uses: appleboy/ssh-action@v0.1.8
