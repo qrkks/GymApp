@@ -153,7 +153,7 @@ jobs:
             docker load -i /home/${{ secrets.SERVER_USER }}/app/backend/gymapp-backend.tar
             docker stop gymapp-backend || true
             docker rm gymapp-backend || true
-            docker network create nginx-network || true 
+            # docker network create nginx-network || true 
             # docker run -d --name gymapp-backend -p 8000:8000 \
             #   --env-file /home/${{ secrets.SERVER_USER }}/app/backend/.env \
             #   -v /home/${{ secrets.SERVER_USER }}/app/backend/.env:/app/.env \
