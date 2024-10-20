@@ -21,7 +21,11 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            # 检查是否已经存在 .env 文件
+            # 检查是否已经存在 .env 文件或目录
+            if [ -d /home/${{ secrets.SERVER_USER }}/app/backend/.env ]; then
+              echo ".env is a directory. Removing it."
+              rm -rf /home/${{ secrets.SERVER_USER }}/app/backend/.env
+            fi
             if [ -f /home/${{ secrets.SERVER_USER }}/app/backend/.env ]; then
               echo ".env file already exists. Creating a backup."
               timestamp=$(date +"%Y%m%d%H%M%S")
