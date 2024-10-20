@@ -75,6 +75,7 @@ jobs:
         working-directory: ./backend
         run: |
           sudo chown $USER:$USER gymapp-backend.tar
+          sudo chmod 644 gymapp-backend.tar
 
       - name: Move Backend files to root directory
         run: |
@@ -101,6 +102,7 @@ jobs:
         working-directory: ./frontend
         run: |
           sudo chown $USER:$USER gymapp-frontend.tar
+          sudo chmod 644 gymapp-frontend.tar
 
       - name: Move Frontend files to root directory
         run: |
