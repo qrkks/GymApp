@@ -154,14 +154,14 @@ jobs:
             docker stop gymapp-backend || true
             docker rm gymapp-backend || true
             # docker network create nginx-network || true 
-            # docker run -d --name gymapp-backend -p 8000:8000 \
-            #   --env-file /home/${{ secrets.SERVER_USER }}/app/backend/.env \
-            #   -v /home/${{ secrets.SERVER_USER }}/app/backend/.env:/app/.env \
-            #   -v /home/${{ secrets.SERVER_USER }}/app/backend/db.production.sqlite3:/app/db.production.sqlite3 \
-            #   gymapp-backend:latest
-            cd /home/${{ secrets.SERVER_USER }}/app/backend
-            docker-compose down || true
-            docker-compose up -d
+            docker run -d --name gymapp-backend -p 8000:8000 \
+              --env-file /home/${{ secrets.SERVER_USER }}/app/backend/.env \
+              -v /home/${{ secrets.SERVER_USER }}/app/backend/.env:/app/.env \
+              -v /home/${{ secrets.SERVER_USER }}/app/backend/db.production.sqlite3:/app/db.production.sqlite3 \
+              gymapp-backend:latest
+            # cd /home/${{ secrets.SERVER_USER }}/app/backend
+            # docker-compose down || true
+            # docker-compose up -d
             # 检查后端容器是否成功启动
             sleep 5
             if [ $(docker ps -q -f name=gymapp-backend) ]; then
@@ -202,10 +202,10 @@ jobs:
             docker load -i /home/${{ secrets.SERVER_USER }}/app/frontend/gymapp-frontend.tar
             docker stop gymapp-frontend || true
             docker rm gymapp-frontend || true
-            # docker run -d --name gymapp-frontend -p 3000:3000 gymapp-frontend:latest
-            cd /home/${{ secrets.SERVER_USER }}/app/frontend
-            docker-compose down || true
-            docker-compose up -d
+            docker run -d --name gymapp-frontend -p 3000:3000 gymapp-frontend:latest
+            # cd /home/${{ secrets.SERVER_USER }}/app/frontend
+            # docker-compose down || true
+            # docker-compose up -d
             # 检查前端容器是否成功启动
             sleep 5
             if [ $(docker ps -q -f name=gymapp-frontend) ]; then
