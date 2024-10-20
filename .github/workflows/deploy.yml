@@ -151,6 +151,15 @@ jobs:
             docker stop gymapp-backend || true
             docker rm gymapp-backend || true
             docker run -d --name gymapp-backend -p 8000:8000 --env-file /home/${{ secrets.SERVER_USER }}/app/backend/.env gymapp-backend:latest
+            # 检查后端容器是否成功启动
+            sleep 5
+            if [ $(docker ps -q -f name=gymapp-backend) ]; then
+              echo "Backend container started successfully."
+            else
+              echo "Error: Backend container failed to start. Checking logs..."
+              docker logs gymapp-backend
+              exit 1
+            fi
 
       # 部署前端到服务器
       - name: Deploy Frontend on Server
@@ -169,3 +178,12 @@ jobs:
             docker stop gymapp-frontend || true
             docker rm gymapp-frontend || true
             docker run -d --name gymapp-frontend -p 3000:3000 gymapp-frontend:latest
+            # 检查前端容器是否成功启动
+            sleep 5
+            if [ $(docker ps -q -f name=gymapp-frontend) ]; then
+              echo "Frontend container started successfully."
+            else
+              echo "Error: Frontend container failed to start. Checking logs..."
+              docker logs gymapp-frontend
+              exit 1
+            fi
