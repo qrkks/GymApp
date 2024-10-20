@@ -26,7 +26,30 @@ jobs:
         working-directory: ./backend
         run: |
           echo "${{ secrets.BACKEND_ENV_FILE_CONTENT }}" > .env
-
+          - name: Transfer Backend .env file to server
+          uses: appleboy/scp-action@v0.1.7
+          with:
+            source: "backend.env"
+            target: "/home/${{ secrets.SERVER_USER }}/app/backend/.env"
+            host: ${{ secrets.SERVER_IP }}
+            username: ${{ secrets.SERVER_USER }}
+            password: ${{ secrets.SERVER_PASSWORD }}
+            debug: true
+        
+        - name: Verify Backend .env file on server
+          uses: appleboy/ssh-action@v0.1.8
+          with:
+            host: ${{ secrets.SERVER_IP }}
+            username: ${{ secrets.SERVER_USER }}
+            password: ${{ secrets.SERVER_PASSWORD }}
+            script: |
+              if [ ! -f /home/${{ secrets.SERVER_USER }}/app/backend/.env ]; then
+                echo "Error: Backend .env file still not found after SCP!"
+                exit 1
+              else
+                echo "Backend .env file exists."
+              fi
+        
       - name: Build Backend Docker image
         working-directory: ./backend
         run: docker build -t gymapp-backend:latest .
@@ -176,3 +199,4 @@ jobs:
             docker stop gymapp-frontend || true
             docker rm gymapp-frontend || true
             docker run -d --name gymapp-frontend -p 3000:3000 --env-file /home/${{ secrets.SERVER_USER }}/app/frontend/.env gymapp-frontend:latest
+  
