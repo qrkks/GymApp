@@ -12,7 +12,7 @@ services:
       - nginx-network
     volumes:
       - ./db.production.sqlite3:/app/db.production.sqlite3
-      - ./backend/.env:/app/.env
+      - ./.env:/app/.env
 
 networks:
   nginx-network:
