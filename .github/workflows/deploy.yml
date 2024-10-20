@@ -82,7 +82,7 @@ jobs:
         run: |
           mv ./frontend/gymapp-frontend.tar .
 
-      # 确保服务器上的目标目录存在
+        # 在服务器上确保目标目录存在，并删除旧文件
       - name: Ensure Target Directories Exist on Server
         uses: appleboy/ssh-action@v0.1.8
         with:
@@ -93,6 +93,10 @@ jobs:
             mkdir -p /home/${{ secrets.SERVER_USER }}/app/backend
             mkdir -p /home/${{ secrets.SERVER_USER }}/app/frontend
             chmod 755 /home/${{ secrets.SERVER_USER }}/app
+            # 删除旧的后端和前端文件
+            rm -f /home/${{ secrets.SERVER_USER }}/app/backend/gymapp-backend.tar
+            rm -f /home/${{ secrets.SERVER_USER }}/app/backend/.env
+            rm -f /home/${{ secrets.SERVER_USER }}/app/frontend/gymapp-frontend.tar
 
       # 传输后端文件到服务器
       - name: Transfer Backend files to server
