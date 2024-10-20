@@ -150,7 +150,10 @@ jobs:
             docker load -i /home/${{ secrets.SERVER_USER }}/app/backend/gymapp-backend.tar
             docker stop gymapp-backend || true
             docker rm gymapp-backend || true
-            docker run -d --name gymapp-backend -p 8000:8000 --env-file /home/${{ secrets.SERVER_USER }}/app/backend/.env gymapp-backend:latest
+            docker run -d --name gymapp-backend -p 8000:8000 \
+              --env-file /home/${{ secrets.SERVER_USER }}/app/backend/.env \
+              -v /home/${{ secrets.SERVER_USER }}/app/backend/.env:/app/.env \
+              gymapp-backend:latest
             # 检查后端容器是否成功启动
             sleep 5
             if [ $(docker ps -q -f name=gymapp-backend) ]; then
@@ -160,7 +163,7 @@ jobs:
               docker logs gymapp-backend
               exit 1
             fi
- 
+
       # 部署前端到服务器
       - name: Deploy Frontend on Server
         uses: appleboy/ssh-action@v0.1.8
