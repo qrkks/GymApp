@@ -155,6 +155,7 @@ jobs:
             docker run -d --name gymapp-backend -p 8000:8000 \
               --env-file /home/${{ secrets.SERVER_USER }}/app/backend/.env \
               -v /home/${{ secrets.SERVER_USER }}/app/backend/.env:/app/.env \
+              -v /home/${{ secrets.SERVER_USER }}/app/backend/db.production.sqlite3:/app/db.production.sqlite3 \
               gymapp-backend:latest
             # 检查后端容器是否成功启动
             sleep 5
