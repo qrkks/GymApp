@@ -49,12 +49,12 @@ jobs:
             fi
             # 在服务器上使用 cat 创建 .env 文件
             cat <<EOF > /home/${{ secrets.SERVER_USER }}/app/backend/.env
-      ${{ secrets.ENV_FILE_CONTENT }}
-      EOF
-            if [ ! -f /home/${{ secrets.SERVER_USER }}/app/backend/.env ]; then
-              echo "Error: Failed to create .env file!"
-              exit 1
-            fi
+            ${{ secrets.ENV_FILE_CONTENT }}
+            EOF
+                  if [ ! -f /home/${{ secrets.SERVER_USER }}/app/backend/.env ]; then
+                    echo "Error: Failed to create .env file!"
+                    exit 1
+                  fi
 
       # 后端步骤
       - name: Verify Backend Dockerfile exists
