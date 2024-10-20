@@ -165,7 +165,7 @@ jobs:
               docker logs gymapp-backend
               exit 1
             fi
-
+ 
       # 运行 Django migrate 和 collectstatic
       - name: Run Django Migrations and Collectstatic on Server
         uses: appleboy/ssh-action@v0.1.8
