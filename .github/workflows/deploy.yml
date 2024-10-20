@@ -13,6 +13,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 保证目标目录存在并删除旧文件
+      - name: Ensure Target Directories Exist on Server
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            mkdir -p /home/${{ secrets.SERVER_USER }}/app/backend
+            mkdir -p /home/${{ secrets.SERVER_USER }}/app/frontend
+            # 删除旧的后端和前端文件
+            rm -f /home/${{ secrets.SERVER_USER }}/app/backend/gymapp-backend.tar
+            rm -f /home/${{ secrets.SERVER_USER }}/app/frontend/gymapp-frontend.tar
+
       # 在服务器上创建 .env 文件
       - name: Create Backend .env File on Server
         uses: appleboy/ssh-action@v0.1.8
@@ -21,6 +35,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
+            # 确保 backend 目录存在
+            mkdir -p /home/${{ secrets.SERVER_USER }}/app/backend
             # 检查是否已经存在 .env 文件或目录
             if [ -d /home/${{ secrets.SERVER_USER }}/app/backend/.env ]; then
               echo ".env is a directory. Removing it."
@@ -37,20 +53,6 @@ jobs:
               echo "Error: Failed to create .env file!"
               exit 1
             fi
-
-      # 保证目标目录存在并删除旧文件
-      - name: Ensure Target Directories Exist on Server
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          script: |
-            mkdir -p /home/${{ secrets.SERVER_USER }}/app/backend
-            mkdir -p /home/${{ secrets.SERVER_USER }}/app/frontend
-            # 删除旧的后端和前端文件
-            rm -f /home/${{ secrets.SERVER_USER }}/app/backend/gymapp-backend.tar
-            rm -f /home/${{ secrets.SERVER_USER }}/app/frontend/gymapp-frontend.tar
 
       # 后端步骤
       - name: Verify Backend Dockerfile exists
@@ -82,7 +84,7 @@ jobs:
       - name: Verify Frontend Dockerfile exists
         working-directory: ./frontend
         run: |
-          if [ ! -f Dockerfile ]; then
+          if [ ! -f Dockerfile ];then
             echo "Error: Frontend Dockerfile not found!"
             exit 1
           fi
