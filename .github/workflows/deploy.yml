@@ -25,7 +25,7 @@ jobs:
       - name: Create Backend .env file
         working-directory: ./backend
         run: |
-          echo "${{ secrets.BACKEND_ENV_FILE_CONTENT }}" > .env
+          echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
           - name: Transfer Backend .env file to server
           uses: appleboy/scp-action@v0.1.7
           with:
