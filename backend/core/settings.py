@@ -155,7 +155,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='').split(',')
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='').split(',')
 
-CSRF_COOKIE_SECURE = True
+# CSRF_COOKIE_SECURE = True
+
 CORS_ALLOW_CREDENTIALS = True  # 允许发送凭证（Cookie）
 
 # 强制 HTTPS 重定向
