@@ -1,5 +1,5 @@
 "use client";
-import StartWorkout from "./StartWorkout";
+import StartWorkout from "./GoToTodayButton";
 import React, {useState, useEffect} from "react";
 import {Calendar} from "@/components/ui/calendar";
 import {useRouter} from "next/navigation";
