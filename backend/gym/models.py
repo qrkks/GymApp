@@ -6,10 +6,15 @@ from datetime import date, datetime
 
 class BodyPart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='body_parts')  # 关联用户
-    name = models.CharField(max_length=100, unique=True)  # 训练部位名称，例如 胸部、背部、腿部
+    name = models.CharField(max_length=100)  # 训练部位名称，例如 胸部、背部、腿部
+
+    class Meta:
+        unique_together = ('user', 'name')
 
     def __str__(self):
         return self.name
+    
+    
 
 # 2. 训练动作表
 
@@ -20,6 +25,9 @@ class Exercise(models.Model):
     body_part = models.ForeignKey(
         BodyPart, on_delete=models.CASCADE, related_name='exercises')  # 动作所属的部位
 
+    class Meta:
+        unique_together = ('user', 'name')
+
     def __str__(self):
         return self.name
 
@@ -27,12 +35,15 @@ class Exercise(models.Model):
 
 class Workout(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='workouts')  # 关联用户
-    date = models.DateField(default=date.today, unique=True)  # 自动记录当天日期
+    date = models.DateField(default=date.today)  # 自动记录当天日期
     start_time = models.DateTimeField(
         default=datetime.now)  # 记录训练开始时间
     end_time = models.DateTimeField(blank=True, null=True)  # 记录训练结束时间，允许为空
     body_parts = models.ManyToManyField(
         BodyPart, related_name='workout', blank=True)  # 训练中涉及的部位
+
+    class Meta:
+        unique_together = ('user', 'date')
 
     def __str__(self):
         return f"Workout on {self.date}"
