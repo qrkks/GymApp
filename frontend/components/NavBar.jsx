@@ -1,6 +1,6 @@
+"use client";
 import Link from "next/link";
 import {CircleUser, Menu, Package2, Search} from "lucide-react";
-
 import {Button} from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,6 +13,7 @@ import {
 import {Input} from "@/components/ui/input";
 import {Sheet, SheetContent, SheetTrigger} from "@/components/ui/sheet";
 import {Dumbbell} from "lucide-react";
+import {useState} from "react";
 
 const navList = [
   {
@@ -30,6 +31,8 @@ const navList = [
 ];
 
 export default function Navbar() {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <div className="flex flex-col w-full">
       <header className="sticky top-0 flex items-center h-16 gap-4 px-4 border-b bg-background md:px-6">
@@ -52,7 +55,7 @@ export default function Navbar() {
             </Link>
           ))}
         </nav>
-        <Sheet>
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
             <Button
               variant="outline"
@@ -77,6 +80,7 @@ export default function Navbar() {
                   key={item.name}
                   href={item.href}
                   className="transition-colors text-muted-foreground hover:text-foreground"
+                  onClick={() => setIsOpen(false)}
                 >
                   {item.name}
                 </Link>
