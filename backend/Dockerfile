@@ -1,9 +1,6 @@
 # 使用阿里云的 Python 镜像作为基础镜像
 FROM registry.cn-beijing.aliyuncs.com/ciye/python:3.12-slim
 
-# 安装构建工具（包括 gcc 和必要的依赖）
-RUN apt-get update \
-    && apt-get install -y gcc build-essential libssl-dev
 
 # 设置工作目录
 WORKDIR /app
@@ -11,10 +8,16 @@ WORKDIR /app
 # 复制项目依赖配置文件
 COPY requirements.txt ./
 
-# 安装 Python 依赖包，并包括 uWSGI
-RUN pip install --upgrade pip \
+# 安装构建工具（包括 gcc 和必要的依赖），然后删除它们
+RUN apt-get update \
+    && apt-get install -y gcc build-essential libssl-dev \
+    && pip install --upgrade pip \
     && pip install -r requirements.txt \
-    && pip install uwsgi
+    && pip install uwsgi \
+    && apt-get remove -y gcc build-essential libssl-dev \
+    && apt-get autoremove -y \
+    && apt-get clean
+
 
 # 复制项目代码到容器中
 COPY . .
