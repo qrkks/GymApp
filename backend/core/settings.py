@@ -147,8 +147,8 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-SESSION_COOKIE_SAMESITE = 'None'  # 必须为 'None'，以便允许跨域发送 Cookie
-SESSION_COOKIE_SECURE = True  # 如果你使用 HTTPS，确保设置为 True
+# SESSION_COOKIE_SAMESITE = 'None'  # 必须为 'None'，以便允许跨域发送 Cookie
+# SESSION_COOKIE_SECURE = True  # 如果你使用 HTTPS，确保设置为 True
 
 # 允许的跨域源
 # 从环境变量中读取 CORS 和 CSRF 相关的配置
@@ -161,11 +161,11 @@ CORS_ALLOW_CREDENTIALS = True  # 允许发送凭证（Cookie）
 # SECURE_SSL_REDIRECT = True
 
 # 确保静态和媒体文件通过 HTTPS 加载
-SECURE_REFERRER_POLICY = 'same-origin'
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
+# SECURE_REFERRER_POLICY = 'same-origin'
+# SECURE_BROWSER_XSS_FILTER = True
+# SECURE_CONTENT_TYPE_NOSNIFF = True
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CSRF_COOKIE_SECURE = True
 
 
