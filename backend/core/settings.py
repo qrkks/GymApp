@@ -157,6 +157,14 @@ CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='').split(',')
 
 CORS_ALLOW_CREDENTIALS = True  # 允许发送凭证（Cookie）
 
+# 强制 HTTPS 重定向
+# SECURE_SSL_REDIRECT = True
+
+# 确保静态和媒体文件通过 HTTPS 加载
+SECURE_REFERRER_POLICY = 'same-origin'
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
 
 LOGGING = {
     'version': 1,
