@@ -6,8 +6,8 @@ import useSWR from "swr";
 import WorkoutSet from "./WorkoutSet";
 import {Button} from "@/components/ui/button";
 import authStore from "@/app/store/authStore";
-import {CircleArrowLeft, CircleArrowRight} from "lucide-react";
 import config from "@/utils/config";
+import DateHead from "./DateHead";
 
 function WorkoutById({params}) {
   const { apiUrl} = config
@@ -104,9 +104,7 @@ function WorkoutById({params}) {
   return (
     <div className="flex flex-col items-center justify-center gap-4">
       <div className="flex items-center gap-4">
-        <CircleArrowLeft  className="w-4 text-gray-500"/>
-        <h2>{params.date}</h2>
-        <CircleArrowRight className="w-4 text-gray-500" />
+      <DateHead params={params}/>
       </div>
 
       {!isWorkoutCreated && (
