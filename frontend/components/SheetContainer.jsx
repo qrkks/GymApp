@@ -19,7 +19,7 @@ export default function SheetProvider({
   children,
   submitButtonText,
   onHandleSubmit = () => {},
-  side = "left",
+  side = "bottom",
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
