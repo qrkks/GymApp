@@ -14,6 +14,9 @@ import {Input} from "@/components/ui/input";
 import {Sheet, SheetContent, SheetTrigger} from "@/components/ui/sheet";
 import {Dumbbell} from "lucide-react";
 import {useState} from "react";
+import { useRouter } from "next/navigation";
+import config from "@/utils/config";
+import { root } from "postcss";
 
 const navList = [
   {
@@ -32,6 +35,8 @@ const navList = [
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
+  const { rootUrl } = config;
 
   return (
     <div className="flex flex-col w-full">
@@ -109,7 +114,7 @@ export default function Navbar() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push(`${rootUrl}/admin`)}>Settings</DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Logout</DropdownMenuItem>

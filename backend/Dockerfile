@@ -1,6 +1,10 @@
 # 使用阿里云的 Python 镜像作为基础镜像
 FROM registry.cn-beijing.aliyuncs.com/ciye/python:3.12-slim
 
+# 安装构建工具（包括 gcc 和必要的依赖）
+RUN apt-get update \
+    && apt-get install -y gcc build-essential libssl-dev
+
 # 设置工作目录
 WORKDIR /app
 
@@ -22,4 +26,4 @@ ENV PYTHONUNBUFFERED=1
 EXPOSE 8000
 
 # 使用 uWSGI 启动应用
-CMD ["uwsgi", "--http", "0.0.0.0:8000", "--module", "core.wsgi:application", "--master", "--processes", "2", "--threads", "2"]
+CMD ["uwsgi", "--http", "0.0.0.0:8000", "--module", "core.wsgi:application", "--master", "--processes", "4", "--threads", "2"]
