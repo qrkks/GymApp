@@ -10,10 +10,11 @@ from django.shortcuts import get_object_or_404
 from ninja import Body, Router, Schema
 from .models import Workout, Exercise, BodyPart, WorkoutSet, Set
 from django.contrib.auth.models import User
+from ninja.security import django_auth
 
 logger = logging.getLogger(__name__)
 
-router = Router()
+router = Router(auth=django_auth)
 
 # Define schema classes with user context
 

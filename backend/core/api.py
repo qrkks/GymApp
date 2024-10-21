@@ -3,7 +3,7 @@ from gym.api import router as gym_router
 from ninja.security import django_auth
 
 
-api = NinjaAPI(auth=django_auth)
+api = NinjaAPI()
 
 api.add_router('/', gym_router)
 
