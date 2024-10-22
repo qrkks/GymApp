@@ -6,9 +6,8 @@ import BodyPartEditPopover from "./ExerciseEditPopover";
 import useSWR from "swr";
 
 function ExerciseSet({set, part, date, mutateWorkoutSet}) {
-
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center p-2">
       <div className="flex items-center gap-2">
         <h4>{set.exercise.name}</h4>
         <div className="flex items-center gap-1">
@@ -24,12 +23,6 @@ function ExerciseSet({set, part, date, mutateWorkoutSet}) {
             date={date}
             mutateWorkoutSet={mutateWorkoutSet}
           /> */}
-          <AddButton
-            set={set}
-            part={part}
-            date={date}
-            mutateWorkoutSet={mutateWorkoutSet}
-          />
         </div>
       </div>
       {/* <pre>{JSON.stringify(set.sets, null, 2)}</pre> */}
@@ -43,6 +36,12 @@ function ExerciseSet({set, part, date, mutateWorkoutSet}) {
           />
         ))}
       </SetTableContainer>
+      <AddButton
+        set={set}
+        part={part}
+        date={date}
+        mutateWorkoutSet={mutateWorkoutSet}
+      />
     </div>
   );
 }
