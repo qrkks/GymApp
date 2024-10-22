@@ -29,4 +29,4 @@ ENV PYTHONUNBUFFERED=1
 EXPOSE 8000
 
 # 使用 uWSGI 启动应用
-CMD ["uwsgi", "--http", "0.0.0.0:8000", "--module", "core.wsgi:application", "--master", "--processes", "4", "--threads", "2"]
+CMD ["uwsgi", "--http", "0.0.0.0:8000", "--module", "core.wsgi:application", "--master", "--processes", "1", "--threads", "2"]
