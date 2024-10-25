@@ -8,6 +8,7 @@ import authStore from "@/app/store/authStore";
 import LastWorkout from "./LastWorkout";
 import { makeAutoObservable } from "mobx";
 import config from "@/utils/config";
+import { Button } from "@/components/ui/button";
 
 class Store {
   constructor() {
@@ -147,9 +148,10 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
         title="添加训练动作"
         description="添加训练动作"
         triggerButton={
-          <button onClick={() => store.setCurrentExercise("")}>
-            <CirclePlus className="w-4 text-gray-400" />
-          </button>
+          <Button onClick={() => store.setCurrentExercise("")}>
+            {/* <CirclePlus className="w-4 text-gray-400" /> */}
+            添加训练动作
+          </Button>
         }
         submitButtonText="确定"
         onHandleSubmit={handleSubmit}
