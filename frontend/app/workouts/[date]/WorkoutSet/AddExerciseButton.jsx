@@ -164,9 +164,9 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
         title="Add Exercise"
         description="Add an exercise to your workout"
         triggerButton={
-          <Button onClick={() => store.setCurrentExercise("")}>
-            <CirclePlus className="w-4 text-gray-400" />
-            Add Exercise
+          <Button onClick={() => store.setCurrentExercise("")} variant='secondary'>
+            <CirclePlus className="w-4 text-gray-400" /> 
+            &nbsp;添加训练动作
           </Button>
         }
         submitButtonText="Confirm"
