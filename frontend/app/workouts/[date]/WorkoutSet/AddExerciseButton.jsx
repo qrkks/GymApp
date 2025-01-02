@@ -15,11 +15,11 @@ class Store {
     makeAutoObservable(this);
   }
 
-  // 可观察属性
+  // Observable properties
   previousWorkout = null;
   currentSelectedExercise = null;
 
-  // Action 方法
+  // Actions
   setPreviousWorkout(workout) {
     this.previousWorkout = workout;
   }
@@ -31,25 +31,33 @@ class Store {
 
 export const store = new Store();
 
-
 function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
-  const {apiUrl} = config
-  const fetcher = (url) =>
-    fetch(url, {
+  const { apiUrl } = config;
+
+  // SWR Fetcher
+  const fetcher = async (url) => {
+    const response = await fetch(url, {
       credentials: "include",
       method: "GET",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": authStore.getCookie("csrftoken"),
       },
-    }).then((res) => res.json());
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch: ${response.statusText}`);
+    }
+
+    return response.json();
+  };
 
   const {
     data: exercisesData,
     error: exercisesError,
     mutate: mutateExercises,
   } = useSWR(
-    `${apiUrl}/exercise?body_part_name=${part.name}`,
+    `${apiUrl}/exercise?body_part_name=${part?.name || ""}`,
     fetcher
   );
 
@@ -71,16 +79,22 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
           store.setPreviousWorkout(data);
         })
         .catch((error) => {
-          console.error("获取上次训练数据时出错:", error);
+          console.error("Error fetching last workout data:", error);
         });
     }
   }, [store.currentSelectedExercise]);
 
-  if (exercisesError) return <div>Failed to load data</div>;
+  if (exercisesError)
+    return (
+      <div>
+        Failed to load data: {exercisesError.message}
+        <button onClick={() => mutateExercises()}>Retry</button>
+      </div>
+    );
 
   const handleSubmit = () => {
-    console.log("submit", store.currentSelectedExercise);
-    console.log("date", date);
+    console.log("Submit", store.currentSelectedExercise);
+    console.log("Date", date);
     setAddedExercise(store.currentSelectedExercise);
 
     fetch(`${apiUrl}/workoutset`, {
@@ -98,19 +112,20 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
       .then((res) => res.json())
       .then((data) => {
         console.log(data);
-        mutateWorkout(); // 重新获取所有训练动作，确保显示完整列表
+        mutateWorkout(); // Refresh all exercises
       })
       .catch((error) => {
-        console.error("Error:", error);
+        console.error("Error submitting data:", error);
+        alert("Failed to add exercise. Please try again.");
       });
   };
 
   function handleSelectChange(value) {
     if (value === "new") {
-      const newExercise = prompt("请输入新的训练动作");
+      const newExercise = prompt("Enter the new exercise name:");
       if (!newExercise) return;
-      const newDescription = prompt("请输入新的训练动作描述");
-      console.log(newExercise, newDescription);
+
+      const newDescription = prompt("Enter the new exercise description:");
       if (newExercise) {
         fetch(`${apiUrl}/exercise`, {
           method: "POST",
@@ -128,13 +143,14 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
           .then((res) => res.json())
           .then((newExerciseData) => {
             mutateExercises(
-              (currentData) => [...currentData, newExerciseData],
+              (currentData) => [...(currentData || []), newExerciseData],
               false
             );
-            store.setCurrentExercise(newExercise); // 立即选择新创建的动作
+            store.setCurrentExercise(newExercise); // Immediately select the new exercise
           })
           .catch((error) => {
-            console.error("Error:", error);
+            console.error("Error creating new exercise:", error);
+            alert("Failed to create a new exercise. Please try again.");
           });
       }
     } else {
@@ -145,22 +161,22 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
   return (
     <>
       <SheetContainer
-        title="添加训练动作"
-        description="添加训练动作"
+        title="Add Exercise"
+        description="Add an exercise to your workout"
         triggerButton={
           <Button onClick={() => store.setCurrentExercise("")}>
-            {/* <CirclePlus className="w-4 text-gray-400" /> */}
-            添加训练动作
+            <CirclePlus className="w-4 text-gray-400" />
+            Add Exercise
           </Button>
         }
-        submitButtonText="确定"
+        submitButtonText="Confirm"
         onHandleSubmit={handleSubmit}
       >
         <form className="flex flex-col items-center w-full gap-2 space-x-2">
           <ExerciseSelectInput
             entries={exercisesData || []}
             className="w-2/3"
-            placeholder="训练动作"
+            placeholder="Select exercise"
             name="exercise"
             mutate={mutateExercises}
             selectedExercise={store.currentSelectedExercise}
