@@ -1,24 +1,12 @@
 import BodyPartRemoveButton from "./BodyPartRemoveButton";
 import AddExerciseButton from "./AddExerciseButton";
-import BodyPartEditPopover from "./BodyPartEditPopover";
 import ExerciseGroup from "./ExerciseGroup";
-import {useState, useEffect} from "react";
+import {useState, useRef} from "react";
 
 function WorkoutSet({part, date, mutateWorkout}) {
   const [addedExercise, setAddedExercise] = useState("");
-
-  useEffect(() => {
-    console.log('Added exercise changed:', addedExercise);
-  }, [addedExercise]);
-
-  const handleExerciseAdded = async (exercise) => {
-    setAddedExercise(exercise);
-    try {
-      await mutateWorkout();
-    } catch (error) {
-      console.error('Failed to update workout:', error);
-    }
-  };
+  // 使用 useRef 存储 mutateWorkoutSet 函数
+  const mutateWorkoutSetRef = useRef(null);
 
   return (
     <div className="flex flex-col gap-3 justify-center items-center">
@@ -35,14 +23,22 @@ function WorkoutSet({part, date, mutateWorkout}) {
       <AddExerciseButton
         part={part}
         date={date}
-        mutateWorkout={mutateWorkout}
-        setAddedExercise={handleExerciseAdded}
+        mutateWorkout={async () => {
+          await mutateWorkout();
+          // 如果 mutateWorkoutSet 存在，则调用它
+          if (mutateWorkoutSetRef.current) {
+            await mutateWorkoutSetRef.current();
+          }
+        }}
+        setAddedExercise={setAddedExercise}
       />
       <ExerciseGroup
         part={part}
         date={date}
         addedExercise={addedExercise}
-        mutateWorkout={mutateWorkout}
+        setMutateRef={(mutate) => {
+          mutateWorkoutSetRef.current = mutate;
+        }}
       />
     </div>
   );
