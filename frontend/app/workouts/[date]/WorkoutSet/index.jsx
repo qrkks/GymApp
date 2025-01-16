@@ -7,6 +7,10 @@ import {useState, useEffect} from "react";
 function WorkoutSet({part, date, mutateWorkout}) {
   const [addedExercise, setAddedExercise] = useState("");
 
+  useEffect(() => {
+    console.log('Added exercise changed:', addedExercise);
+  }, [addedExercise]);
+
   const handleExerciseAdded = async (exercise) => {
     setAddedExercise(exercise);
     try {
@@ -21,20 +25,11 @@ function WorkoutSet({part, date, mutateWorkout}) {
       <div className="flex gap-2 items-center">
         <h3>{part.name}</h3>
         <div className="flex gap-1 items-center">
-          {/* BodyPartRemoveButton：用于移除训练部位。
-        AddExerciseButton：用于添加新的训练动作。
-        BodyPartEditPopover：用于编辑训练部位信息。
-        ExerciseGroup：显示当前训练部位下的所有训练动作。 */}
           <BodyPartRemoveButton
             part={part}
             date={date}
             mutateWorkout={mutateWorkout}
           />
-          {/* <BodyPartEditPopover
-            part={part}
-            date={date}
-            mutateWorkout={mutateWorkout}
-          /> */}
         </div>
       </div>
       <AddExerciseButton
