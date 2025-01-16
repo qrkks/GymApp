@@ -14,19 +14,31 @@ function WorkoutById({params}) {
   const [resData, setResData] = useState({});
   const [isWorkoutCreated, setIsWorkoutCreated] = useState(false);
 
-  // 自定义 fetcher 处理 404 情况
+  // 自定义 fetcher 处理连接错误
   const fetcher = async (url) => {
-    const response = await fetch(url, {
-      method: "GET",
-      credentials: "include",
-    });
-    if (response.status === 404) {
-      return null; // 后端返回 404 表示没有找到对应 Workout
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        credentials: "include",
+      });
+      
+      if (response.status === 404) {
+        return null;
+      }
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      return response.json();
+    } catch (error) {
+      // 如果是连接错误，返回 null 而不是抛出错误
+      if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+        console.log('Connection error, will retry later');
+        return null;
+      }
+      throw error;
     }
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    return response.json();
   };
 
   const {
@@ -34,11 +46,20 @@ function WorkoutById({params}) {
     error: workoutError,
     mutate: mutateWorkout,
   } = useSWR(`${apiUrl}/workout/${params.date}`, fetcher, {
-    revalidateOnFocus: true,
-    revalidateOnReconnect: true,
-    refreshInterval: 0,  // 如果需要自动刷新可以设置具体时间
-    shouldRetryOnError: true,
-    dedupingInterval: 2000, // 2秒内的重复请求会被去重
+    revalidateOnFocus: false,      // 禁用焦点重新验证
+    revalidateOnReconnect: true,   // 网络重连时重新验证
+    refreshInterval: 0,            // 禁用自动刷新
+    shouldRetryOnError: false,     // 禁用错误自动重试
+    dedupingInterval: 5000,        // 增加去重间隔到5秒
+    errorRetryCount: 3,            // 最多重试3次
+    onErrorRetry: (error, key, config, revalidate, { retryCount }) => {
+      // 自定义重试逻辑
+      if (retryCount >= 3) return;  // 最多重试3次
+      if (error.status === 404) return;  // 不重试404错误
+      
+      // 5秒后重试
+      setTimeout(() => revalidate({ retryCount }), 5000);
+    },
   });
 
   useEffect(() => {
