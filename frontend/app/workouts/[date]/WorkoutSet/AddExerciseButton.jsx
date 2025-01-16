@@ -84,6 +84,20 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
     }
   }, [store.currentSelectedExercise]);
 
+  useEffect(() => {
+    if (exercisesData) {
+      mutateExercises();
+    }
+  }, [date]);
+
+  useEffect(() => {
+    console.log('Current exercise changed:', store.currentSelectedExercise);
+  }, [store.currentSelectedExercise]);
+
+  useEffect(() => {
+    console.log('Exercises data updated:', exercisesData);
+  }, [exercisesData]);
+
   if (exercisesError)
     return (
       <div>
@@ -92,32 +106,31 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
       </div>
     );
 
-  const handleSubmit = () => {
-    console.log("Submit", store.currentSelectedExercise);
-    console.log("Date", date);
-    setAddedExercise(store.currentSelectedExercise);
-
-    fetch(`${apiUrl}/workoutset`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": authStore.getCookie("csrftoken"),
-      },
-      body: JSON.stringify({
-        workout_date: date,
-        exercise_name: store.currentSelectedExercise,
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log(data);
-        mutateWorkout(); // Refresh all exercises
-      })
-      .catch((error) => {
-        console.error("Error submitting data:", error);
-        alert("Failed to add exercise. Please try again.");
+  const handleSubmit = async () => {
+    try {
+      setAddedExercise(store.currentSelectedExercise);
+      
+      const response = await fetch(`${apiUrl}/workoutset`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": authStore.getCookie("csrftoken"),
+        },
+        body: JSON.stringify({
+          workout_date: date,
+          exercise_name: store.currentSelectedExercise,
+        }),
       });
+      
+      const data = await response.json();
+      await mutateWorkout(); // 等待数据更新完成
+      store.setCurrentExercise(""); // 重置选择
+      
+    } catch (error) {
+      console.error("Error submitting data:", error);
+      alert("Failed to add exercise. Please try again.");
+    }
   };
 
   function handleSelectChange(value) {
@@ -172,7 +185,7 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
         submitButtonText="Confirm"
         onHandleSubmit={handleSubmit}
       >
-        <form className="flex flex-col items-center w-full gap-2 space-x-2">
+        <form className="flex flex-col gap-2 items-center space-x-2 w-full">
           <ExerciseSelectInput
             entries={exercisesData || []}
             className="w-2/3"

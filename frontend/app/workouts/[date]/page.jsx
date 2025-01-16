@@ -33,7 +33,13 @@ function WorkoutById({params}) {
     data: workoutData,
     error: workoutError,
     mutate: mutateWorkout,
-  } = useSWR(`${apiUrl}/workout/${params.date}`, fetcher);
+  } = useSWR(`${apiUrl}/workout/${params.date}`, fetcher, {
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+    refreshInterval: 0,  // 如果需要自动刷新可以设置具体时间
+    shouldRetryOnError: true,
+    dedupingInterval: 2000, // 2秒内的重复请求会被去重
+  });
 
   useEffect(() => {
     // 检查当天是否有 Workout 数据
@@ -41,6 +47,18 @@ function WorkoutById({params}) {
       setIsWorkoutCreated(true); // 数据存在，表示 workout 已创建
     } else {
       setIsWorkoutCreated(false); // 数据为 null，表示未创建
+    }
+  }, [workoutData]);
+
+  useEffect(() => {
+    if (workoutError) {
+      console.error('Workout data fetch error:', workoutError);
+    }
+  }, [workoutError]);
+
+  useEffect(() => {
+    if (workoutData) {
+      console.log('Workout data updated:', workoutData);
     }
   }, [workoutData]);
 
@@ -101,9 +119,24 @@ function WorkoutById({params}) {
     }
   }
 
+  const handleMutateWorkout = async () => {
+    try {
+      await mutateWorkout();
+      console.log('Data revalidation triggered');
+    } catch (error) {
+      console.error('Failed to update data:', error);
+    }
+  };
+
+  const debugMutate = async () => {
+    console.log('Starting mutation...');
+    await mutateWorkout();
+    console.log('Mutation completed');
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center gap-4">
-      <div className="flex items-center gap-4">
+    <div className="flex flex-col gap-4 justify-center items-center">
+      <div className="flex gap-4 items-center">
       <DateHead params={params}/>
       </div>
 
@@ -115,7 +148,7 @@ function WorkoutById({params}) {
 
       {isWorkoutCreated && (
         <>
-          <StartBodyPart date={params.date} mutateWorkout={mutateWorkout} />
+          <StartBodyPart date={params.date} mutateWorkout={handleMutateWorkout} />
           {/* <pre className="m-auto text-foreground">
             {JSON.stringify(workoutData, null, 2)}
           </pre> */}
@@ -124,7 +157,7 @@ function WorkoutById({params}) {
               key={part.id}
               part={part}
               date={params.date}
-              mutateWorkout={mutateWorkout}
+              mutateWorkout={handleMutateWorkout}
             />
           ))}
 
