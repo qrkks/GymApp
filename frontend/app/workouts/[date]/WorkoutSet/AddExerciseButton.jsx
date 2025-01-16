@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { CirclePlus } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import SheetContainer from "@/components/SheetContainer";
@@ -33,6 +33,7 @@ export const store = new Store();
 
 function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
   const { apiUrl } = config;
+  const submitCount = useRef(0);
 
   // SWR Fetcher
   const fetcher = async (url) => {
@@ -124,12 +125,16 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
       });
       
       const data = await response.json();
-      await mutateWorkout(); // 等待数据更新完成
-      store.setCurrentExercise(""); // 重置选择
       
+      // 1. 等待顶层数据更新
+      await mutateWorkout();
+      
+      // 2. 需要传入 mutateWorkoutSet 来更新具体的动作列表
+      // 或者通过共享的 store 来触发更新
+      
+      store.setCurrentExercise("");
     } catch (error) {
-      console.error("Error submitting data:", error);
-      alert("Failed to add exercise. Please try again.");
+      console.error('Submission error:', error);
     }
   };
 

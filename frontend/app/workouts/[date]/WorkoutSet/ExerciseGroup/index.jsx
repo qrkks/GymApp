@@ -4,7 +4,7 @@ import authStore from "@/app/store/authStore";
 import {useEffect, useRef} from "react";
 import config from "@/utils/config";
 
-function ExerciseGroup({part, date, addedExercise}) {
+function ExerciseGroup({part, date, addedExercise, onMutateSet}) {
   const {apiUrl} = config;
   const renderCount = useRef(0);
   
@@ -79,6 +79,12 @@ function ExerciseGroup({part, date, addedExercise}) {
 
     updateData();
   }, [addedExercise, mutateWorkoutSet]);
+
+  useEffect(() => {
+    if (onMutateSet) {
+      onMutateSet(mutateWorkoutSet);
+    }
+  }, [mutateWorkoutSet, onMutateSet]);
 
   if (workoutSetError) {
     console.error('❌ WorkoutSet error:', workoutSetError);
