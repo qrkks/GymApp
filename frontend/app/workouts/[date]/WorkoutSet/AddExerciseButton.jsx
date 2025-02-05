@@ -186,11 +186,11 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
             <CirclePlus className="w-4 text-gray-400" /> 
             &nbsp;添加训练动作
           </Button>
-        }
+        } 
         submitButtonText="Confirm"
         onHandleSubmit={handleSubmit}
       >
-        <form className="flex flex-col gap-2 items-center space-x-2 w-full">
+        <form className="flex flex-col items-center w-full gap-2 space-x-2">
           <ExerciseSelectInput
             entries={exercisesData || []}
             className="w-2/3"
