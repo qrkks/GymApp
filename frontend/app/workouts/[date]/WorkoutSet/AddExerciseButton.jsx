@@ -1,14 +1,14 @@
-import React, { useEffect, useRef } from "react";
-import { CirclePlus } from "lucide-react";
-import { observer } from "mobx-react-lite";
+import React, {useEffect, useRef} from "react";
+import {CirclePlus} from "lucide-react";
+import {observer} from "mobx-react-lite";
 import SheetContainer from "@/components/SheetContainer";
 import ExerciseSelectInput from "./ExerciseSelectInput";
 import useSWR from "swr";
 import authStore from "@/app/store/authStore";
 import LastWorkout from "./LastWorkout";
-import { makeAutoObservable } from "mobx";
+import {makeAutoObservable} from "mobx";
 import config from "@/utils/config";
-import { Button } from "@/components/ui/button";
+import {Button} from "@/components/ui/button";
 
 class Store {
   constructor() {
@@ -31,8 +31,8 @@ class Store {
 
 export const store = new Store();
 
-function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
-  const { apiUrl } = config;
+function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
+  const {apiUrl} = config;
   const submitCount = useRef(0);
 
   // SWR Fetcher
@@ -57,10 +57,7 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
     data: exercisesData,
     error: exercisesError,
     mutate: mutateExercises,
-  } = useSWR(
-    `${apiUrl}/exercise?body_part_name=${part?.name || ""}`,
-    fetcher
-  );
+  } = useSWR(`${apiUrl}/exercise?body_part_name=${part?.name || ""}`, fetcher);
 
   useEffect(() => {
     if (store.currentSelectedExercise) {
@@ -92,11 +89,11 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
   }, [date]);
 
   useEffect(() => {
-    console.log('Current exercise changed:', store.currentSelectedExercise);
+    console.log("Current exercise changed:", store.currentSelectedExercise);
   }, [store.currentSelectedExercise]);
 
   useEffect(() => {
-    console.log('Exercises data updated:', exercisesData);
+    console.log("Exercises data updated:", exercisesData);
   }, [exercisesData]);
 
   if (exercisesError)
@@ -110,7 +107,7 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
   const handleSubmit = async () => {
     try {
       setAddedExercise(store.currentSelectedExercise);
-      
+
       const response = await fetch(`${apiUrl}/workoutset`, {
         method: "POST",
         credentials: "include",
@@ -123,18 +120,18 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
           exercise_name: store.currentSelectedExercise,
         }),
       });
-      
+
       const data = await response.json();
-      
+
       // 1. 等待顶层数据更新
       await mutateWorkout();
-      
+
       // 2. 需要传入 mutateWorkoutSet 来更新具体的动作列表
       // 或者通过共享的 store 来触发更新
-      
+
       store.setCurrentExercise("");
     } catch (error) {
-      console.error('Submission error:', error);
+      console.error("Submission error:", error);
     }
   };
 
@@ -182,11 +179,14 @@ function AddExerciseButton({ part, date, setAddedExercise, mutateWorkout }) {
         title="Add Exercise"
         description="Add an exercise to your workout"
         triggerButton={
-          <Button onClick={() => store.setCurrentExercise("")} variant='secondary'>
-            <CirclePlus className="w-4 text-gray-400" /> 
+          <Button
+            onClick={() => store.setCurrentExercise("")}
+            variant="secondary"
+          >
+            <CirclePlus className="w-4 text-gray-400" />
             &nbsp;添加训练动作
           </Button>
-        } 
+        }
         submitButtonText="Confirm"
         onHandleSubmit={handleSubmit}
       >
