@@ -160,7 +160,7 @@ jobs:
               -v /home/${{ secrets.SERVER_USER }}/app/backend/db:/app/db \
               --network traefik_net \
               --label "traefik.enable=true" \
-              --label "traefik.http.routers.gymapp_api.rule=PathPrefix(`/api`)" \
+              --label "traefik.http.routers.gymapp.rule=Host(`39.107.126.13`)" && PathPrefix(`/api`) \
               --label "traefik.http.routers.gymapp_api.entrypoints=websecure" \
               --label "traefik.http.routers.gymapp_api.tls=true" \
               --label "traefik.http.services.gymapp_api.loadbalancer.server.port=8000" \
@@ -208,10 +208,10 @@ jobs:
             docker load -i /home/${{ secrets.SERVER_USER }}/app/frontend/gymapp-frontend.tar
             docker stop gymapp-frontend || true
             docker rm gymapp-frontend || true
-            docker run -d --name gymapp-frontend \-p 3000:3000 \
+            docker run -d --name gymapp-frontend -p 3000:3000 \
               --network traefik_net \
               --label "traefik.enable=true" \
-              --label "traefik.http.routers.gymapp.rule=PathPrefix(`/`)" \
+              --label "traefik.http.routers.gymapp.rule=Host(`39.107.126.13`)" \
               --label "traefik.http.routers.gymapp.entrypoints=websecure" \
               --label "traefik.http.routers.gymapp.tls=true" \
               --label "traefik.http.services.gymapp.loadbalancer.server.port=3000" \
