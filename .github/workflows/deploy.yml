@@ -160,7 +160,7 @@ jobs:
               -v /home/${{ secrets.SERVER_USER }}/app/backend/db:/app/db \
               --network traefik_net \
               --label "traefik.enable=true" \
-              --label "traefik.http.routers.gymapp.rule=Host(`39.107.126.13`)" && PathPrefix(`/api`) \
+              --label 'traefik.http.routers.gymapp_api.rule=Host(`39.107.126.13`) && PathPrefix(`/api`)' \
               --label "traefik.http.routers.gymapp_api.entrypoints=websecure" \
               --label "traefik.http.routers.gymapp_api.tls=true" \
               --label "traefik.http.services.gymapp_api.loadbalancer.server.port=8000" \
