@@ -51,10 +51,10 @@ jobs:
             cat <<EOF > /home/${{ secrets.SERVER_USER }}/app/backend/.env
             ${{ secrets.ENV_FILE_CONTENT }}
             EOF
-                  if [ ! -f /home/${{ secrets.SERVER_USER }}/app/backend/.env ]; then
-                    echo "Error: Failed to create .env file!"
-                    exit 1
-                  fi
+            if [ ! -f /home/${{ secrets.SERVER_USER }}/app/backend/.env ]; then
+              echo "Error: Failed to create .env file!"
+              exit 1
+            fi
 
       # 后端步骤
       - name: Verify Backend Dockerfile exists
@@ -87,7 +87,7 @@ jobs:
       - name: Verify Frontend Dockerfile exists
         working-directory: ./frontend
         run: |
-          if [ ! -f Dockerfile ];then
+          if [ ! -f Dockerfile ]; then
             echo "Error: Frontend Dockerfile not found!"
             exit 1
           fi
@@ -155,15 +155,23 @@ jobs:
             docker rm gymapp-backend || true
             # docker network create traefik_net || true 
             docker run -d --name gymapp-backend -p 8000:8000 \
-              --env-file /home/${{ secrets.SERVER_USER }}/app/backend/.env \
-              -v /home/${{ secrets.SERVER_USER }}/app/backend/.env:/app/.env \
-              -v /home/${{ secrets.SERVER_USER }}/app/backend/db:/app/db \
+              --env-file /home/ali/app/backend/.env \
+              -v /home/ali/app/backend/.env:/app/.env \
+              -v /home/ali/app/backend/db:/app/db \
               --network traefik_net \
-              --label "traefik.enable=true" \
+              --label 'traefik.enable=true' \
               --label 'traefik.http.routers.gymapp_api.rule=Host(`39.107.126.13`) && PathPrefix(`/api`)' \
-              --label "traefik.http.routers.gymapp_api.entrypoints=websecure" \
-              --label "traefik.http.routers.gymapp_api.tls=true" \
-              --label "traefik.http.services.gymapp_api.loadbalancer.server.port=8000" \
+              --label 'traefik.http.routers.gymapp_api.entrypoints=websecure' \
+              --label 'traefik.http.routers.gymapp_api.tls=true' \
+              --label 'traefik.http.services.gymapp_api.loadbalancer.server.port=8000' \
+              --label 'traefik.http.routers.gymapp_admin.rule=Host(`39.107.126.13`) && PathPrefix(`/admin`)' \
+              --label 'traefik.http.routers.gymapp_admin.entrypoints=websecure' \
+              --label 'traefik.http.routers.gymapp_admin.tls=true' \
+              --label 'traefik.http.routers.gymapp_admin.service=gymapp_api' \
+              --label 'traefik.http.routers.gymapp_static.rule=Host(`39.107.126.13`) && PathPrefix(`/static`)' \
+              --label 'traefik.http.routers.gymapp_static.entrypoints=websecure' \
+              --label 'traefik.http.routers.gymapp_static.tls=true' \
+              --label 'traefik.http.routers.gymapp_static.service=gymapp_api' \
               gymapp-backend:latest
             # cd /home/${{ secrets.SERVER_USER }}/app/backend
             # docker-compose down || true
