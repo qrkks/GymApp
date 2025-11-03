@@ -163,7 +163,7 @@ jobs:
               --label "traefik.http.routers.gymapp_api.rule=PathPrefix(`/api`)" \
               --label "traefik.http.routers.gymapp_api.entrypoints=websecure" \
               --label "traefik.http.routers.gymapp_api.tls=true" \
-              --label "traefik.http.services.gymapp_api.loadbalancer.server.port=8000"
+              --label "traefik.http.services.gymapp_api.loadbalancer.server.port=8000" \
               gymapp-backend:latest
             # cd /home/${{ secrets.SERVER_USER }}/app/backend
             # docker-compose down || true
