@@ -210,12 +210,12 @@ jobs:
             docker rm gymapp-frontend || true
             docker run -d --name gymapp-frontend -p 3000:3000 \
               --network traefik_net \
-              --label "traefik.enable=true" \
-              --label "traefik.http.routers.gymapp.rule=Host(`39.107.126.13`)" \
-              --label "traefik.http.routers.gymapp.entrypoints=websecure" \
-              --label "traefik.http.routers.gymapp.tls=true" \
-              --label "traefik.http.services.gymapp.loadbalancer.server.port=3000" \
-              gymapp-frontend:latest
+              --label 'traefik.enable=true' \
+              --label 'traefik.http.routers.gymapp.rule=Host(`39.107.126.13`)' \
+              --label 'traefik.http.routers.gymapp.entrypoints=websecure' \
+              --label 'traefik.http.routers.gymapp.tls=true' \
+              --label 'traefik.http.services.gymapp.loadbalancer.server.port=3000' \
+              gymapp-frontend:latest 
             # cd /home/${{ secrets.SERVER_USER }}/app/frontend
             # docker-compose down || true
             # docker-compose up -d
