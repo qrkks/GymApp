@@ -153,12 +153,12 @@ jobs:
             docker load -i /home/${{ secrets.SERVER_USER }}/app/backend/gymapp-backend.tar
             docker stop gymapp-backend || true
             docker rm gymapp-backend || true
-            # docker network create nginx-network || true 
+            # docker network create traefik_network || true 
             docker run -d --name gymapp-backend -p 8000:8000 \
               --env-file /home/${{ secrets.SERVER_USER }}/app/backend/.env \
               -v /home/${{ secrets.SERVER_USER }}/app/backend/.env:/app/.env \
               -v /home/${{ secrets.SERVER_USER }}/app/backend/db:/app/db \
-              --network nginx-network \
+              --network traefik_network \
               gymapp-backend:latest
             # cd /home/${{ secrets.SERVER_USER }}/app/backend
             # docker-compose down || true
@@ -172,7 +172,7 @@ jobs:
               docker logs gymapp-backend
               exit 1
             fi
- 
+
       # 运行 Django migrate 和 collectstatic
       - name: Run Django Migrations and Collectstatic on Server
         uses: appleboy/ssh-action@v0.1.8
@@ -203,8 +203,13 @@ jobs:
             docker load -i /home/${{ secrets.SERVER_USER }}/app/frontend/gymapp-frontend.tar
             docker stop gymapp-frontend || true
             docker rm gymapp-frontend || true
-            docker run -d --name gymapp-frontend -p 3000:3000 \
-              --network nginx-network \
+            docker run -d --name gymapp-frontend \-p 3000:3000 \
+              --network traefik_network \
+              --label "traefik.enable=true" \
+              --label "traefik.http.routers.gymapp.rule=PathPrefix(`/`)" \
+              --label "traefik.http.routers.gymapp.entrypoints=websecure" \
+              --label "traefik.http.routers.gymapp.tls=true" \
+              --label "traefik.http.services.gymapp.loadbalancer.server.port=3000" \
               gymapp-frontend:latest
             # cd /home/${{ secrets.SERVER_USER }}/app/frontend
             # docker-compose down || true
@@ -229,4 +234,3 @@ jobs:
           script: |
             # 清理未使用的 Docker 资源
             docker system prune -f
-
