@@ -155,9 +155,9 @@ jobs:
             docker rm gymapp-backend || true
             # docker network create traefik_net || true 
             docker run -d --name gymapp-backend -p 8000:8000 \
-              --env-file /home/ali/app/backend/.env \
-              -v /home/ali/app/backend/.env:/app/.env \
-              -v /home/ali/app/backend/db:/app/db \
+              --env-file /home/${{ secrets.SERVER_USER }}/app/backend/.env \
+              -v /home/${{ secrets.SERVER_USER }}/app/backend/.env:/app/.env \
+              -v /home/${{ secrets.SERVER_USER }}/app/backend/db:/app/db \
               --network traefik_net \
               --label 'traefik.enable=true' \
               --label 'traefik.http.routers.gymapp_api.rule=Host(`39.107.126.13`) && PathPrefix(`/api`)' \
