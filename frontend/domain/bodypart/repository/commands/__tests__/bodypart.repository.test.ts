@@ -4,6 +4,7 @@
 import { getTestDb } from '@/tests/setup/test-db';
 import * as bodyPartCommands from '../bodypart.repository';
 import * as bodyPartQueries from '../../queries/bodypart.repository';
+import * as userCommands from '@domain/user/repository/commands/user.repository';
 import { bodyParts, users } from '@/lib/db/schema';
 
 // Mock the database module
