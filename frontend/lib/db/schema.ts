@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real, unique, primaryKey } from 'drizzle-orm/sqlite-core';
 import { relations } from 'drizzle-orm';
 
 // User table (for NextAuth.js)
@@ -18,7 +18,7 @@ export const bodyParts = sqliteTable('body_parts', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
 }, (table) => ({
-  uniqueUserBodyPart: sqliteTable.unique({ userId: table.userId, name: table.name }),
+  uniqueUserBodyPart: unique().on(table.userId, table.name),
 }));
 
 // Exercise table
@@ -29,7 +29,7 @@ export const exercises = sqliteTable('exercises', {
   description: text('description'),
   bodyPartId: integer('body_part_id').notNull().references(() => bodyParts.id, { onDelete: 'cascade' }),
 }, (table) => ({
-  uniqueUserExercise: sqliteTable.unique({ userId: table.userId, name: table.name }),
+  uniqueUserExercise: unique().on(table.userId, table.name),
 }));
 
 // Workout table
@@ -40,7 +40,7 @@ export const workouts = sqliteTable('workouts', {
   startTime: integer('start_time', { mode: 'timestamp' }).notNull(),
   endTime: integer('end_time', { mode: 'timestamp' }),
 }, (table) => ({
-  uniqueUserDate: sqliteTable.unique({ userId: table.userId, date: table.date }),
+  uniqueUserDate: unique().on(table.userId, table.date),
 }));
 
 // WorkoutBodyPart junction table (many-to-many relationship)
@@ -48,7 +48,7 @@ export const workoutBodyParts = sqliteTable('workout_body_parts', {
   workoutId: integer('workout_id').notNull().references(() => workouts.id, { onDelete: 'cascade' }),
   bodyPartId: integer('body_part_id').notNull().references(() => bodyParts.id, { onDelete: 'cascade' }),
 }, (table) => ({
-  pk: sqliteTable.primaryKey({ columns: [table.workoutId, table.bodyPartId] }),
+  pk: primaryKey({ columns: [table.workoutId, table.bodyPartId] }),
 }));
 
 // WorkoutSet table
@@ -58,7 +58,7 @@ export const workoutSets = sqliteTable('workout_sets', {
   workoutId: integer('workout_id').notNull().references(() => workouts.id, { onDelete: 'cascade' }),
   exerciseId: integer('exercise_id').notNull().references(() => exercises.id, { onDelete: 'cascade' }),
 }, (table) => ({
-  uniqueWorkoutExercise: sqliteTable.unique({ workoutId: table.workoutId, exerciseId: table.exerciseId }),
+  uniqueWorkoutExercise: unique().on(table.workoutId, table.exerciseId),
 }));
 
 // Set table

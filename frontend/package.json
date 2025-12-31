@@ -9,7 +9,10 @@
     "lint": "next lint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "db:init": "node scripts/init-db.js",
+    "db:init-alt": "node scripts/init-db-alternative.js",
+    "db:init-sqlite3": "scripts\\init-db-sqlite3.bat"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -19,10 +22,10 @@
     "@radix-ui/react-popover": "^1.1.15",
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",
-    "better-sqlite3": "^11.10.0",
+    "@radix-ui/react-toast": "^1.2.2",
+    "better-sqlite3": "^12.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "date-fns": "^3.6.0",
     "drizzle-orm": "^0.36.4",
     "lucide-react": "^0.451.0",
     "mobx-react-lite": "^4.1.1",
@@ -44,5 +47,8 @@
     "eslint-config-next": "14.2.15",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.19"
+  },
+  "volta": {
+    "node": "22.21.1"
   }
 }

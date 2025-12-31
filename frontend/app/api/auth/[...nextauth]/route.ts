@@ -1,8 +1,21 @@
-import NextAuth, { NextAuthOptions } from 'next-auth';
+import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { getUserByEmail, createUser } from '@/lib/auth';
 
-export const authOptions: NextAuthOptions = {
+// NextAuth v5 requires AUTH_SECRET
+// Try multiple environment variable names
+const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+
+if (!secret) {
+  throw new Error(
+    'Missing AUTH_SECRET environment variable. ' +
+    'Please set AUTH_SECRET in your .env.local file. ' +
+    'You can generate one using: openssl rand -base64 32'
+  );
+}
+
+export const authOptions = {
+  secret: secret,
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -63,5 +76,7 @@ export const authOptions: NextAuthOptions = {
 
 const handler = NextAuth(authOptions);
 
-export { handler as GET, handler as POST };
+export const { handlers, auth } = handler;
+
+export const { GET, POST } = handlers;
 
