@@ -12,6 +12,10 @@ export type ErrorCode =
   | 'UNAUTHORIZED'
   | 'VALIDATION_ERROR'
   | 'NOT_FOUND'
+  // User 相关错误
+  | 'USER_NOT_FOUND'
+  | 'USER_ALREADY_EXISTS'
+  | 'INVALID_EMAIL'
   // BodyPart 相关错误
   | 'BODY_PART_ALREADY_EXISTS'
   | 'BODY_PART_NOT_FOUND'
@@ -71,6 +75,7 @@ export function getStatusCode(errorCode: ErrorCode): number {
     case 'UNAUTHORIZED':
       return 401;
     case 'NOT_FOUND':
+    case 'USER_NOT_FOUND':
     case 'BODY_PART_NOT_FOUND':
     case 'EXERCISE_NOT_FOUND':
     case 'WORKOUT_NOT_FOUND':
@@ -78,6 +83,8 @@ export function getStatusCode(errorCode: ErrorCode): number {
     case 'SET_NOT_FOUND':
       return 404;
     case 'VALIDATION_ERROR':
+    case 'INVALID_EMAIL':
+    case 'USER_ALREADY_EXISTS':
     case 'BODY_PART_ALREADY_EXISTS':
     case 'EXERCISE_ALREADY_EXISTS':
     case 'WORKOUT_ALREADY_EXISTS':

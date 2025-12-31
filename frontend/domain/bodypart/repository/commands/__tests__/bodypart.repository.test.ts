@@ -21,12 +21,13 @@ describe('BodyPart Repository - Commands', () => {
   beforeEach(async () => {
     // 清理数据库
     await db.delete(bodyParts);
+    await db.delete(users);
     // 创建测试用户（body_parts 需要外键引用 users）
-    await db.insert(users).values({
+    await userCommands.insertUser({
       id: testUserId,
       email: 'test@example.com',
       name: 'Test User',
-    }).onConflictDoNothing();
+    });
   });
 
   describe('insertBodyPart', () => {
@@ -70,6 +71,14 @@ describe('BodyPart Repository - Commands', () => {
 
     it('should return null when body part belongs to different user', async () => {
       const otherUserId = 'test-user-2';
+      
+      // 创建另一个用户
+      await userCommands.insertUser({
+        id: otherUserId,
+        email: 'other@example.com',
+        name: 'Other User',
+      });
+      
       const created = await bodyPartCommands.insertBodyPart(otherUserId, 'Chest');
       
       const result = await bodyPartCommands.updateBodyPart(
@@ -99,6 +108,14 @@ describe('BodyPart Repository - Commands', () => {
 
     it('should return false when body part belongs to different user', async () => {
       const otherUserId = 'test-user-2';
+      
+      // 创建另一个用户
+      await userCommands.insertUser({
+        id: otherUserId,
+        email: 'other@example.com',
+        name: 'Other User',
+      });
+      
       const created = await bodyPartCommands.insertBodyPart(otherUserId, 'Chest');
       
       const result = await bodyPartCommands.deleteBodyPart(created.id, testUserId);
@@ -119,6 +136,13 @@ describe('BodyPart Repository - Commands', () => {
 
     it('should only delete body parts for the specified user', async () => {
       const otherUserId = 'test-user-2';
+      
+      // 创建另一个用户
+      await userCommands.insertUser({
+        id: otherUserId,
+        email: 'other@example.com',
+        name: 'Other User',
+      });
       
       await bodyPartCommands.insertBodyPart(testUserId, 'Chest');
       await bodyPartCommands.insertBodyPart(otherUserId, 'Back');

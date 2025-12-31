@@ -10,6 +10,7 @@ import {
   deleteAllBodyParts,
 } from '../bodypart.use-case';
 import * as bodyPartCommands from '../../repository/commands/bodypart.repository';
+import * as userCommands from '@domain/user/repository/commands/user.repository';
 import { bodyParts, users } from '@/lib/db/schema';
 
 // Mock the database module
@@ -27,12 +28,13 @@ describe('BodyPart Application Service', () => {
   beforeEach(async () => {
     // 清理数据库
     await db.delete(bodyParts);
+    await db.delete(users);
     // 创建测试用户（body_parts 需要外键引用 users）
-    await db.insert(users).values({
+    await userCommands.insertUser({
       id: testUserId,
       email: 'test@example.com',
       name: 'Test User',
-    }).onConflictDoNothing();
+    });
   });
 
   describe('getBodyPartList', () => {

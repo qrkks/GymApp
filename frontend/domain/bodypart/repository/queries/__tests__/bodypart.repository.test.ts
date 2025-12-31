@@ -21,12 +21,13 @@ describe('BodyPart Repository - Queries', () => {
   beforeEach(async () => {
     // 清理数据库
     await db.delete(bodyParts);
+    await db.delete(users);
     // 创建测试用户（body_parts 需要外键引用 users）
-    await db.insert(users).values({
+    await userCommands.insertUser({
       id: testUserId,
       email: 'test@example.com',
       name: 'Test User',
-    }).onConflictDoNothing();
+    });
   });
 
   describe('getBodyPartList', () => {
@@ -50,11 +51,11 @@ describe('BodyPart Repository - Queries', () => {
       const otherUserId = 'test-user-2';
       
       // 创建另一个用户
-      await db.insert(users).values({
+      await userCommands.insertUser({
         id: otherUserId,
         email: 'other@example.com',
         name: 'Other User',
-      }).onConflictDoNothing();
+      });
       
       await bodyPartCommands.insertBodyPart(testUserId, 'Chest');
       await bodyPartCommands.insertBodyPart(otherUserId, 'Back');
@@ -84,11 +85,11 @@ describe('BodyPart Repository - Queries', () => {
       const otherUserId = 'test-user-2';
       
       // 创建另一个用户
-      await db.insert(users).values({
+      await userCommands.insertUser({
         id: otherUserId,
         email: 'other@example.com',
         name: 'Other User',
-      }).onConflictDoNothing();
+      });
       
       const created = await bodyPartCommands.insertBodyPart(otherUserId, 'Chest');
       
@@ -116,11 +117,11 @@ describe('BodyPart Repository - Queries', () => {
       const otherUserId = 'test-user-2';
       
       // 创建另一个用户
-      await db.insert(users).values({
+      await userCommands.insertUser({
         id: otherUserId,
         email: 'other@example.com',
         name: 'Other User',
-      }).onConflictDoNothing();
+      });
       
       await bodyPartCommands.insertBodyPart(otherUserId, 'Chest');
       
