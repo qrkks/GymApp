@@ -35,10 +35,15 @@ export async function getUserByEmail(email: string) {
 export async function createUser(data: {
   id: string;
   email: string;
-  name?: string;
+  username?: string;
+  password?: string;
   image?: string;
 }) {
-  const result = await userUseCase.createUser(data);
+  // 如果没有提供 password，使用空字符串（仅用于兼容旧代码，不推荐）
+  const result = await userUseCase.createUser({
+    ...data,
+    password: data.password || '',
+  });
   if (!result.success) {
     throw new Error(result.error.message);
   }

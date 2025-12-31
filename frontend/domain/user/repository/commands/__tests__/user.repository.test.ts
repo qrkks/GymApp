@@ -27,20 +27,20 @@ describe('User Repository - Commands', () => {
       const result = await userCommands.insertUser({
         id: 'test-user-1',
         email: 'test@example.com',
-        name: 'Test User',
+        username: 'Test User',
       });
       
       expect(result).toBeDefined();
       expect(result.id).toBe('test-user-1');
       expect(result.email).toBe('test@example.com');
-      expect(result.name).toBe('Test User');
+      expect(result.username).toBe('Test User');
     });
 
     it('should create user with optional fields', async () => {
       const result = await userCommands.insertUser({
         id: 'test-user-2',
         email: 'test2@example.com',
-        name: 'Test User 2',
+        username: 'Test User 2',
         image: 'https://example.com/avatar.jpg',
       });
       
@@ -53,21 +53,21 @@ describe('User Repository - Commands', () => {
       const created = await userCommands.insertUser({
         id: 'test-user-1',
         email: 'test@example.com',
-        name: 'Test User',
+        username: 'Test User',
       });
       
       const updated = await userCommands.updateUser('test-user-1', {
-        name: 'Updated Name',
+        username: 'Updated Name',
       });
       
       expect(updated).not.toBeNull();
-      expect(updated?.name).toBe('Updated Name');
+      expect(updated?.username).toBe('Updated Name');
       expect(updated?.email).toBe('test@example.com');
     });
 
     it('should return null when user does not exist', async () => {
       const result = await userCommands.updateUser('non-existent', {
-        name: 'New Name',
+        username: 'New Name',
       });
       expect(result).toBeNull();
     });
@@ -78,7 +78,7 @@ describe('User Repository - Commands', () => {
       const created = await userCommands.insertUser({
         id: 'test-user-1',
         email: 'test@example.com',
-        name: 'Test User',
+        username: 'Test User',
       });
       
       const deleted = await userCommands.deleteUser('test-user-1');

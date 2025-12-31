@@ -32,7 +32,7 @@ describe('User Application Service', () => {
       await db.insert(users).values({
         id: 'test-user-1',
         email: 'test@example.com',
-        name: 'Test User',
+        username: 'Test User',
       });
       
       const result = await getUserById('test-user-1');
@@ -58,7 +58,7 @@ describe('User Application Service', () => {
       await db.insert(users).values({
         id: 'test-user-1',
         email: 'test@example.com',
-        name: 'Test User',
+        username: 'Test User',
       });
       
       const result = await getUserByEmail('test@example.com');
@@ -84,7 +84,7 @@ describe('User Application Service', () => {
       const result = await createUser({
         id: 'test-user-1',
         email: 'test@example.com',
-        name: 'Test User',
+        username: 'Test User',
       });
       
       expect(result.success).toBe(true);
@@ -97,7 +97,7 @@ describe('User Application Service', () => {
       const result = await createUser({
         id: 'test-user-1',
         email: 'invalid-email',
-        name: 'Test User',
+        username: 'Test User',
       });
       
       expect(result.success).toBe(false);
@@ -110,13 +110,13 @@ describe('User Application Service', () => {
       await db.insert(users).values({
         id: 'existing-user',
         email: 'test@example.com',
-        name: 'Existing User',
+        username: 'Existing User',
       });
       
       const result = await createUser({
         id: 'test-user-1',
         email: 'test@example.com',
-        name: 'Test User',
+        username: 'Test User',
       });
       
       expect(result.success).toBe(false);
@@ -129,13 +129,13 @@ describe('User Application Service', () => {
       await db.insert(users).values({
         id: 'test-user-1',
         email: 'existing@example.com',
-        name: 'Existing User',
+        username: 'Existing User',
       });
       
       const result = await createUser({
         id: 'test-user-1',
         email: 'test@example.com',
-        name: 'Test User',
+        username: 'Test User',
       });
       
       expect(result.success).toBe(false);
@@ -150,22 +150,22 @@ describe('User Application Service', () => {
       await db.insert(users).values({
         id: 'test-user-1',
         email: 'test@example.com',
-        name: 'Test User',
+        username: 'Test User',
       });
       
       const result = await updateUser('test-user-1', {
-        name: 'Updated Name',
+        username: 'Updated Name',
       });
       
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.name).toBe('Updated Name');
+        expect(result.data.username).toBe('Updated Name');
       }
     });
 
     it('should return failure when user not found', async () => {
       const result = await updateUser('non-existent', {
-        name: 'New Name',
+        username: 'New Name',
       });
       
       expect(result.success).toBe(false);
@@ -178,12 +178,12 @@ describe('User Application Service', () => {
       await db.insert(users).values({
         id: 'test-user-1',
         email: 'test@example.com',
-        name: 'Test User',
+        username: 'Test User',
       });
       await db.insert(users).values({
         id: 'test-user-2',
         email: 'other@example.com',
-        name: 'Other User',
+        username: 'Other User',
       });
       
       const result = await updateUser('test-user-1', {
@@ -202,7 +202,7 @@ describe('User Application Service', () => {
       await db.insert(users).values({
         id: 'test-user-1',
         email: 'test@example.com',
-        name: 'Test User',
+        username: 'Test User',
       });
       
       const result = await deleteUser('test-user-1');

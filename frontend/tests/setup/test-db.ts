@@ -20,8 +20,9 @@ function initializeTestDb() {
   testSqlite.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
-      name TEXT,
+      username TEXT UNIQUE,
       email TEXT UNIQUE,
+      password TEXT,
       emailVerified INTEGER,
       image TEXT,
       createdAt INTEGER,

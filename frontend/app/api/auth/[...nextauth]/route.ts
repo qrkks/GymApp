@@ -1,6 +1,7 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { getUserByEmail, createUser } from '@/lib/auth';
+import { getUserByEmail } from '@/lib/auth';
+import * as userUseCase from '@domain/user/application/user.use-case';
 
 // NextAuth v5 requires AUTH_SECRET
 // Try multiple environment variable names
@@ -20,32 +21,28 @@ export const authOptions = {
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        identifier: { label: 'Username or Email', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email) {
+        if (!credentials?.identifier || !credentials?.password) {
           return null;
         }
 
-        // For now, we'll use a simple email-based auth
-        // In production, you should implement proper password hashing
-        let user = await getUserByEmail(credentials.email);
+        // 验证用户密码（支持用户名或邮箱）
+        const result = await userUseCase.verifyPassword(
+          credentials.identifier,
+          credentials.password
+        );
 
-        if (!user) {
-          // Auto-create user if doesn't exist (for development)
-          // In production, you should have a proper registration flow
-          user = await createUser({
-            id: credentials.email,
-            email: credentials.email,
-            name: credentials.email.split('@')[0],
-          });
+        if (!result.success) {
+          return null;
         }
 
         return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
+          id: result.data.id,
+          email: result.data.email,
+          name: result.data.username, // NextAuth 使用 name 字段，我们映射 username
         };
       },
     }),

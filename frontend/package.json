@@ -15,7 +15,8 @@
     "db:push": "drizzle-kit push",
     "db:init": "node scripts/init-db.js",
     "db:init-alt": "node scripts/init-db-alternative.js",
-    "db:init-sqlite3": "scripts\\init-db-sqlite3.bat"
+    "db:init-sqlite3": "scripts\\init-db-sqlite3.bat",
+    "db:reset": "tsx scripts/reset-db.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -26,6 +27,7 @@
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-toast": "^1.2.2",
+    "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -43,6 +45,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/jest": "^29.5.12",
     "@types/react": "^18.3.27",
@@ -53,7 +56,8 @@
     "jest-environment-node": "^29.7.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.19",
-    "ts-jest": "^29.1.2"
+    "ts-jest": "^29.1.2",
+    "tsx": "^4.21.0"
   },
   "volta": {
     "node": "22.21.1"

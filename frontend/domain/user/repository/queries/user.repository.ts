@@ -33,3 +33,16 @@ export async function findUserByEmail(email: string): Promise<User | null> {
   return result || null;
 }
 
+/**
+ * 根据用户名查找用户
+ */
+export async function findUserByUsername(username: string): Promise<User | null> {
+  const [result] = await db
+    .select()
+    .from(users)
+    .where(eq(users.username, username))
+    .limit(1);
+
+  return result || null;
+}
+

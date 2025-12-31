@@ -82,7 +82,7 @@ function AddButton({date, set, part, mutateWorkoutSet}) {
         submitButtonText="确定"
         onHandleSubmit={handleSubmit}
       >
-        <form className="flex flex-col items-center justify-center w-full gap-2">
+        <form className="flex flex-col gap-2 justify-center items-center w-full">
           <Input
             name="weight"
             type="number"

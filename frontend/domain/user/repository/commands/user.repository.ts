@@ -10,7 +10,8 @@ export type User = typeof users.$inferSelect;
 export interface CreateUserData {
   id: string;
   email: string;
-  name?: string;
+  username?: string;
+  password?: string; // 密码哈希
   image?: string;
 }
 
@@ -23,7 +24,8 @@ export async function insertUser(data: CreateUserData): Promise<User> {
     .values({
       id: data.id,
       email: data.email,
-      name: data.name,
+      username: data.username,
+      password: data.password,
       image: data.image,
       emailVerified: false,
       createdAt: new Date(),

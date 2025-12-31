@@ -32,7 +32,7 @@ describe('User Repository - Queries', () => {
       const created = await userCommands.insertUser({
         id: 'test-user-1',
         email: 'test@example.com',
-        name: 'Test User',
+        username: 'Test User',
       });
       
       const result = await userQueries.findUserById('test-user-1');
@@ -53,7 +53,7 @@ describe('User Repository - Queries', () => {
       await userCommands.insertUser({
         id: 'test-user-1',
         email: 'test@example.com',
-        name: 'Test User',
+        username: 'Test User',
       });
       
       const result = await userQueries.findUserByEmail('test@example.com');

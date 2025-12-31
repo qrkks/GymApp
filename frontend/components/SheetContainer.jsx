@@ -12,7 +12,7 @@ import {
 
 import {useState} from "react";
 
-export default function SheetProvider({
+export default function SheetContainer({
   triggerButton,
   title,
   description,
