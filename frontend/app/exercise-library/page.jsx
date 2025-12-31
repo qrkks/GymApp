@@ -12,7 +12,7 @@ function page() {
     data: bodyParts,
     error,
     mutate,
-  } = useSWR(`${apiUrl}/bodypart`, (url) =>
+  } = useSWR(`${apiUrl}/body-part`, (url) =>
     fetch(url, {
       credentials: "include",
       headers: {"X-CSRFToken": authStore.getCookie("csrftoken")},

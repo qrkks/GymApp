@@ -9,7 +9,7 @@ import {
   getBodyPartList,
   createBodyPart,
   deleteAllBodyParts,
-} from '@domain/bodypart/application/bodypart.use-case';
+} from '@domain/body-part/application/body-part.use-case';
 import { toHttpResponse } from '@domain/shared/error-types';
 
 const bodyPartSchema = z.object({
@@ -17,7 +17,7 @@ const bodyPartSchema = z.object({
 });
 
 /**
- * GET /api/bodypart - Get all body parts for current user
+ * GET /api/body-part - Get all body parts for current user
  */
 export async function GET() {
   try {
@@ -42,7 +42,7 @@ export async function GET() {
 }
 
 /**
- * POST /api/bodypart - Create a new body part
+ * POST /api/body-part - Create a new body part
  */
 export async function POST(request: NextRequest) {
   try {
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * DELETE /api/bodypart - Delete all body parts for current user
+ * DELETE /api/body-part - Delete all body parts for current user
  */
 export async function DELETE() {
   try {
@@ -99,3 +99,4 @@ export async function DELETE() {
     );
   }
 }
+

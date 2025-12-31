@@ -2,8 +2,8 @@
  * BodyPart Repository Commands 单元测试
  */
 import { getTestDb } from '@/tests/setup/test-db';
-import * as bodyPartCommands from '../bodypart.repository';
-import * as bodyPartQueries from '../../queries/bodypart.repository';
+import * as bodyPartCommands from '../body-part.repository';
+import * as bodyPartQueries from '../../queries/body-part.repository';
 import * as userCommands from '@domain/user/repository/commands/user.repository';
 import { bodyParts, users } from '@/lib/db/schema';
 

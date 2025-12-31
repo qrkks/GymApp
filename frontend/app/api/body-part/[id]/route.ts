@@ -8,15 +8,15 @@ import { z } from 'zod';
 import {
   updateBodyPart,
   deleteBodyPart,
-} from '@domain/bodypart/application/bodypart.use-case';
+} from '@domain/body-part/application/body-part.use-case';
 import { toHttpResponse } from '@domain/shared/error-types';
 
 const patchSchema = z.object({
-  bodypart_name: z.string().min(1),
+  body_part_name: z.string().min(1),
 });
 
 /**
- * PATCH /api/bodypart/[id] - Update body part name
+ * PATCH /api/body-part/[id] - Update body part name
  */
 export async function PATCH(
   request: NextRequest,
@@ -39,7 +39,7 @@ export async function PATCH(
       );
     }
 
-    const result = await updateBodyPart(id, user.id, data.bodypart_name);
+    const result = await updateBodyPart(id, user.id, data.body_part_name);
     const response = toHttpResponse(result);
 
     return NextResponse.json(response.body, { status: response.status });
@@ -61,7 +61,7 @@ export async function PATCH(
 }
 
 /**
- * DELETE /api/bodypart/[id] - Delete a body part
+ * DELETE /api/body-part/[id] - Delete a body part
  */
 export async function DELETE(
   request: NextRequest,
@@ -96,3 +96,4 @@ export async function DELETE(
     );
   }
 }
+

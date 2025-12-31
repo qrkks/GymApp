@@ -8,8 +8,8 @@ import {
   updateBodyPart,
   deleteBodyPart,
   deleteAllBodyParts,
-} from '../bodypart.use-case';
-import * as bodyPartCommands from '../../repository/commands/bodypart.repository';
+} from '../body-part.use-case';
+import * as bodyPartCommands from '../../repository/commands/body-part.repository';
 import * as userCommands from '@domain/user/repository/commands/user.repository';
 import { bodyParts, users } from '@/lib/db/schema';
 

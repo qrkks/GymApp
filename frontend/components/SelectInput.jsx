@@ -19,7 +19,7 @@ export default function SelectInput({placeholder, entries, mutate, onSelectChang
     if (value === "new") {
       const newEntry = prompt("请输入新建的部位：");
       if (newEntry) {
-        fetch(`${apiUrl}/bodypart`, {
+        fetch(`${apiUrl}/body-part`, {
           method: "POST",
           credentials: "include",
           headers: {

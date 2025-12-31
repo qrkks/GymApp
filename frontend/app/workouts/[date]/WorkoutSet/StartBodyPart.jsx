@@ -17,7 +17,7 @@ function StartBodyPart({date, mutateWorkout}) {
     data: bodyPartsDataForSelect,
     error: bodyPartsError,
     mutate: mutateBodyParts,
-  } = useSWR(`${apiUrl}/bodypart`, fetcher);
+  } = useSWR(`${apiUrl}/body-part`, fetcher);
 
   if (bodyPartsError) return <div>Failed to load data</div>;
 

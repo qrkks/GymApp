@@ -15,16 +15,16 @@ export default function PopoverButton({set, part, date, mutateWorkout}) {
   function handleSubmit(e) {
     setIsPopoverOpen(false);
     e.preventDefault();
-    const bodypart_name = e.target[0].value;
-    console.log(bodypart_name);
-    fetch(`${apiUrl}/bodypart/${part.id}`, {
+    const body_part_name = e.target[0].value;
+    console.log(body_part_name);
+    fetch(`${apiUrl}/body-part/${part.id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": authStore.getCookie("csrftoken"),
       },
       credentials: "include",
-      body: JSON.stringify({bodypart_name: bodypart_name}),
+      body: JSON.stringify({body_part_name: body_part_name}),
     })
       .then((res) => {
         if (!res.ok) {

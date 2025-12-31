@@ -3,8 +3,8 @@
  * 协调 Repository 和 Domain Service，处理完整用例
  */
 import { Result, success, failure } from '@domain/shared/error-types';
-import * as bodyPartQueries from '@domain/bodypart/repository/queries/bodypart.repository';
-import * as bodyPartCommands from '@domain/bodypart/repository/commands/bodypart.repository';
+import * as bodyPartQueries from '@domain/body-part/repository/queries/body-part.repository';
+import * as bodyPartCommands from '@domain/body-part/repository/commands/body-part.repository';
 
 export type BodyPart = bodyPartQueries.BodyPart;
 

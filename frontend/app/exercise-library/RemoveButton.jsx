@@ -11,7 +11,7 @@ function RemoveButton({ part, mutate}) {
     );
     if (!isConfirmed) return;
 
-    fetch(`${apiUrl}/bodypart/${part.id}`, {
+    fetch(`${apiUrl}/body-part/${part.id}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
