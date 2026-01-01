@@ -1,4 +1,4 @@
-FROM node:22-bookworm-slim AS base
+FROM node:20-bookworm-slim AS base
 
 ARG AUTH_SECRET
 ARG DATABASE_PATH
