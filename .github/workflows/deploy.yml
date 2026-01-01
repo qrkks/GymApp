@@ -21,67 +21,9 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            mkdir -p /home/${{ secrets.SERVER_USER }}/app/backend
             mkdir -p /home/${{ secrets.SERVER_USER }}/app/frontend
-            # 删除旧的后端和前端文件
-            rm -f /home/${{ secrets.SERVER_USER }}/app/backend/gymapp-backend.tar
+            # 删除旧的前端文件
             rm -f /home/${{ secrets.SERVER_USER }}/app/frontend/gymapp-frontend.tar
-
-      # 在服务器上创建 .env 文件
-      - name: Create Backend .env File on Server
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          script: |
-            # 确保 backend 目录存在
-            mkdir -p /home/${{ secrets.SERVER_USER }}/app/backend
-            # 检查是否已经存在 .env 文件或目录
-            if [ -d /home/${{ secrets.SERVER_USER }}/app/backend/.env ]; then
-              echo ".env is a directory. Removing it."
-              rm -rf /home/${{ secrets.SERVER_USER }}/app/backend/.env
-            fi
-            if [ -f /home/${{ secrets.SERVER_USER }}/app/backend/.env ]; then
-              echo ".env file already exists. Creating a backup."
-              timestamp=$(date +"%Y%m%d%H%M%S")
-              mv /home/${{ secrets.SERVER_USER }}/app/backend/.env /home/${{ secrets.SERVER_USER }}/app/backend/.env.bak.$timestamp
-            fi
-            # 在服务器上使用 cat 创建 .env 文件
-            cat <<EOF > /home/${{ secrets.SERVER_USER }}/app/backend/.env
-            ${{ secrets.ENV_FILE_CONTENT }}
-            EOF
-            if [ ! -f /home/${{ secrets.SERVER_USER }}/app/backend/.env ]; then
-              echo "Error: Failed to create .env file!"
-              exit 1
-            fi
-
-      # 后端步骤
-      - name: Verify Backend Dockerfile exists
-        working-directory: ./backend
-        run: |
-          if [ ! -f Dockerfile ]; then
-            echo "Error: Backend Dockerfile not found!"
-            exit 1
-          fi
-
-      - name: Build Backend Docker image
-        working-directory: ./backend
-        run: docker build -t gymapp-backend:latest .
-
-      - name: Save Backend Docker image as tar
-        working-directory: ./backend
-        run: docker save -o gymapp-backend.tar gymapp-backend:latest
-
-      - name: Change ownership and permissions of Backend files
-        working-directory: ./backend
-        run: |
-          sudo chown $USER:$USER gymapp-backend.tar
-          sudo chmod 644 gymapp-backend.tar
-
-      - name: Move Backend files to root directory
-        run: |
-          mv ./backend/gymapp-backend.tar .
 
       # 前端步骤
       - name: Verify Frontend Dockerfile exists
@@ -110,17 +52,6 @@ jobs:
         run: |
           mv ./frontend/gymapp-frontend.tar .
 
-      # 传输后端 tar 文件到服务器
-      - name: Transfer Backend tar file to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          source: "gymapp-backend.tar"
-          target: "/home/${{ secrets.SERVER_USER }}/app/backend/"
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          debug: true
-
       # 传输前端 tar 文件到服务器
       - name: Transfer Frontend tar file to server
         uses: appleboy/scp-action@v0.1.7
@@ -131,74 +62,6 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           debug: true
-
-      # 部署后端到服务器
-      - name: Deploy Backend on Server
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          script: |
-
-            # 部署后端
-            if [ ! -f /home/${{ secrets.SERVER_USER }}/app/backend/gymapp-backend.tar ]; then
-              echo "Error: gymapp-backend.tar not found!"
-              exit 1
-            fi
-            if [ ! -f /home/${{ secrets.SERVER_USER }}/app/backend/.env ]; then
-              echo "Error: Backend .env file not found!"
-              exit 1
-            fi
-            docker load -i /home/${{ secrets.SERVER_USER }}/app/backend/gymapp-backend.tar
-            docker stop gymapp-backend || true
-            docker rm gymapp-backend || true
-            # docker network create traefik_net || true 
-            docker run -d --name gymapp-backend -p 8000:8000 \
-              --env-file /home/${{ secrets.SERVER_USER }}/app/backend/.env \
-              -v /home/${{ secrets.SERVER_USER }}/app/backend/.env:/app/.env \
-              -v /home/${{ secrets.SERVER_USER }}/app/backend/db:/app/db \
-              --network traefik_net \
-              --label 'traefik.enable=true' \
-              --label 'traefik.http.routers.gymapp_api.rule=Host(`39.107.126.13`) && PathPrefix(`/api`)' \
-              --label 'traefik.http.routers.gymapp_api.entrypoints=websecure' \
-              --label 'traefik.http.routers.gymapp_api.tls=true' \
-              --label 'traefik.http.services.gymapp_api.loadbalancer.server.port=8000' \
-              --label 'traefik.http.routers.gymapp_admin.rule=Host(`39.107.126.13`) && PathPrefix(`/admin`)' \
-              --label 'traefik.http.routers.gymapp_admin.entrypoints=websecure' \
-              --label 'traefik.http.routers.gymapp_admin.tls=true' \
-              --label 'traefik.http.routers.gymapp_admin.service=gymapp_api' \
-              --label 'traefik.http.routers.gymapp_static.rule=Host(`39.107.126.13`) && PathPrefix(`/static`)' \
-              --label 'traefik.http.routers.gymapp_static.entrypoints=websecure' \
-              --label 'traefik.http.routers.gymapp_static.tls=true' \
-              --label 'traefik.http.routers.gymapp_static.service=gymapp_api' \
-              gymapp-backend:latest
-            # cd /home/${{ secrets.SERVER_USER }}/app/backend
-            # docker-compose down || true
-            # docker-compose up -d
-            # 检查后端容器是否成功启动
-            sleep 5
-            if [ $(docker ps -q -f name=gymapp-backend) ]; then
-              echo "Backend container started successfully."
-            else
-              echo "Error: Backend container failed to start. Checking logs..."
-              docker logs gymapp-backend
-              exit 1
-            fi
-
-      # 运行 Django migrate 和 collectstatic
-      - name: Run Django Migrations and Collectstatic on Server
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          script: |
-            cd /home/${{ secrets.SERVER_USER }}/app/backend/
-            # 运行数据库迁移
-            docker exec gymapp-backend python manage.py migrate --noinput
-            # 收集静态文件
-            docker exec gymapp-backend python manage.py collectstatic --noinput
 
       # 部署前端到服务器
       - name: Deploy Frontend on Server

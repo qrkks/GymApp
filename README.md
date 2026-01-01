@@ -49,12 +49,11 @@ corepack enable
 
 ## 项目结构
 
-- `frontend/` - Next.js 前端应用
-- `backend/` - Django 后端应用
+- `frontend/` - Next.js 全栈应用（包含前端和 API 路由）
 
 ## 快速开始
 
-### 前端开发
+### 开发
 
 ```bash
 cd frontend
@@ -62,13 +61,7 @@ pnpm install
 pnpm dev
 ```
 
-### 后端开发
-
-```bash
-cd backend
-pip install -r requirements.txt
-python manage.py runserver
-```
+应用将在 `http://localhost:3000` 启动，API 路由位于 `/api/*`。
 
 ## 版本管理说明
 
