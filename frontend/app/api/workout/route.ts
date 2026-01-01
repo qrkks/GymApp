@@ -8,6 +8,7 @@ import { z } from 'zod';
 import {
   getWorkoutList,
   createWorkout,
+  createOrGetWorkout,
   deleteAllWorkouts,
 } from '@domain/workout/application/workout.use-case';
 import { toHttpResponse } from '@domain/shared/error-types';
@@ -42,7 +43,8 @@ export async function GET() {
 }
 
 /**
- * POST /api/workout - Create a new workout
+ * POST /api/workout - Create a new workout or get existing one
+ * Supports both create and createOrGet via query parameter
  */
 export async function POST(request: NextRequest) {
   try {
@@ -53,13 +55,24 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const data = workoutSchema.parse(body);
+    
+    // Check if createOrGet is requested via query parameter
+    const searchParams = request.nextUrl.searchParams;
+    const createOrGet = searchParams.get('createOrGet') === 'true';
 
-    const result = await createWorkout(user.id, {
-      date: data.date,
-      startTime: new Date(),
-    });
+    let result;
+    if (createOrGet) {
+      // Use createOrGetWorkout (returns existing if exists, creates if not)
+      result = await createOrGetWorkout(user.id, data.date);
+    } else {
+      // Use createWorkout (fails if already exists)
+      result = await createWorkout(user.id, {
+        date: data.date,
+        startTime: new Date(),
+      });
+    }
+    
     const response = toHttpResponse(result);
-
     return NextResponse.json(response.body, { status: response.status });
   } catch (error: any) {
     if (error instanceof z.ZodError) {

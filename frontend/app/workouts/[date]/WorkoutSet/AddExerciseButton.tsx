@@ -73,7 +73,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
   useEffect(() => {
     if (store.currentSelectedExercise) {
       fetch(
-        `${apiUrl}/last-workout-all-sets?exercise_name=${store.currentSelectedExercise}`,
+        `${apiUrl}/workout/last/sets?exercise_name=${store.currentSelectedExercise}`,
         {
           credentials: "include",
           method: "GET",

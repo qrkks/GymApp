@@ -26,7 +26,7 @@ function AddButton({date, exerciseBlock, part, mutateWorkoutSet}: AddButtonProps
   const fetcher = (url: string) =>
     fetch(url, {credentials: "include"}).then((res) => res.json());
   const {data: lastWorkoutData} = useSWR(
-    `${apiUrl}/last-workout-all-sets?exercise_id=${exerciseBlock.exercise.id}`,
+    `${apiUrl}/workout/last/sets?exercise_id=${exerciseBlock.exercise.id}`,
     fetcher
   );
 

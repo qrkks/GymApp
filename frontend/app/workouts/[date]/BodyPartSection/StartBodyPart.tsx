@@ -35,8 +35,8 @@ function StartBodyPart({date, mutateWorkout}: StartBodyPartProps) {
       return;
     }
 
-    fetch(`${apiUrl}/workout/add-body-parts/${date}`, {
-      method: "PUT",
+    fetch(`${apiUrl}/workout/${date}/body-parts`, {
+      method: "POST",
       credentials: "include",
       headers: {
         "Content-Type": "application/json",

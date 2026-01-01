@@ -15,8 +15,8 @@ function RemoveBodyPartButton({part, date, mutateWorkout}: RemoveBodyPartButtonP
     const isConfirmed = window.confirm(`确定要删除 ${part.name} 吗？`);
     if (!isConfirmed) return;
 
-    fetch(`${apiUrl}/workout/remove-body-parts/${date}`, {
-      method: "PUT",
+    fetch(`${apiUrl}/workout/${date}/body-parts`, {
+      method: "DELETE",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": authStore.getCookie("csrftoken"),

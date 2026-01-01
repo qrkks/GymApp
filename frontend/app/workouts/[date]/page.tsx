@@ -87,7 +87,7 @@ function WorkoutById({params}: WorkoutByIdProps) {
 
   function handleCreateWorkout() {
     if (params?.date && !isWorkoutCreated) {
-      fetch(`${apiUrl}/workout/create`, {
+      fetch(`${apiUrl}/workout?createOrGet=true`, {
         method: "POST",
         credentials: "include",
         headers: {

@@ -1,13 +1,23 @@
+/**
+ * Workout API Routes - Last Workout Sets
+ * 仅处理 HTTP 请求/响应，调用 Application Service
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { workoutSets, workouts, sets, exercises } from '@/lib/db/schema';
 import { requireAuth } from '@/lib/auth-helpers';
 import { eq, and, ne, desc } from 'drizzle-orm';
 
-// GET /api/last-workout-first-set - Get first set from last workout for an exercise
+/**
+ * GET /api/workout/last/sets - Get all sets from last workout for an exercise
+ */
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth();
+    if (!user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const exerciseId = searchParams.get('exercise_id');
     const exerciseName = searchParams.get('exercise_name');
@@ -62,15 +72,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get first set from last workout
-    const firstSet = await db
+    // Get all sets from last workout
+    const allSets = await db
       .select()
       .from(sets)
       .where(eq(sets.workoutSetId, lastWorkoutSet[0].workoutSetId))
-      .orderBy(sets.setNumber)
-      .limit(1);
+      .orderBy(sets.setNumber);
 
-    if (firstSet.length === 0) {
+    if (allSets.length === 0) {
       return NextResponse.json(
         { error: '未找到该练习的训练组数据' },
         { status: 404 }
@@ -78,9 +87,12 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      weight: firstSet[0].weight,
-      reps: firstSet[0].reps,
       date: lastWorkoutSet[0].workoutDate,
+      sets: allSets.map(s => ({
+        set_number: s.setNumber,
+        weight: s.weight,
+        reps: s.reps,
+      })),
     });
   } catch (error: any) {
     if (error.message === 'Unauthorized') {
