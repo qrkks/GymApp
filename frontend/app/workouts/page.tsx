@@ -4,14 +4,19 @@ import React, {useState, useEffect} from "react";
 import {Calendar} from "@/components/ui/calendar";
 import {useRouter} from "next/navigation";
 import {Button} from "@/components/ui/button";
+import WorkoutListSkeleton from "@/components/loading/WorkoutListSkeleton";
 import type { DateRange } from "react-day-picker";
 
 function Workouts() {
   const [date, setDate] = useState<Date | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     setDate(new Date());
+    // Simulate initial load
+    const timer = setTimeout(() => setIsLoading(false), 300);
+    return () => clearTimeout(timer);
   }, []);
 
   function handleSelect(selectedDate: Date | undefined) {
@@ -31,6 +36,10 @@ function Workouts() {
     const formattedDate = `${year}-${month}-${day}`;
 
     router.push(`/workouts/${formattedDate}`);
+  }
+
+  if (isLoading) {
+    return <WorkoutListSkeleton />;
   }
 
   return (

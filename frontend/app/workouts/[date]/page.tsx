@@ -8,6 +8,9 @@ import {Button} from "@/components/ui/button";
 import authStore from "@/app/store/authStore";
 import config from "@/utils/config";
 import DateHead from "./DateHead";
+import WorkoutSkeleton from "@/components/loading/WorkoutSkeleton";
+import RefreshIndicator from "@/components/loading/RefreshIndicator";
+import { useLoadingState } from "@/hooks/useLoadingState";
 import type { BodyPart, MutateFunction } from "@/app/types/workout.types";
 
 interface WorkoutData {
@@ -55,6 +58,8 @@ function WorkoutById({params}: WorkoutByIdProps) {
   const {
     data: workoutData,
     error: workoutError,
+    isLoading,
+    isValidating,
     mutate: mutateWorkout,
   } = useSWR<WorkoutData | null>(`${apiUrl}/workout/${params.date}`, fetcher, {
     revalidateOnFocus: false,
@@ -70,6 +75,13 @@ function WorkoutById({params}: WorkoutByIdProps) {
       setTimeout(() => revalidate({ retryCount }), 5000);
     },
   });
+
+  const { isInitialLoading, isRefreshing, hasError } = useLoadingState(
+    workoutData,
+    workoutError,
+    isLoading,
+    isValidating
+  );
 
   useEffect(() => {
     if (workoutData !== undefined && workoutData !== null) {
@@ -148,10 +160,29 @@ function WorkoutById({params}: WorkoutByIdProps) {
     }
   };
 
+  // Show skeleton during initial load
+  if (isInitialLoading) {
+    return <WorkoutSkeleton />;
+  }
+
+  // Show error state
+  if (hasError && workoutError) {
+    return (
+      <div className="flex flex-col gap-4 justify-center items-center">
+        <div className="text-red-600">加载失败，请刷新页面重试</div>
+        <Button onClick={() => mutateWorkout()}>重试</Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4 justify-center items-center">
+      {isRefreshing && (
+        <RefreshIndicator className="fixed top-20 right-4 z-50" />
+      )}
+      
       <div className="flex gap-4 items-center">
-      <DateHead params={params}/>
+        <DateHead params={params}/>
       </div>
 
       {!isWorkoutCreated && (
