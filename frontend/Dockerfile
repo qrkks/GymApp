@@ -1,4 +1,3 @@
-# ========= base =========
 FROM node:22-bookworm-slim AS base
 
 ARG AUTH_SECRET
@@ -12,69 +11,47 @@ ENV AUTH_TRUST_HOST=true
 
 WORKDIR /app
 
-# ========= deps：安装依赖 =========
+# ========== deps：安装依赖 ==========
 FROM base AS deps
 
-# 用于安装依赖 & 后面编译原生模块
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 make g++ \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+COPY package.json pnpm-lock.yaml ./
 
-RUN \
-  if [ -f yarn.lock ]; then \
-    yarn --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then \
-    npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then \
-    corepack enable pnpm && pnpm i --frozen-lockfile; \
-  else \
-    echo "Lockfile not found." && exit 1; \
-  fi
+RUN corepack enable pnpm && pnpm install --frozen-lockfile
 
-# ========= builder：构建 Next.js 并在容器内编译 better-sqlite3 =========
+# ========== builder：构建 Next.js ==========
 FROM base AS builder
 
-# 再装一次构建工具，用于 rebuild better-sqlite3
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 make g++ \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# 依赖 & 源码
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# ⚠️ 关键：在容器里、用当前 Node 版本编译 better-sqlite3
-RUN \
-  if [ -f pnpm-lock.yaml ]; then \
-    corepack enable pnpm && pnpm rebuild better-sqlite3 --config.build_from_source=true; \
-  elif [ -f package-lock.json ]; then \
-    npm rebuild better-sqlite3 --build-from-source; \
-  elif [ -f yarn.lock ]; then \
-    yarn rebuild better-sqlite3 || yarn add better-sqlite3 --force; \
-  else \
-    true; \
-  fi
+# 可选：在这里也 rebuild 一次（更稳）
+RUN corepack enable pnpm && pnpm rebuild better-sqlite3 --config.build_from_source=true
 
-# 构建 Next
-RUN \
-  if [ -f yarn.lock ]; then \
-    yarn run build; \
-  elif [ -f package-lock.json ]; then \
-    npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then \
-    corepack enable pnpm && pnpm run build; \
-  else \
-    echo "Lockfile not found." && exit 1; \
-  fi
+RUN corepack enable pnpm && pnpm run build
 
-# ========= runner：生产环境镜像 =========
-FROM base AS runner
+# ========== runner：生产环境 ==========
+FROM node:22-bookworm-slim AS runner
+
+ARG AUTH_SECRET
+ARG DATABASE_PATH
+ARG NEXTAUTH_URL
+
+ENV AUTH_SECRET=${AUTH_SECRET}
+ENV DATABASE_PATH=${DATABASE_PATH}
+ENV NEXTAUTH_URL=${NEXTAUTH_URL}
+ENV AUTH_TRUST_HOST=true
 
 WORKDIR /app
 ENV NODE_ENV=production
@@ -82,14 +59,25 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# 拷贝 Next standalone 输出
+# 拷贝构建产物
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# 拷贝已经在 builder 中编译好的 node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+# 拷贝依赖信息（在 runner 里重新安装）
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=nextjs:nodejs /app/pnpm-lock.yaml ./pnpm-lock.yaml
 
+# 用 root 装依赖
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN corepack enable pnpm \
+  && pnpm install --prod --frozen-lockfile \
+  && pnpm rebuild better-sqlite3 --config.build_from_source=true
+
+# 再切回普通用户
 USER nextjs
 
 EXPOSE 3000
