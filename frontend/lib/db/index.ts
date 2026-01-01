@@ -3,10 +3,10 @@ import Database from 'better-sqlite3';
 import * as schema from './schema';
 
 // Lazy initialization to avoid database connection during build
-let sqliteInstance: Database | null = null;
+let sqliteInstance: InstanceType<typeof Database> | null = null;
 let dbInstance: ReturnType<typeof drizzle> | null = null;
 
-function getDatabase(): Database {
+function getDatabase(): InstanceType<typeof Database> {
   if (!sqliteInstance) {
     const dbPath = process.env.DATABASE_PATH || './db.sqlite';
     sqliteInstance = new Database(dbPath);

@@ -1,7 +1,7 @@
 /**
  * 测试 Django PBKDF2 密码验证
  */
-import { verifyPassword } from './lib/password-utils';
+import { verifyPassword } from '../../lib/password-utils';
 
 async function test() {
   console.log('测试 Django PBKDF2 密码验证...\n');
