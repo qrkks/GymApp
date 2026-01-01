@@ -31,5 +31,5 @@
 1. 检查脚本中的配置是否仍然适用
 2. 确认数据库路径和连接信息
 3. 备份数据后再执行
-4. 使用 `volta run tsx scripts/archive/<script-name>` 运行
+4. 使用 `pnpm tsx scripts/archive/<script-name>` 或 `tsx scripts/archive/<script-name>` 运行
 
