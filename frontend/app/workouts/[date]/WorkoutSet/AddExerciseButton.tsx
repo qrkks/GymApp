@@ -1,40 +1,29 @@
 import React, {useEffect, useRef} from "react";
 import {CirclePlus} from "lucide-react";
-import {observer} from "mobx-react-lite";
+import {create} from "zustand";
 import SheetContainer from "@/components/SheetContainer";
 import ExerciseSelectInput from "./ExerciseSelectInput";
 import useSWR from "swr";
 import LastWorkout from "./LastWorkout";
-import {makeAutoObservable} from "mobx";
 import config from "@/utils/config";
 import {Button} from "@/components/ui/button";
 import { showToast } from "@/lib/toast";
 import type { BodyPart, Exercise, MutateFunction } from "@/app/types/workout.types";
 import type { LastWorkoutData } from "./LastWorkout";
 
-interface StoreData {
+interface AddExerciseStore {
   previousWorkout: LastWorkoutData | null;
   currentSelectedExercise: string | null;
+  setPreviousWorkout: (workout: LastWorkoutData | null) => void;
+  setCurrentExercise: (exercise: string | null) => void;
 }
 
-class Store {
-  previousWorkout: LastWorkoutData | null = null;
-  currentSelectedExercise: string | null = null;
-
-  constructor() {
-    makeAutoObservable(this);
-  }
-
-  setPreviousWorkout(workout: LastWorkoutData | null) {
-    this.previousWorkout = workout;
-  }
-
-  setCurrentExercise(exercise: string | null) {
-    this.currentSelectedExercise = exercise;
-  }
-}
-
-export const store = new Store();
+export const useAddExerciseStore = create<AddExerciseStore>((set) => ({
+  previousWorkout: null,
+  currentSelectedExercise: null,
+  setPreviousWorkout: (workout) => set({ previousWorkout: workout }),
+  setCurrentExercise: (exercise) => set({ currentSelectedExercise: exercise }),
+}));
 
 interface AddExerciseButtonProps {
   part: BodyPart;
@@ -46,6 +35,11 @@ interface AddExerciseButtonProps {
 function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExerciseButtonProps) {
   const {apiUrl} = config;
   const submitCount = useRef(0);
+  
+  const currentSelectedExercise = useAddExerciseStore((state) => state.currentSelectedExercise);
+  const previousWorkout = useAddExerciseStore((state) => state.previousWorkout);
+  const setPreviousWorkout = useAddExerciseStore((state) => state.setPreviousWorkout);
+  const setCurrentExercise = useAddExerciseStore((state) => state.setCurrentExercise);
 
   const fetcher = async (url: string) => {
     const response = await fetch(url, {
@@ -70,9 +64,9 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
   } = useSWR<Exercise[]>(`${apiUrl}/exercise?body_part_name=${part?.name || ""}`, fetcher);
 
   useEffect(() => {
-    if (store.currentSelectedExercise) {
+    if (currentSelectedExercise) {
       fetch(
-        `${apiUrl}/workout/last/sets?exercise_name=${store.currentSelectedExercise}`,
+        `${apiUrl}/workout/last/sets?exercise_name=${currentSelectedExercise}`,
         {
           credentials: "include",
           method: "GET",
@@ -83,13 +77,13 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
       )
         .then((res) => res.json())
         .then((data) => {
-          store.setPreviousWorkout(data as LastWorkoutData);
+          setPreviousWorkout(data as LastWorkoutData);
         })
         .catch((error) => {
           console.error("Error fetching last workout data:", error);
         });
     }
-  }, [store.currentSelectedExercise]);
+  }, [currentSelectedExercise, apiUrl, setPreviousWorkout]);
 
   useEffect(() => {
     if (exercisesData) {
@@ -107,9 +101,9 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
 
   const handleSubmit = async () => {
     try {
-      if (!store.currentSelectedExercise) return;
+      if (!currentSelectedExercise) return;
       
-      setAddedExercise(store.currentSelectedExercise);
+      setAddedExercise(currentSelectedExercise);
 
       const response = await fetch(`${apiUrl}/exercise-block`, {
         method: "POST",
@@ -119,7 +113,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
         },
         body: JSON.stringify({
           workout_date: date,
-          exercise_name: store.currentSelectedExercise,
+          exercise_name: currentSelectedExercise,
         }),
       });
 
@@ -127,7 +121,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
 
       await mutateWorkout();
 
-      store.setCurrentExercise("");
+      setCurrentExercise("");
     } catch (error) {
       console.error("Submission error:", error);
     }
@@ -158,7 +152,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
               (currentData) => [...(currentData || []), newExerciseData as Exercise],
               false
             );
-            store.setCurrentExercise(newExercise);
+            setCurrentExercise(newExercise);
           })
           .catch((error) => {
             console.error("Error creating new exercise:", error);
@@ -166,7 +160,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
           });
       }
     } else {
-      store.setCurrentExercise(value);
+      setCurrentExercise(value);
     }
   }
 
@@ -177,7 +171,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
         description="Add an exercise to your workout"
         triggerButton={
           <Button
-            onClick={() => store.setCurrentExercise("")}
+            onClick={() => setCurrentExercise("")}
             variant="secondary"
           >
             <CirclePlus className="w-4 text-gray-400" />
@@ -194,12 +188,12 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
             placeholder="Select exercise"
             name="exercise"
             mutate={mutateExercises}
-            selectedExercise={store.currentSelectedExercise || undefined}
+            selectedExercise={currentSelectedExercise || undefined}
             onSelectChange={handleSelectChange}
           />
           <LastWorkout
-            selectedExercise={store.currentSelectedExercise || ""}
-            lastWorkoutData={store.previousWorkout}
+            selectedExercise={currentSelectedExercise || ""}
+            lastWorkoutData={previousWorkout}
           />
         </form>
       </SheetContainer>
@@ -207,5 +201,5 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
   );
 }
 
-export default observer(AddExerciseButton);
+export default AddExerciseButton;
 

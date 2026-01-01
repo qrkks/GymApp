@@ -29,10 +29,14 @@ export const authOptions = {
           return null;
         }
 
+        // 类型断言：确保 identifier 和 password 是 string 类型
+        const identifier = String(credentials.identifier);
+        const password = String(credentials.password);
+
         // 验证用户密码（支持用户名或邮箱）
         const result = await userUseCase.verifyPassword(
-          credentials.identifier,
-          credentials.password
+          identifier,
+          password
         );
 
         if (!result.success) {

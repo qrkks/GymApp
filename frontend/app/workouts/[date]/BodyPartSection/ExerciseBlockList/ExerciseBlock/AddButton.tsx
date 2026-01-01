@@ -3,7 +3,6 @@ import SheetContainer from "@/components/SheetContainer";
 import {useState, ChangeEvent} from "react";
 import {Input} from "@/components/ui/input";
 import LastWorkout from "../../LastWorkout";
-import {observer} from "mobx-react-lite";
 import useSWR from "swr";
 import config from "@/utils/config";
 import { showToast } from "@/lib/toast";
@@ -109,5 +108,5 @@ function AddButton({date, exerciseBlock, part, mutateWorkoutSet}: AddButtonProps
   );
 }
 
-export default observer(AddButton);
+export default AddButton;
 
