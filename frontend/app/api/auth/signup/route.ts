@@ -1,3 +1,4 @@
+export const runtime = 'nodejs';
 /**
  * 用户注册 API Route
  */
