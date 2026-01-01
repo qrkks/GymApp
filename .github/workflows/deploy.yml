@@ -39,8 +39,6 @@ jobs:
           docker build \
             --build-arg AUTH_SECRET=${{ secrets.AUTH_SECRET }} \
             --build-arg DATABASE_PATH=${{ secrets.DATABASE_PATH }} \
-            --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
-            --build-arg DATABASE_PATH=${{ secrets.DATABASE_PATH }} \
             -t gymapp-frontend:latest .
 
       - name: Save Frontend Docker image as tar
