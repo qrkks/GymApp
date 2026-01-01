@@ -90,7 +90,7 @@ jobs:
               -e AUTH_SECRET=${{ secrets.AUTH_SECRET }} \
               -e DATABASE_PATH=${{ secrets.DATABASE_PATH }} \
               -e AUTH_TRUST_HOST=true \
-              -e AUTH_URL=https://39.107.126.13 \
+              -e NEXTAUTH_URL=https://39.107.126.13 \
               -v /home/${USER}/app/frontend/db:/app/db \
               --label 'traefik.enable=true' \
               --label 'traefik.http.routers.gymapp.rule=Host(`39.107.126.13`)' \
