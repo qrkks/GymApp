@@ -10,7 +10,17 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-import {useState} from "react";
+import {useState, ReactNode} from "react";
+
+interface SheetContainerProps {
+  triggerButton: ReactNode;
+  title: string;
+  description?: string;
+  children: ReactNode;
+  submitButtonText: string;
+  onHandleSubmit?: () => void;
+  side?: "top" | "right" | "bottom" | "left";
+}
 
 export default function SheetContainer({
   triggerButton,
@@ -20,7 +30,7 @@ export default function SheetContainer({
   submitButtonText,
   onHandleSubmit = () => {},
   side = "top",
-}) {
+}: SheetContainerProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -29,12 +39,10 @@ export default function SheetContainer({
       <SheetContent side={side}>
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>
-          <SheetDescription>{description}</SheetDescription>
+          {description && <SheetDescription>{description}</SheetDescription>}
         </SheetHeader>
         <div className="grid gap-4 py-4 ">
-          {/* <div className="grid items-center w-full grid-cols-4 gap-4"> */}
           {children}
-          {/* </div> */}
         </div>
         <SheetFooter>
           <SheetClose asChild>
@@ -53,3 +61,4 @@ export default function SheetContainer({
     </Sheet>
   );
 }
+

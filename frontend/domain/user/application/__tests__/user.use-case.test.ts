@@ -85,6 +85,7 @@ describe('User Application Service', () => {
         id: 'test-user-1',
         email: 'test@example.com',
         username: 'Test User',
+        password: 'password123',
       });
       
       expect(result.success).toBe(true);
@@ -117,6 +118,7 @@ describe('User Application Service', () => {
         id: 'test-user-1',
         email: 'test@example.com',
         username: 'Test User',
+        password: 'password123',
       });
       
       expect(result.success).toBe(false);
@@ -136,6 +138,7 @@ describe('User Application Service', () => {
         id: 'test-user-1',
         email: 'test@example.com',
         username: 'Test User',
+        password: 'password123',
       });
       
       expect(result.success).toBe(false);

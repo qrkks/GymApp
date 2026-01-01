@@ -4,7 +4,7 @@ import { relations } from 'drizzle-orm';
 // User table (for NextAuth.js)
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
-  username: text('username').unique(), // 用户名，唯一
+  username: text('username').notNull().unique(), // 用户名，必选且唯一
   email: text('email').unique(),
   password: text('password'), // 密码哈希
   emailVerified: integer('emailVerified', { mode: 'boolean' }),

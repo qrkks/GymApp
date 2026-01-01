@@ -11,11 +11,23 @@ import {useState} from "react";
 import authStore from "@/app/store/authStore";
 import config from "@/utils/config";
 
-export default function SelectInput({placeholder, entries, mutate, onSelectChange}) {
+interface SelectInputProps {
+  placeholder: string;
+  entries?: Array<{ id: number; name: string }>;
+  mutate: () => void;
+  onSelectChange?: (value: string) => void;
+}
+
+export default function SelectInput({
+  placeholder,
+  entries,
+  mutate,
+  onSelectChange,
+}: SelectInputProps) {
   const {apiUrl} = config;
   const [selectValue, setSelectValue] = useState("");
 
-  function handleValueChange(value) {
+  function handleValueChange(value: string) {
     if (value === "new") {
       const newEntry = prompt("请输入新建的部位：");
       if (newEntry) {
@@ -24,7 +36,7 @@ export default function SelectInput({placeholder, entries, mutate, onSelectChang
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
-            "X-CSRFToken": authStore.getCookie("csrftoken"),
+            "X-CSRFToken": authStore.getCookie("csrftoken") || "",
           },
           body: JSON.stringify({
             name: newEntry,
@@ -41,14 +53,13 @@ export default function SelectInput({placeholder, entries, mutate, onSelectChang
     }
   }
 
-
   return (
     <Select onValueChange={handleValueChange} value={selectValue}>
       <SelectTrigger>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        <SelectGroup >
+        <SelectGroup>
           <SelectLabel>{placeholder}</SelectLabel>
           {entries?.map((entry) => (
             <SelectItem key={entry.id} value={entry.name}>
@@ -63,3 +74,4 @@ export default function SelectInput({placeholder, entries, mutate, onSelectChang
     </Select>
   );
 }
+

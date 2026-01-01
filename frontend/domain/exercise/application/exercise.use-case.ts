@@ -8,6 +8,7 @@ import * as exerciseCommands from '@domain/exercise/repository/commands/exercise
 import * as bodyPartQueries from '@domain/body-part/repository/queries/body-part.repository';
 import { db } from '@/lib/db';
 import { bodyParts } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 
 export type Exercise = exerciseQueries.ExerciseWithBodyPart;
 export type CreateExerciseData = exerciseCommands.CreateExerciseData;

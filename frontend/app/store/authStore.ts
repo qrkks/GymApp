@@ -6,8 +6,8 @@ class Store {
   }
 
   // 工具函数：获取指定名称的 Cookie
-  getCookie(name) {
-    let cookieValue = null;
+  getCookie(name: string): string | null {
+    let cookieValue: string | null = null;
     if (document.cookie && document.cookie !== "") {
       const cookies = document.cookie.split(";");
       for (let i = 0; i < cookies.length; i++) {
@@ -23,3 +23,4 @@ class Store {
 }
 
 export default new Store();
+
