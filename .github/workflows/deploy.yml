@@ -39,7 +39,7 @@ jobs:
           docker build \
             --build-arg AUTH_SECRET=${{ secrets.AUTH_SECRET }} \
             --build-arg DATABASE_PATH=${{ secrets.DATABASE_PATH }} \
-            --build-arg NEXTAUTH_URL=http://localhost:3000
+            --build-arg NEXTAUTH_URL=https://39.107.126.13 \
             -t gymapp-frontend:latest .
 
       - name: Save Frontend Docker image as tar
@@ -89,13 +89,16 @@ jobs:
               --network traefik_net \
               -e AUTH_SECRET=${{ secrets.AUTH_SECRET }} \
               -e DATABASE_PATH=${{ secrets.DATABASE_PATH }} \
+              -e AUTH_TRUST_HOST=true \
+              -e AUTH_URL=https://39.107.126.13 \
               -v /home/${USER}/app/frontend/db:/app/db \
               --label 'traefik.enable=true' \
               --label 'traefik.http.routers.gymapp.rule=Host(`39.107.126.13`)' \
               --label 'traefik.http.routers.gymapp.entrypoints=websecure' \
               --label 'traefik.http.routers.gymapp.tls=true' \
               --label 'traefik.http.services.gymapp.loadbalancer.server.port=3000' \
-              gymapp-frontend:latest 
+              gymapp-frontend:latest
+
 
             sleep 5
             if [ $(docker ps -q -f name=gymapp-frontend) ]; then
