@@ -1,12 +1,10 @@
-# 数据库初始化脚本
+# 数据库脚本说明
 
-## 问题
+## 当前可用脚本
 
-`better-sqlite3` 需要原生绑定（native bindings），在 Windows 上可能需要编译工具。
+### 数据库初始化
 
-## 解决方案
-
-### 方案 1: 使用 SQLite3 命令行工具（推荐）
+#### 方案 1: 使用 SQLite3 命令行工具（推荐）
 
 如果你已经安装了 SQLite3 命令行工具：
 
@@ -23,35 +21,41 @@ npm run db:init-sqlite3
 - 或使用 Chocolatey: `choco install sqlite`
 - 或使用 Scoop: `scoop install sqlite`
 
-### 方案 2: 重新编译 better-sqlite3
+#### 方案 2: 使用 Node.js 脚本
 
 ```bash
-# 删除 node_modules 中的 better-sqlite3
-npm uninstall better-sqlite3
-npm install better-sqlite3
+# 使用 better-sqlite3（需要编译工具）
+npm run db:init
 
-# 或强制重新构建
-npm rebuild better-sqlite3 --build-from-source
+# 或使用替代方案（自动检测环境）
+npm run db:init-alt
 ```
 
-**注意**: 这需要：
+**注意**: better-sqlite3 需要：
 - Visual Studio Build Tools (Windows)
 - Python
 - node-gyp
 
-### 方案 3: 使用替代初始化脚本
+#### 方案 3: 手动创建数据库
+
+参考 `create-db-manual.md` 文件，使用 GUI 工具或手动执行 SQL。
+
+### 数据库重置
+
+清空并重新初始化数据库（**警告：会删除所有数据**）：
 
 ```bash
-npm run db:init-alt
+npm run db:reset
 ```
 
-这个脚本会尝试使用 better-sqlite3，如果失败会给出清晰的错误信息。
+## 已归档脚本
 
-### 方案 4: 手动创建数据库
+以下脚本已移至 `archive/` 目录，为一次性使用的脚本：
 
-1. 打开 SQLite 命令行或 GUI 工具（如 DB Browser for SQLite）
-2. 创建新数据库 `db.sqlite`
-3. 执行 `scripts/init-db.sql` 中的所有 SQL 语句
+- `import-production-db.ts` - 生产数据迁移脚本（已使用）
+- `reset-all-passwords.ts` - 批量密码重置脚本（已使用）
+
+如需使用这些脚本，请从 `archive/` 目录中查找。
 
 ## 验证数据库
 
@@ -71,4 +75,3 @@ sqlite3 db.sqlite
 - workout_body_parts
 - workout_sets
 - sets
-

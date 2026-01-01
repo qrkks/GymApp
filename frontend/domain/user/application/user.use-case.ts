@@ -192,7 +192,9 @@ export async function verifyPassword(
       return failure('UNAUTHORIZED', '该账户未设置密码，请联系管理员');
     }
 
-    const isValid = await bcrypt.compare(passwordVO.getValue(), userData.password!);
+    // 使用密码验证工具
+    const { verifyPassword } = await import('@/lib/password-utils');
+    const isValid = await verifyPassword(passwordVO.getValue(), userData.password!);
     if (!isValid) {
       return failure('UNAUTHORIZED', '密码错误，请检查后重试');
     }
@@ -310,7 +312,9 @@ export async function changePassword(
       return failure('UNAUTHORIZED', '该账户未设置密码，无法修改');
     }
 
-    const isValidOldPassword = await bcrypt.compare(oldPassword, userData.password!);
+    // 使用密码验证工具
+    const { verifyPassword } = await import('@/lib/password-utils');
+    const isValidOldPassword = await verifyPassword(oldPassword, userData.password!);
     if (!isValidOldPassword) {
       return failure('UNAUTHORIZED', '旧密码错误，请检查后重试');
     }

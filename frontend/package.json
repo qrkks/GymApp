@@ -3,20 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
+    "dev": "volta run next dev",
+    "build": "volta run next build",
+    "start": "volta run next start",
+    "lint": "volta run next lint",
+    "test": "volta run jest",
+    "test:watch": "volta run jest --watch",
+    "test:coverage": "volta run jest --coverage",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:init": "node scripts/init-db.js",
-    "db:init-alt": "node scripts/init-db-alternative.js",
+    "db:init": "volta run node scripts/init-db.js",
+    "db:init-alt": "volta run node scripts/init-db-alternative.js",
     "db:init-sqlite3": "scripts\\init-db-sqlite3.bat",
-    "db:reset": "tsx scripts/reset-db.ts"
+    "db:reset": "volta run tsx scripts/reset-db.ts",
+    "db:import-production": "volta run tsx scripts/import-production-db.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -59,7 +60,12 @@
     "ts-jest": "^29.1.2",
     "tsx": "^4.21.0"
   },
+  "engines": {
+    "node": ">=22.0.0 <23.0.0",
+    "pnpm": ">=8.0.0"
+  },
   "volta": {
-    "node": "22.21.1"
+    "node": "22.21.1",
+    "pnpm": "10.24.0"
   }
 }
