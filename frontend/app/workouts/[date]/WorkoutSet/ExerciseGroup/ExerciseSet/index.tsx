@@ -1,23 +1,30 @@
 import AddButton from "./AddButton";
-import RemoveButton from "./RemoveButton";
+import RemoveExerciseBlockButton from "./RemoveButton";
 import ExerciseItem from "./ExerciseItem";
 import SetTableContainer from "./SetTableContainer";
-import BodyPartEditPopover from "./ExerciseEditPopover";
-import useSWR from "swr";
+import ExerciseBlockEditPopover from "./ExerciseEditPopover";
+import type { ExerciseBlock, BodyPart, MutateFunction } from "@/app/types/workout.types";
 
-function ExerciseSet({set, part, date, mutateWorkoutSet}) {
+interface ExerciseSetProps {
+  set: ExerciseBlock;
+  part: BodyPart;
+  date: string;
+  mutateWorkoutSet: MutateFunction;
+}
+
+function ExerciseSet({set, part, date, mutateWorkoutSet}: ExerciseSetProps) {
   return (
     <div className="flex flex-col items-center p-2">
       <div className="flex items-center gap-2">
         <h4>{set.exercise.name}</h4>
         <div className="flex items-center gap-1">
-          <RemoveButton
+          <RemoveExerciseBlockButton
             set={set}
             part={part}
             date={date}
             mutateWorkoutSet={mutateWorkoutSet}
           />
-          {/* <BodyPartEditPopover
+          {/* <ExerciseBlockEditPopover
             set={set}
             part={part}
             date={date}
@@ -25,7 +32,6 @@ function ExerciseSet({set, part, date, mutateWorkoutSet}) {
           /> */}
         </div>
       </div>
-      {/* <pre>{JSON.stringify(set.sets, null, 2)}</pre> */}
       <SetTableContainer set={set} mutateWorkoutSet={mutateWorkoutSet}>
         {set.sets.map((item) => (
           <ExerciseItem
@@ -47,3 +53,4 @@ function ExerciseSet({set, part, date, mutateWorkoutSet}) {
 }
 
 export default ExerciseSet;
+

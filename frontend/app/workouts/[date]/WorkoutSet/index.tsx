@@ -2,11 +2,17 @@ import BodyPartRemoveButton from "./BodyPartRemoveButton";
 import AddExerciseButton from "./AddExerciseButton";
 import ExerciseGroup from "./ExerciseGroup";
 import {useState, useRef} from "react";
+import type { BodyPart, MutateFunction } from "@/app/types/workout.types";
 
-function WorkoutSet({part, date, mutateWorkout}) {
+interface WorkoutSetProps {
+  part: BodyPart;
+  date: string;
+  mutateWorkout: MutateFunction;
+}
+
+function WorkoutSet({part, date, mutateWorkout}: WorkoutSetProps) {
   const [addedExercise, setAddedExercise] = useState("");
-  // 使用 useRef 存储 mutateWorkoutSet 函数
-  const mutateWorkoutSetRef = useRef(null);
+  const mutateWorkoutSetRef = useRef<MutateFunction | null>(null);
 
   return (
     <div className="flex flex-col gap-3 justify-center items-center">
@@ -25,7 +31,6 @@ function WorkoutSet({part, date, mutateWorkout}) {
         date={date}
         mutateWorkout={async () => {
           await mutateWorkout();
-          // 如果 mutateWorkoutSet 存在，则调用它
           if (mutateWorkoutSetRef.current) {
             await mutateWorkoutSetRef.current();
           }
@@ -45,3 +50,4 @@ function WorkoutSet({part, date, mutateWorkout}) {
 }
 
 export default WorkoutSet;
+

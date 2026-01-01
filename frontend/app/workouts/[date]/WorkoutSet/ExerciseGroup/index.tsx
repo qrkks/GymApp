@@ -3,11 +3,19 @@ import useSWR from "swr";
 import ExerciseSet from "./ExerciseSet";
 import authStore from "@/app/store/authStore";
 import config from "@/utils/config";
+import type { BodyPart, ExerciseBlock, MutateFunction } from "@/app/types/workout.types";
 
-function ExerciseGroup({ part, date, addedExercise, setMutateRef }) {
+interface ExerciseGroupProps {
+  part: BodyPart;
+  date: string;
+  addedExercise: string;
+  setMutateRef: (mutate: MutateFunction) => void;
+}
+
+function ExerciseGroup({ part, date, addedExercise, setMutateRef }: ExerciseGroupProps) {
   const {apiUrl} = config;
 
-  const fetcher = useCallback(async (url) => {
+  const fetcher = useCallback(async (url: string) => {
     console.log('🔍 Fetcher called with URL:', url);
     try {
       const response = await fetch(url, {
@@ -16,7 +24,7 @@ function ExerciseGroup({ part, date, addedExercise, setMutateRef }) {
       });
       
       const data = await response.json();
-      return data;
+      return data as ExerciseBlock[];
     } catch (error) {
       console.error('❌ Fetch error:', error);
       throw error;
@@ -27,7 +35,7 @@ function ExerciseGroup({ part, date, addedExercise, setMutateRef }) {
     data: workoutSetData,
     error: workoutSetError,
     mutate: mutateWorkoutSet,
-  } = useSWR(
+  } = useSWR<ExerciseBlock[]>(
     `${apiUrl}/exercise-block?workout_date=${date}&body_part_name=${part.name}`,
     fetcher,
     {
@@ -64,3 +72,4 @@ function ExerciseGroup({ part, date, addedExercise, setMutateRef }) {
 }
 
 export default React.memo(ExerciseGroup);
+

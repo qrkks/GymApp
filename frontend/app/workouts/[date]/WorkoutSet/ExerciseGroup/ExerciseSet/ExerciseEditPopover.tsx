@@ -3,19 +3,28 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
-import {useState} from "react";
+import {useState, FormEvent} from "react";
 import authStore from "@/app/store/authStore";
 import config from "@/utils/config";
+import type { ExerciseBlock, BodyPart, MutateFunction } from "@/app/types/workout.types";
 
-export default function PopoverButton({set, part, date, mutateWorkoutSet}) {
+interface ExerciseBlockEditPopoverProps {
+  set: ExerciseBlock;
+  part: BodyPart;
+  date: string;
+  mutateWorkoutSet: MutateFunction;
+}
+
+export default function ExerciseBlockEditPopover({set, part, date, mutateWorkoutSet}: ExerciseBlockEditPopoverProps) {
   const {apiUrl} = config;
   const key = "训练动作";
-  // console.log(item, "in edit popover");
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  function handleSubmit(e) {
+  
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
     setIsPopoverOpen(false);
     e.preventDefault();
-    const exercise_name = e.target[0].value;
+    const form = e.currentTarget;
+    const exercise_name = (form[0] as HTMLInputElement).value;
     console.log(exercise_name);
     fetch(`${apiUrl}/exercise/${set.exercise.id}/patch`, {
       method: "PATCH",
@@ -36,6 +45,7 @@ export default function PopoverButton({set, part, date, mutateWorkoutSet}) {
         console.error("Fetch error:", error);
       });
   }
+  
   return (
     <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
       <PopoverTrigger asChild>
@@ -60,25 +70,6 @@ export default function PopoverButton({set, part, date, mutateWorkoutSet}) {
                 min="0"
               />
             </div>
-            {/* {Object.entries(part.name)?.map(
-              ([key, value]) =>
-                key !== "id" &&
-                key !== "set_number" && (
-                  <div
-                    key={key}
-                    className="grid items-center grid-cols-3 gap-4"
-                  >
-                    <Label htmlFor={key}>{key}</Label>
-                    <Input
-                      name={key}
-                      defaultValue={value}
-                      className="h-8 col-span-2"
-                      type="number"
-                      min="0"
-                    />
-                  </div>
-                )
-            )} */}
           </div>
           <div className="flex justify-end gap-2">
             <Button
@@ -96,3 +87,4 @@ export default function PopoverButton({set, part, date, mutateWorkoutSet}) {
     </Popover>
   );
 }
+

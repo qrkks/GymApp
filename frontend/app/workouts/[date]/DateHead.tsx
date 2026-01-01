@@ -1,13 +1,18 @@
 import {CircleArrowLeft, CircleArrowRight} from "lucide-react";
 import {useRouter} from "next/navigation";
-import {useEffect} from "react";
+import {useEffect, KeyboardEvent} from "react";
 import { getTodayDate } from "../GoToTodayButton";
 
-function DateHead({params}) {
+interface DateHeadProps {
+  params: {
+    date: string;
+  };
+}
+
+function DateHead({params}: DateHeadProps) {
   const router = useRouter();
 
-  // 获取偏移日期
-  function getSomeDate(offset) {
+  function getSomeDate(offset: number): string {
     const currentDate = new Date(params.date);
     currentDate.setDate(currentDate.getDate() + offset);
 
@@ -18,9 +23,8 @@ function DateHead({params}) {
     return `${year}-${month}-${day}`;
   }
 
-
   useEffect(() => {
-    function handleKeyDown(event) {
+    function handleKeyDown(event: KeyboardEvent<Window>) {
       if (event.key === "ArrowLeft") {
         router.push(getSomeDate(-1));
       } else if (event.key === "ArrowRight") {
@@ -28,10 +32,10 @@ function DateHead({params}) {
       }
     }
 
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown as unknown as EventListener);
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown as unknown as EventListener);
     };
   }, [params.date, router]);
 
@@ -56,3 +60,4 @@ function DateHead({params}) {
 }
 
 export default DateHead;
+

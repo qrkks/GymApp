@@ -1,35 +1,38 @@
 import React from "react";
+import type { Set } from "@/app/types/workout.types";
 
-function LastWorkout({ selectedExercise, lastWorkoutData }) {
-  // 计算天数差距
-  let daysAgo = null;
+export interface LastWorkoutData {
+  date: string;
+  sets: Set[];
+}
+
+interface LastWorkoutProps {
+  selectedExercise: string;
+  lastWorkoutData?: LastWorkoutData | null;
+}
+
+function LastWorkout({ selectedExercise, lastWorkoutData }: LastWorkoutProps) {
+  let daysAgo: number | null = null;
 
   if (lastWorkoutData?.date) {
     const workoutDate = new Date(lastWorkoutData.date);
     const today = new Date();
     
-    // 设置今天的日期到零点，避免时区误差
     today.setHours(0, 0, 0, 0);
     workoutDate.setHours(0, 0, 0, 0);
 
-    const timeDiff = today - workoutDate; // 获取时间差，以毫秒为单位
-    daysAgo = Math.floor(timeDiff / (1000 * 60 * 60 * 24)); // 转换为天数
+    const timeDiff = today.getTime() - workoutDate.getTime();
+    daysAgo = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
   }
 
-  // 解构 lastWorkoutData 的 sets
   const sets = lastWorkoutData?.sets || [];
 
   return (
     <>
-      {/* 调试信息，开发中可以保留 */}
-      {/* <pre>{JSON.stringify(selectedExercise, null, 2)}</pre>
-      <pre>{JSON.stringify(lastWorkoutData, null, 2)}</pre> */}
-
-      {/* 显示上次训练的数据 */}
       {selectedExercise && sets.length > 0 ? (
         <div className="w-full">
           <h4>
-            上次 {selectedExercise} 训练数据 ({lastWorkoutData.date}，{daysAgo} 天前):
+            上次 {selectedExercise} 训练数据 ({lastWorkoutData?.date}，{daysAgo} 天前):
           </h4>
           <ul>
             {sets.map((set, index) => (
@@ -47,3 +50,4 @@ function LastWorkout({ selectedExercise, lastWorkoutData }) {
 }
 
 export default LastWorkout;
+

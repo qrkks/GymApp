@@ -2,9 +2,10 @@
 import authStore from "@/app/store/authStore";
 import Exercises from "./Exercises";
 import useSWR from "swr";
-import BodyPartEditPopover from "./../workouts/[date]/WorkoutSet/BodyPartEditPopover.jsx";
-import RemoveButton from "./RemoveButton";
+import BodyPartEditPopover from "./../workouts/[date]/WorkoutSet/BodyPartEditPopover";
+import RemoveBodyPartButton from "./RemoveButton";
 import config from "@/utils/config";
+import type { BodyPart, MutateFunction } from "@/app/types/workout.types";
 
 function page() {
   const {apiUrl} = config;
@@ -12,7 +13,7 @@ function page() {
     data: bodyParts,
     error,
     mutate,
-  } = useSWR(`${apiUrl}/body-part`, (url) =>
+  } = useSWR<BodyPart[]>(`${apiUrl}/body-part`, (url) =>
     fetch(url, {
       credentials: "include",
       headers: {"X-CSRFToken": authStore.getCookie("csrftoken")},
@@ -32,7 +33,7 @@ function page() {
           <div className="flex items-center gap-2">
             <h3>{part.name}</h3>
             <div className="flex items-center gap-1">
-              <RemoveButton part={part} mutate={mutate} />
+              <RemoveBodyPartButton part={part} mutate={mutate} />
               <BodyPartEditPopover part={part} mutateWorkout={mutate} />
             </div>
           </div>
@@ -44,3 +45,4 @@ function page() {
 }
 
 export default page;
+

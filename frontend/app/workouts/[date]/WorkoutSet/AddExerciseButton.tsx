@@ -9,34 +9,45 @@ import LastWorkout from "./LastWorkout";
 import {makeAutoObservable} from "mobx";
 import config from "@/utils/config";
 import {Button} from "@/components/ui/button";
+import type { BodyPart, Exercise, MutateFunction } from "@/app/types/workout.types";
+import type { LastWorkoutData } from "./LastWorkout";
+
+interface StoreData {
+  previousWorkout: LastWorkoutData | null;
+  currentSelectedExercise: string | null;
+}
 
 class Store {
+  previousWorkout: LastWorkoutData | null = null;
+  currentSelectedExercise: string | null = null;
+
   constructor() {
     makeAutoObservable(this);
   }
 
-  // Observable properties
-  previousWorkout = null;
-  currentSelectedExercise = null;
-
-  // Actions
-  setPreviousWorkout(workout) {
+  setPreviousWorkout(workout: LastWorkoutData | null) {
     this.previousWorkout = workout;
   }
 
-  setCurrentExercise(exercise) {
+  setCurrentExercise(exercise: string | null) {
     this.currentSelectedExercise = exercise;
   }
 }
 
 export const store = new Store();
 
-function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
+interface AddExerciseButtonProps {
+  part: BodyPart;
+  date: string;
+  setAddedExercise: (exercise: string) => void;
+  mutateWorkout: MutateFunction;
+}
+
+function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExerciseButtonProps) {
   const {apiUrl} = config;
   const submitCount = useRef(0);
 
-  // SWR Fetcher
-  const fetcher = async (url) => {
+  const fetcher = async (url: string) => {
     const response = await fetch(url, {
       credentials: "include",
       method: "GET",
@@ -50,14 +61,14 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
       throw new Error(`Failed to fetch: ${response.statusText}`);
     }
 
-    return response.json();
+    return response.json() as Promise<Exercise[]>;
   };
 
   const {
     data: exercisesData,
     error: exercisesError,
     mutate: mutateExercises,
-  } = useSWR(`${apiUrl}/exercise?body_part_name=${part?.name || ""}`, fetcher);
+  } = useSWR<Exercise[]>(`${apiUrl}/exercise?body_part_name=${part?.name || ""}`, fetcher);
 
   useEffect(() => {
     if (store.currentSelectedExercise) {
@@ -74,7 +85,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
       )
         .then((res) => res.json())
         .then((data) => {
-          store.setPreviousWorkout(data);
+          store.setPreviousWorkout(data as LastWorkoutData);
         })
         .catch((error) => {
           console.error("Error fetching last workout data:", error);
@@ -88,14 +99,6 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
     }
   }, [date]);
 
-  useEffect(() => {
-    console.log("Current exercise changed:", store.currentSelectedExercise);
-  }, [store.currentSelectedExercise]);
-
-  useEffect(() => {
-    console.log("Exercises data updated:", exercisesData);
-  }, [exercisesData]);
-
   if (exercisesError)
     return (
       <div>
@@ -106,6 +109,8 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
 
   const handleSubmit = async () => {
     try {
+      if (!store.currentSelectedExercise) return;
+      
       setAddedExercise(store.currentSelectedExercise);
 
       const response = await fetch(`${apiUrl}/exercise-block`, {
@@ -123,11 +128,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
 
       const data = await response.json();
 
-      // 1. 等待顶层数据更新
       await mutateWorkout();
-
-      // 2. 需要传入 mutateWorkoutSet 来更新具体的动作列表
-      // 或者通过共享的 store 来触发更新
 
       store.setCurrentExercise("");
     } catch (error) {
@@ -135,7 +136,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
     }
   };
 
-  function handleSelectChange(value) {
+  function handleSelectChange(value: string) {
     if (value === "new") {
       const newExercise = prompt("Enter the new exercise name:");
       if (!newExercise) return;
@@ -158,10 +159,10 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
           .then((res) => res.json())
           .then((newExerciseData) => {
             mutateExercises(
-              (currentData) => [...(currentData || []), newExerciseData],
+              (currentData) => [...(currentData || []), newExerciseData as Exercise],
               false
             );
-            store.setCurrentExercise(newExercise); // Immediately select the new exercise
+            store.setCurrentExercise(newExercise);
           })
           .catch((error) => {
             console.error("Error creating new exercise:", error);
@@ -197,11 +198,11 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
             placeholder="Select exercise"
             name="exercise"
             mutate={mutateExercises}
-            selectedExercise={store.currentSelectedExercise}
+            selectedExercise={store.currentSelectedExercise || undefined}
             onSelectChange={handleSelectChange}
           />
           <LastWorkout
-            selectedExercise={store.currentSelectedExercise}
+            selectedExercise={store.currentSelectedExercise || ""}
             lastWorkoutData={store.previousWorkout}
           />
         </form>
@@ -211,3 +212,4 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
 }
 
 export default observer(AddExerciseButton);
+

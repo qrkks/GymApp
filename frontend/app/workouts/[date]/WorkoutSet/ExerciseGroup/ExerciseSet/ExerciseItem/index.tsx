@@ -1,12 +1,18 @@
-import RemoveButton from "./RemoveButton";
-import EditPopover from "./EditPopover";
+import RemoveSetButton from "./RemoveButton";
+import SetEditPopover from "./EditPopover";
 import SetTable from "../SetTableContainer";
 import {TableCell, TableRow} from "@/components/ui/table";
+import type { Set, ExerciseBlock, MutateFunction } from "@/app/types/workout.types";
 
-function index({item, mutateWorkoutSet}) {
+interface ExerciseItemProps {
+  item: Set;
+  mutateWorkoutSet: MutateFunction;
+  set?: ExerciseBlock;
+}
+
+function ExerciseItem({item, mutateWorkoutSet, set}: ExerciseItemProps) {
   return (
     <>
-      {/* {JSON.stringify(item)} */}
       <TableRow>
         <TableCell className="font-medium text-center">
           {item.set_number}
@@ -17,12 +23,13 @@ function index({item, mutateWorkoutSet}) {
         </TableCell>
         <TableCell className="font-medium text-center"> {item.reps}</TableCell>
         <TableCell className="flex items-center justify-center gap-1">
-          <RemoveButton item={item} mutateWorkoutSet={mutateWorkoutSet} />
-          <EditPopover item={item} mutateWorkoutSet={mutateWorkoutSet} />
+          <RemoveSetButton item={item} mutateWorkoutSet={mutateWorkoutSet} />
+          <SetEditPopover item={item} mutateWorkoutSet={mutateWorkoutSet} />
         </TableCell>
       </TableRow>
     </>
   );
 }
 
-export default index;
+export default ExerciseItem;
+

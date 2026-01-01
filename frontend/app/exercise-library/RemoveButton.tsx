@@ -1,10 +1,15 @@
 import {CircleX} from "lucide-react";
 import authStore from "@/app/store/authStore";
 import config from "@/utils/config";
+import type { BodyPart, MutateFunction } from "@/app/types/workout.types";
 
-function RemoveButton({ part, mutate}) {
+interface RemoveBodyPartButtonProps {
+  part: BodyPart;
+  mutate: MutateFunction;
+}
+
+function RemoveBodyPartButton({ part, mutate}: RemoveBodyPartButtonProps) {
   const { apiUrl } = config;
-  // console.log(item);
   function handleClick() {
     const isConfirmed = window.confirm(
       `确定要删除 ${part.name} 吗？`
@@ -37,4 +42,5 @@ function RemoveButton({ part, mutate}) {
   );
 }
 
-export default RemoveButton;
+export default RemoveBodyPartButton;
+

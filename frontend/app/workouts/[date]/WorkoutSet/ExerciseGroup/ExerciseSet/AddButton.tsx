@@ -1,28 +1,36 @@
 import {CirclePlus} from "lucide-react";
 import SheetContainer from "@/components/SheetContainer";
-import {useState} from "react";
+import {useState, ChangeEvent} from "react";
 import {Input} from "@/components/ui/input";
 import authStore from "@/app/store/authStore";
 import LastWorkout from "../../LastWorkout";
 import {observer} from "mobx-react-lite";
 import useSWR from "swr";
 import config from "@/utils/config";
+import type { ExerciseBlock, BodyPart, MutateFunction } from "@/app/types/workout.types";
 
-function AddButton({date, set, part, mutateWorkoutSet}) {
+interface AddButtonProps {
+  date: string;
+  set: ExerciseBlock;
+  part: BodyPart;
+  mutateWorkoutSet: MutateFunction;
+}
+
+function AddButton({date, set, part, mutateWorkoutSet}: AddButtonProps) {
   const {apiUrl} = config;
   const [formData, setFormData] = useState({
     weight: "",
     reps: "",
   });
 
-  const fetcher = (url) =>
+  const fetcher = (url: string) =>
     fetch(url, {credentials: "include"}).then((res) => res.json());
   const {data: lastWorkoutData} = useSWR(
     `${apiUrl}/last-workout-all-sets?exercise_id=${set.exercise.id}`,
     fetcher
   );
 
-  function handleChange(event) {
+  function handleChange(event: ChangeEvent<HTMLInputElement>) {
     setFormData({
       ...formData,
       [event.target.name]: event.target.value,
@@ -30,20 +38,6 @@ function AddButton({date, set, part, mutateWorkoutSet}) {
   }
 
   function handleSubmit() {
-    // console.log("formData", formData);
-    // console.log({
-    //   workout_date: date,
-    //   exercise_name: set.exercise.name,
-    //   sets: [
-    //     {
-    //       weight: formData.weight,
-    //       reps: formData.reps,
-    //     },
-    //   ],
-    // });
-    // console.log(set.exercise.name);
-    // console.log(set);
-
     fetch(`${apiUrl}/exercise-block`, {
       method: "POST",
       headers: {
@@ -64,7 +58,6 @@ function AddButton({date, set, part, mutateWorkoutSet}) {
     })
       .then((res) => res.json())
       .then((data) => {
-        // console.log(data);
         mutateWorkoutSet();
       });
   }
@@ -110,3 +103,4 @@ function AddButton({date, set, part, mutateWorkoutSet}) {
 }
 
 export default observer(AddButton);
+

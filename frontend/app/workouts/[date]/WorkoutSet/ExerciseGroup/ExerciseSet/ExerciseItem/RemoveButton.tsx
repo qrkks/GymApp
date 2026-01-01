@@ -1,10 +1,15 @@
 import {CircleX} from "lucide-react";
 import authStore from "@/app/store/authStore";
 import config from "@/utils/config";
+import type { Set, MutateFunction } from "@/app/types/workout.types";
 
-function ExersiceSetButtonRemove({item, mutateWorkoutSet}) {
+interface RemoveSetButtonProps {
+  item: Set;
+  mutateWorkoutSet: MutateFunction;
+}
+
+function RemoveSetButton({item, mutateWorkoutSet}: RemoveSetButtonProps) {
   const { apiUrl } = config;
-  // console.log(item);
   function handleClick() {
     const isConfirmed = window.confirm(
       `确定要删除第 ${item.set_number} 组吗？`
@@ -33,4 +38,5 @@ function ExersiceSetButtonRemove({item, mutateWorkoutSet}) {
   );
 }
 
-export default ExersiceSetButtonRemove;
+export default RemoveSetButton;
+

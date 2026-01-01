@@ -4,25 +4,29 @@ import React, {useState, useEffect} from "react";
 import {Calendar} from "@/components/ui/calendar";
 import {useRouter} from "next/navigation";
 import {Button} from "@/components/ui/button";
+import type { DateRange } from "react-day-picker";
 
 function Workouts() {
-  const [date, setDate] = useState(null); // 初始化为空，避免服务器端渲染和客户端渲染不一致
+  const [date, setDate] = useState<Date | undefined>(undefined);
   const router = useRouter();
 
   useEffect(() => {
-    // 在客户端渲染后才设置当前日期，避免服务端渲染和客户端渲染时间不同
     setDate(new Date());
   }, []);
 
-  function handleSelect(selectedDate) {
+  function handleSelect(selectedDate: Date | undefined) {
     setDate(selectedDate);
-    console.log(selectedDate && selectedDate.toLocaleDateString().slice(0, 10));
+    if (selectedDate) {
+      console.log(selectedDate.toLocaleDateString().slice(0, 10));
+    }
   }
 
   function handleClick() {
+    if (!date) return;
+    
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // 月份从0开始，所以加1
-    const day = String(date.getDate()).padStart(2, "0"); // 确保日是两位数
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
 
     const formattedDate = `${year}-${month}-${day}`;
 
@@ -41,9 +45,9 @@ function Workouts() {
       <Button onClick={handleClick}>
         {date ? `前往 ${date.toLocaleDateString()}` : "没有选择日期"}
       </Button>
-      {/* <div>{JSON.stringify(date)}</div> */}
     </div>
   );
 }
 
 export default Workouts;
+

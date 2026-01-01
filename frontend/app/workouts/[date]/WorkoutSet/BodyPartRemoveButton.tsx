@@ -1,9 +1,15 @@
 import {CircleX} from "lucide-react";
 import authStore from "@/app/store/authStore";
 import config from "@/utils/config";
+import type { BodyPart } from "@/app/types/workout.types";
 
+interface RemoveBodyPartButtonProps {
+  part: BodyPart;
+  date: string;
+  mutateWorkout: () => void | Promise<void>;
+}
 
-function ExersiceSetButtonRemove({part, date, mutateWorkout}) {
+function RemoveBodyPartButton({part, date, mutateWorkout}: RemoveBodyPartButtonProps) {
   const { apiUrl } = config;
   function handleClick() {
     const isConfirmed = window.confirm(`确定要删除 ${part.name} 吗？`);
@@ -36,4 +42,5 @@ function ExersiceSetButtonRemove({part, date, mutateWorkout}) {
   );
 }
 
-export default ExersiceSetButtonRemove;
+export default RemoveBodyPartButton;
+
