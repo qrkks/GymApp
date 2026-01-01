@@ -41,6 +41,72 @@ function initializeTestDb() {
     );
   `);
   
+  // 创建 exercises 表
+  testSqlite.exec(`
+    CREATE TABLE IF NOT EXISTS exercises (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT,
+      body_part_id INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (body_part_id) REFERENCES body_parts(id) ON DELETE CASCADE,
+      UNIQUE(user_id, name)
+    );
+  `);
+  
+  // 创建 workouts 表
+  testSqlite.exec(`
+    CREATE TABLE IF NOT EXISTS workouts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      date TEXT NOT NULL,
+      start_time INTEGER NOT NULL,
+      end_time INTEGER,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE(user_id, date)
+    );
+  `);
+  
+  // 创建 workout_sets 表
+  testSqlite.exec(`
+    CREATE TABLE IF NOT EXISTS workout_sets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      workout_id INTEGER NOT NULL,
+      exercise_id INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (workout_id) REFERENCES workouts(id) ON DELETE CASCADE,
+      FOREIGN KEY (exercise_id) REFERENCES exercises(id) ON DELETE CASCADE,
+      UNIQUE(workout_id, exercise_id)
+    );
+  `);
+  
+  // 创建 sets 表
+  testSqlite.exec(`
+    CREATE TABLE IF NOT EXISTS sets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      workout_set_id INTEGER NOT NULL,
+      set_number INTEGER NOT NULL,
+      weight REAL NOT NULL,
+      reps INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (workout_set_id) REFERENCES workout_sets(id) ON DELETE CASCADE
+    );
+  `);
+  
+  // 创建 workout_body_parts 表
+  testSqlite.exec(`
+    CREATE TABLE IF NOT EXISTS workout_body_parts (
+      workout_id INTEGER NOT NULL,
+      body_part_id INTEGER NOT NULL,
+      PRIMARY KEY (workout_id, body_part_id),
+      FOREIGN KEY (workout_id) REFERENCES workouts(id) ON DELETE CASCADE,
+      FOREIGN KEY (body_part_id) REFERENCES body_parts(id) ON DELETE CASCADE
+    );
+  `);
+  
   isInitialized = true;
 }
 

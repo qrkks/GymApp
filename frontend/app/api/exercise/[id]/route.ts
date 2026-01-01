@@ -1,99 +1,86 @@
+/**
+ * Exercise API Routes - Single Exercise
+ * 仅处理 HTTP 请求/响应，调用 Application Service
+ */
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { exercises } from '@/lib/db/schema';
 import { requireAuth } from '@/lib/auth-helpers';
-import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
+import {
+  updateExerciseName,
+  deleteExercise,
+} from '@domain/exercise/application/exercise.use-case';
+import { toHttpResponse } from '@domain/shared/error-types';
 
 const patchSchema = z.object({
   exercise_name: z.string().min(1),
 });
 
-// PATCH /api/exercise/[id]/patch - Update exercise name
+/**
+ * PATCH /api/exercise/[id] - Update exercise name
+ */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const user = await requireAuth();
+    if (!user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const data = patchSchema.parse(body);
     const id = parseInt(params.id);
 
-    const [result] = await db
-      .update(exercises)
-      .set({ name: data.exercise_name })
-      .where(and(
-        eq(exercises.id, id),
-        eq(exercises.userId, user.id)
-      ))
-      .returning();
+    const result = await updateExerciseName(id, user.id, data.exercise_name);
+    const response = toHttpResponse(result);
 
-    if (!result) {
-      return NextResponse.json(
-        { error: 'Exercise not found' },
-        { status: 404 }
-      );
-    }
-
-    // Get body part info
-    const { bodyParts } = await import('@/lib/db/schema');
-    const bodyPart = await db
-      .select()
-      .from(bodyParts)
-      .where(eq(bodyParts.id, result.bodyPartId))
-      .limit(1);
-
-    return NextResponse.json({
-      id: result.id,
-      name: result.name,
-      description: result.description,
-      body_part: {
-        id: bodyPart[0].id,
-        name: bodyPart[0].name,
-      },
-    });
+    return NextResponse.json(response.body, { status: response.status });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Validation error', details: error.errors },
+        { status: 400 }
+      );
     }
     if (error.message === 'Unauthorized') {
-      return NextResponse.json({ error: error.message }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
-// DELETE /api/exercise/[id]/delete - Delete an exercise
+/**
+ * DELETE /api/exercise/[id] - Delete an exercise
+ */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const user = await requireAuth();
-    const id = parseInt(params.id);
-
-    const [result] = await db
-      .delete(exercises)
-      .where(and(
-        eq(exercises.id, id),
-        eq(exercises.userId, user.id)
-      ))
-      .returning();
-
-    if (!result) {
-      return NextResponse.json(
-        { error: 'Exercise not found' },
-        { status: 404 }
-      );
+    if (!user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    return NextResponse.json(null, { status: 204 });
+    const id = parseInt(params.id);
+    const result = await deleteExercise(id, user.id);
+    const response = toHttpResponse(result);
+
+    if (response.status === 204) {
+      return NextResponse.json(null, { status: 204 });
+    }
+    return NextResponse.json(response.body, { status: response.status });
   } catch (error: any) {
     if (error.message === 'Unauthorized') {
-      return NextResponse.json({ error: error.message }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
-

@@ -10,7 +10,7 @@ function ExersiceSetButtonRemove({date, mutateWorkoutSet, set}) {
     const isConfirmed = window.confirm(`确定要删除 ${set.exercise.name} 吗？`);
     if (!isConfirmed) return;
 
-    fetch(`${apiUrl}/workoutset/${date}/${set.exercise.name}`, {
+    fetch(`${apiUrl}/exercise-block/${date}/${set.exercise.name}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",

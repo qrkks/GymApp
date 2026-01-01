@@ -44,7 +44,7 @@ function AddButton({date, set, part, mutateWorkoutSet}) {
     // console.log(set.exercise.name);
     // console.log(set);
 
-    fetch(`${apiUrl}/workoutset`, {
+    fetch(`${apiUrl}/exercise-block`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

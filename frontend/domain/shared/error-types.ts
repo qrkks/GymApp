@@ -27,6 +27,8 @@ export type ErrorCode =
   | 'WORKOUT_ALREADY_EXISTS'
   // WorkoutSet 相关错误
   | 'WORKOUT_SET_NOT_FOUND'
+  // ExerciseBlock 相关错误
+  | 'EXERCISE_BLOCK_NOT_FOUND'
   // Set 相关错误
   | 'SET_NOT_FOUND';
 
@@ -80,6 +82,7 @@ export function getStatusCode(errorCode: ErrorCode): number {
     case 'EXERCISE_NOT_FOUND':
     case 'WORKOUT_NOT_FOUND':
     case 'WORKOUT_SET_NOT_FOUND':
+    case 'EXERCISE_BLOCK_NOT_FOUND':
     case 'SET_NOT_FOUND':
       return 404;
     case 'VALIDATION_ERROR':

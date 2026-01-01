@@ -1,29 +1,40 @@
 /**
- * Exercise API Routes - By Body Part
+ * Set API Routes
  * 仅处理 HTTP 请求/响应，调用 Application Service
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-helpers';
 import {
-  getExercisesByBodyPartName,
-} from '@domain/exercise/application/exercise.use-case';
+  getSetsByWorkoutDateAndExerciseName,
+} from '@domain/workout/application/workout.use-case';
 import { toHttpResponse } from '@domain/shared/error-types';
 
 /**
- * GET /api/exercise/body-part/[name] - Get exercises by body part name
+ * GET /api/set - Get sets by workout date and exercise name
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { name: string } }
-) {
+export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth();
     if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const bodyPartName = decodeURIComponent(params.name);
-    const result = await getExercisesByBodyPartName(user.id, bodyPartName);
+    const searchParams = request.nextUrl.searchParams;
+    const workoutDate = searchParams.get('workout_date');
+    const exerciseName = searchParams.get('exercise_name');
+
+    if (!workoutDate || !exerciseName) {
+      return NextResponse.json(
+        { error: 'workout_date and exercise_name are required' },
+        { status: 400 }
+      );
+    }
+
+    const result = await getSetsByWorkoutDateAndExerciseName(
+      user.id,
+      workoutDate,
+      exerciseName
+    );
     const response = toHttpResponse(result);
 
     return NextResponse.json(response.body, { status: response.status });

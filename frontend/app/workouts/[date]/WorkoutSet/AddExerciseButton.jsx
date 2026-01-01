@@ -108,7 +108,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}) {
     try {
       setAddedExercise(store.currentSelectedExercise);
 
-      const response = await fetch(`${apiUrl}/workoutset`, {
+      const response = await fetch(`${apiUrl}/exercise-block`, {
         method: "POST",
         credentials: "include",
         headers: {

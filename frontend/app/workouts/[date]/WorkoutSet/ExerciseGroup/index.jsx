@@ -28,7 +28,7 @@ function ExerciseGroup({ part, date, addedExercise, setMutateRef }) {
     error: workoutSetError,
     mutate: mutateWorkoutSet,
   } = useSWR(
-    `${apiUrl}/workoutset?workout_date=${date}&body_part_name=${part.name}`,
+    `${apiUrl}/exercise-block?workout_date=${date}&body_part_name=${part.name}`,
     fetcher,
     {
       revalidateOnFocus: false,
