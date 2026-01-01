@@ -3,10 +3,16 @@ FROM node:22-bookworm-slim AS base
 
 WORKDIR /app
 
-# 建议：不要把 AUTH_SECRET / DATABASE_PATH / NEXTAUTH_URL 写进镜像层（安全&可维护）
-# 这些用 docker run 的 -e 或 compose 来注入即可。
-ENV NODE_ENV=production
+ARG AUTH_SECRET
+ARG DATABASE_PATH
+ARG NEXTAUTH_URL
+
+
+ENV AUTH_SECRET=${AUTH_SECRET}
+ENV DATABASE_PATH=${DATABASE_PATH}
+ENV NEXTAUTH_URL=${NEXTAUTH_URL}
 ENV AUTH_TRUST_HOST=true
+# ENV NODE_ENV=production
 
 # ========= Dependencies (install + native build) =========
 FROM base AS deps
