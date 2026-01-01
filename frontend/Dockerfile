@@ -2,9 +2,11 @@ FROM node:20-bookworm-slim AS base
 
 ARG AUTH_SECRET
 ARG DATABASE_PATH
+ARG NEXTAUTH_URL
 
 ENV AUTH_SECRET=${AUTH_SECRET}
 ENV DATABASE_PATH=${DATABASE_PATH}
+ENV NEXTAUTH_URL=${NEXTAUTH_URL}
 
 # Install dependencies only when needed
 FROM base AS deps

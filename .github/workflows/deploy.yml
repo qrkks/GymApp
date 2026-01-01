@@ -39,6 +39,7 @@ jobs:
           docker build \
             --build-arg AUTH_SECRET=${{ secrets.AUTH_SECRET }} \
             --build-arg DATABASE_PATH=${{ secrets.DATABASE_PATH }} \
+            --build-arg NEXTAUTH_URL=http://localhost:3000
             -t gymapp-frontend:latest .
 
       - name: Save Frontend Docker image as tar
