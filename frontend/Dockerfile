@@ -28,6 +28,15 @@ RUN \
   else echo "Lockfile not found." && exit 1; \
   fi
 
+  # ✅ 关键：在有编译环境的阶段强制重建 better-sqlite3
+RUN \
+if [ -f pnpm-lock.yaml ]; then \
+  corepack enable pnpm && pnpm rebuild better-sqlite3; \
+elif [ -f package-lock.json ]; then \
+  npm rebuild better-sqlite3; \
+else \
+  true; \
+fi
 
 # Rebuild the source code only when needed
 FROM base AS builder
