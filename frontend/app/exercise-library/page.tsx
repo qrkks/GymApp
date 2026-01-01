@@ -9,7 +9,7 @@ import RefreshIndicator from "@/components/loading/RefreshIndicator";
 import { useLoadingState } from "@/hooks/useLoadingState";
 import type { BodyPart, MutateFunction } from "@/app/types/workout.types";
 
-function page() {
+function Page() {
   const {apiUrl} = config;
   const {
     data: bodyParts,
@@ -74,5 +74,5 @@ function page() {
   );
 }
 
-export default page;
+export default Page;
 

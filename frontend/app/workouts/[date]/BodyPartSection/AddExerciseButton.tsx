@@ -89,7 +89,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
     if (exercisesData) {
       mutateExercises();
     }
-  }, [date]);
+  }, [date, exercisesData, mutateExercises]);
 
   if (exercisesError)
     return (

@@ -1,6 +1,6 @@
 import {CircleArrowLeft, CircleArrowRight} from "lucide-react";
 import {useRouter} from "next/navigation";
-import {useEffect, KeyboardEvent} from "react";
+import {useEffect, useCallback, KeyboardEvent} from "react";
 import { getTodayDate } from "../GoToTodayButton";
 
 interface DateHeadProps {
@@ -12,7 +12,7 @@ interface DateHeadProps {
 function DateHead({params}: DateHeadProps) {
   const router = useRouter();
 
-  function getSomeDate(offset: number): string {
+  const getSomeDate = useCallback((offset: number): string => {
     const currentDate = new Date(params.date);
     currentDate.setDate(currentDate.getDate() + offset);
 
@@ -21,7 +21,7 @@ function DateHead({params}: DateHeadProps) {
     const day = String(currentDate.getDate()).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
-  }
+  }, [params.date]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent<Window>) {
@@ -37,7 +37,7 @@ function DateHead({params}: DateHeadProps) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown as unknown as EventListener);
     };
-  }, [params.date, router]);
+  }, [router, getSomeDate]);
 
   return (
     <>
