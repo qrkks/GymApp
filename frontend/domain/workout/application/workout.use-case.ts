@@ -8,6 +8,9 @@ import * as workoutQueries from '@domain/workout/repository/queries/workout.repo
 import * as workoutCommands from '@domain/workout/repository/commands/workout.repository';
 import * as bodyPartQueries from '@domain/body-part/repository/queries/body-part.repository';
 import * as exerciseQueries from '@domain/exercise/repository/queries/exercise.repository';
+import { Workout as WorkoutEntity } from '@domain/workout/model/workout.entity';
+import { ExerciseBlock as ExerciseBlockEntity } from '@domain/workout/model/exercise-block.entity';
+import { Set as SetEntity } from '@domain/workout/model/set.entity';
 import { db } from '@/lib/db';
 import { exercises, bodyParts } from '@/lib/db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
@@ -75,19 +78,47 @@ export async function createWorkout(
   data: CreateWorkoutData
 ): Promise<Result<workoutQueries.Workout & { created: boolean }>> {
   try {
+    // 使用实体验证日期格式（会抛出异常如果无效）
+    try {
+      // 临时创建实体以验证日期格式
+      WorkoutEntity.fromPersistence({
+        id: 0, // 临时 ID
+        userId,
+        date: data.date,
+        startTime: data.startTime || new Date(),
+        endTime: null,
+      });
+    } catch (error: any) {
+      if (error.message?.includes('date') || error.message?.includes('Date')) {
+        return failure(
+          'VALIDATION_ERROR',
+          'Invalid workout date format'
+        );
+      }
+      throw error;
+    }
+
     // 业务规则：检查是否已存在同一天的训练
     const existing = await workoutQueries.findWorkoutByDate(userId, data.date);
     if (existing) {
-      return failure(
-        'WORKOUT_ALREADY_EXISTS',
-        'Workout for this date already exists'
-      );
+      // 使用实体封装业务逻辑
+      const existingEntity = WorkoutEntity.fromPersistence(existing);
+      if (existingEntity.isSameDate(data.date)) {
+        return failure(
+          'WORKOUT_ALREADY_EXISTS',
+          'Workout for this date already exists'
+        );
+      }
     }
 
     // 创建训练
     const workout = await workoutCommands.insertWorkout(userId, data);
+    
+    // 使用实体封装业务逻辑（可选，用于验证）
+    const workoutEntity = WorkoutEntity.fromPersistence(workout);
+    
     return success({ ...workout, created: true });
-  } catch (error) {
+  } catch (error: any) {
     return failure(
       'INTERNAL_ERROR',
       'Failed to create workout',
@@ -390,6 +421,37 @@ export async function createExerciseBlock(
       created = true;
     }
 
+    // 使用实体验证组数据（如果提供）
+    if (setsData && setsData.length > 0) {
+      for (const setData of setsData) {
+        try {
+          // 临时创建实体以验证数据
+          SetEntity.fromPersistence({
+            id: 0, // 临时 ID
+            userId,
+            workoutSetId: existingExerciseBlock.id,
+            setNumber: 1, // 临时值
+            weight: setData.weight,
+            reps: setData.reps,
+          });
+        } catch (error: any) {
+          if (error.message?.includes('Weight') || error.message?.includes('weight')) {
+            return failure(
+              'VALIDATION_ERROR',
+              'Weight must be greater than 0'
+            );
+          }
+          if (error.message?.includes('Reps') || error.message?.includes('reps')) {
+            return failure(
+              'VALIDATION_ERROR',
+              'Reps must be greater than 0'
+            );
+          }
+          throw error;
+        }
+      }
+    }
+
     // 添加组（如果提供）
     let createdSets: Array<{ id: number; setNumber: number; weight: number; reps: number }> = [];
     if (setsData && setsData.length > 0) {
@@ -661,22 +723,55 @@ export async function updateSet(
 ): Promise<Result<workoutQueries.Set & { set_number: number }>> {
   try {
     // 业务规则：检查组是否存在且属于用户
-    const existing = await workoutQueries.findSetById(id, userId);
-    if (!existing) {
+    const existingData = await workoutQueries.findSetById(id, userId);
+    if (!existingData) {
       return failure(
         'SET_NOT_FOUND',
         'Set not found'
       );
     }
 
+    // 使用实体封装业务逻辑
+    const existing = SetEntity.fromPersistence(existingData);
+    
+    // 使用实体验证新的 weight 和 reps（会抛出异常如果无效）
+    try {
+      // 临时创建实体以验证数据
+      SetEntity.fromPersistence({
+        id: existing.id,
+        userId: existing.userId,
+        workoutSetId: existing.exerciseBlockId,
+        setNumber: existing.setNumber,
+        weight: data.weight ?? existing.weight,
+        reps: data.reps ?? existing.reps,
+      });
+    } catch (error: any) {
+      if (error.message?.includes('Weight') || error.message?.includes('weight')) {
+        return failure(
+          'VALIDATION_ERROR',
+          'Weight must be greater than 0'
+        );
+      }
+      if (error.message?.includes('Reps') || error.message?.includes('reps')) {
+        return failure(
+          'VALIDATION_ERROR',
+          'Reps must be greater than 0'
+        );
+      }
+      throw error;
+    }
+
     // 更新组
-    const updated = await workoutCommands.updateSet(id, data);
-    if (!updated) {
+    const updatedData = await workoutCommands.updateSet(id, data);
+    if (!updatedData) {
       return failure(
         'SET_NOT_FOUND',
         'Set not found'
       );
     }
+
+    // 使用实体封装业务逻辑（可选，用于验证）
+    const updated = SetEntity.fromPersistence(updatedData);
 
     return success({
       id: updated.id,
@@ -684,7 +779,7 @@ export async function updateSet(
       weight: updated.weight,
       reps: updated.reps,
     });
-  } catch (error) {
+  } catch (error: any) {
     return failure(
       'INTERNAL_ERROR',
       'Failed to update set',
@@ -702,13 +797,16 @@ export async function deleteSet(
 ): Promise<Result<{ success: boolean; message: string }>> {
   try {
     // 业务规则：检查组是否存在且属于用户
-    const existing = await workoutQueries.findSetById(id, userId);
-    if (!existing) {
+    const existingData = await workoutQueries.findSetById(id, userId);
+    if (!existingData) {
       return failure(
         'SET_NOT_FOUND',
         'Set not found'
       );
     }
+
+    // 使用实体封装业务逻辑
+    const existing = SetEntity.fromPersistence(existingData);
 
     // 获取训练动作块 ID
     const exerciseBlockId = await workoutCommands.getExerciseBlockIdBySetId(id, userId);
