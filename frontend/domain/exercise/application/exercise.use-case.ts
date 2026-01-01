@@ -6,6 +6,8 @@ import { Result, success, failure } from '@domain/shared/error-types';
 import * as exerciseQueries from '@domain/exercise/repository/queries/exercise.repository';
 import * as exerciseCommands from '@domain/exercise/repository/commands/exercise.repository';
 import * as bodyPartQueries from '@domain/body-part/repository/queries/body-part.repository';
+import { Exercise as ExerciseEntity } from '@domain/exercise/model/exercise.entity';
+import { ExerciseName } from '@domain/exercise/model/exercise-name.value-object';
 import { db } from '@/lib/db';
 import { bodyParts } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
@@ -87,6 +89,17 @@ export async function createExercise(
   data: CreateExerciseData
 ): Promise<Result<Exercise>> {
   try {
+    // 使用值对象进行验证
+    let exerciseName: ExerciseName;
+    try {
+      exerciseName = ExerciseName.create(data.name);
+    } catch (error: any) {
+      return failure(
+        'VALIDATION_ERROR',
+        'Exercise name cannot be empty'
+      );
+    }
+
     // 业务规则：检查身体部位是否存在
     const bodyPart = await bodyPartQueries.findBodyPartById(data.bodyPartId, userId);
     if (!bodyPart) {
@@ -97,19 +110,22 @@ export async function createExercise(
     }
 
     // 业务规则：如果动作已存在，返回现有的
-    const existing = await exerciseQueries.findExerciseByName(userId, data.name);
+    const existing = await exerciseQueries.findExerciseByName(userId, exerciseName.getValue());
     if (existing) {
+      // 使用实体封装业务逻辑
+      const existingEntity = ExerciseEntity.fromPersistence(existing);
+      
       // 获取身体部位信息
       const [bodyPartData] = await db
         .select()
         .from(bodyParts)
-        .where(eq(bodyParts.id, existing.bodyPartId))
+        .where(eq(bodyParts.id, existingEntity.bodyPartId))
         .limit(1);
 
       return success({
-        id: existing.id,
-        name: existing.name,
-        description: existing.description,
+        id: existingEntity.id,
+        name: existingEntity.getName(),
+        description: existingEntity.description,
         body_part: {
           id: bodyPartData.id,
           name: bodyPartData.name,
@@ -118,7 +134,13 @@ export async function createExercise(
     }
 
     // 创建动作
-    const exercise = await exerciseCommands.insertExercise(userId, data);
+    const exerciseData = await exerciseCommands.insertExercise(userId, {
+      ...data,
+      name: exerciseName.getValue(),
+    });
+
+    // 使用实体封装业务逻辑
+    const exercise = ExerciseEntity.fromPersistence(exerciseData);
 
     // 获取身体部位信息
     const [bodyPartData] = await db
@@ -129,14 +151,22 @@ export async function createExercise(
 
     return success({
       id: exercise.id,
-      name: exercise.name,
+      name: exercise.getName(),
       description: exercise.description,
       body_part: {
         id: bodyPartData.id,
         name: bodyPartData.name,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    // 捕获值对象验证异常
+    if (error.message?.includes('name') || error.message?.includes('Name')) {
+      return failure(
+        'VALIDATION_ERROR',
+        'Exercise name cannot be empty'
+      );
+    }
+    
     return failure(
       'INTERNAL_ERROR',
       'Failed to create exercise',
@@ -154,23 +184,40 @@ export async function updateExerciseName(
   name: string
 ): Promise<Result<Exercise>> {
   try {
+    // 使用值对象进行验证
+    let exerciseName: ExerciseName;
+    try {
+      exerciseName = ExerciseName.create(name);
+    } catch (error: any) {
+      return failure(
+        'VALIDATION_ERROR',
+        'Exercise name cannot be empty'
+      );
+    }
+
     // 业务规则：检查动作是否存在
-    const existing = await exerciseQueries.findExerciseById(id, userId);
-    if (!existing) {
+    const existingData = await exerciseQueries.findExerciseById(id, userId);
+    if (!existingData) {
       return failure(
         'EXERCISE_NOT_FOUND',
         'Exercise not found'
       );
     }
 
+    // 使用实体封装业务逻辑
+    const existing = ExerciseEntity.fromPersistence(existingData);
+
     // 更新动作名称
-    const updated = await exerciseCommands.updateExerciseName(id, userId, name);
-    if (!updated) {
+    const updatedData = await exerciseCommands.updateExerciseName(id, userId, exerciseName.getValue());
+    if (!updatedData) {
       return failure(
         'EXERCISE_NOT_FOUND',
         'Exercise not found'
       );
     }
+
+    // 使用实体封装业务逻辑
+    const updated = ExerciseEntity.fromPersistence(updatedData);
 
     // 获取身体部位信息
     const [bodyPartData] = await db
@@ -181,14 +228,22 @@ export async function updateExerciseName(
 
     return success({
       id: updated.id,
-      name: updated.name,
+      name: updated.getName(),
       description: updated.description,
       body_part: {
         id: bodyPartData.id,
         name: bodyPartData.name,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    // 捕获值对象验证异常
+    if (error.message?.includes('name') || error.message?.includes('Name')) {
+      return failure(
+        'VALIDATION_ERROR',
+        'Exercise name cannot be empty'
+      );
+    }
+    
     return failure(
       'INTERNAL_ERROR',
       'Failed to update exercise',
@@ -206,13 +261,16 @@ export async function deleteExercise(
 ): Promise<Result<void>> {
   try {
     // 业务规则：检查动作是否存在
-    const existing = await exerciseQueries.findExerciseById(id, userId);
-    if (!existing) {
+    const existingData = await exerciseQueries.findExerciseById(id, userId);
+    if (!existingData) {
       return failure(
         'EXERCISE_NOT_FOUND',
         'Exercise not found'
       );
     }
+
+    // 使用实体封装业务逻辑（可选，用于验证）
+    const existing = ExerciseEntity.fromPersistence(existingData);
 
     // 删除动作
     const deleted = await exerciseCommands.deleteExercise(id, userId);
@@ -248,4 +306,3 @@ export async function deleteAllExercises(userId: string): Promise<Result<void>> 
     );
   }
 }
-
