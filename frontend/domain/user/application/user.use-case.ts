@@ -9,7 +9,7 @@ import { User as UserEntity, UserPersistence } from '@domain/user/model/user.ent
 import { Email } from '@domain/user/model/email.value-object';
 import { Username } from '@domain/user/model/username.value-object';
 import { Password } from '@domain/user/model/password.value-object';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 // 导出类型：使用 repository 的原始类型（用于 API 层）
 export type User = userQueries.User;

@@ -3,7 +3,7 @@
  * 使用 bcrypt 进行密码验证
  */
 
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 /**
  * 验证密码

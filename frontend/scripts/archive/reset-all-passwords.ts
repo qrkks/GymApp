@@ -7,7 +7,7 @@ import { drizzle } from 'drizzle-orm/better-sqlite3';
 import * as schema from '../../lib/db/schema';
 import { users } from '../../lib/db/schema';
 import { eq } from 'drizzle-orm';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 const dbPath = process.env.DATABASE_PATH || './db.sqlite';
 const NEW_PASSWORD = '123698';
