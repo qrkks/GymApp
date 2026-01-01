@@ -1,5 +1,4 @@
 import {useState, useEffect} from "react";
-import authStore from "@/app/store/authStore";
 import RemoveExerciseButton from "./RemoveButton";
 import useSWR from "swr";
 import ExerciseEditPopover from "./EditPopover";
@@ -21,7 +20,6 @@ function Exercises({part, mutate}: ExercisesProps) {
   } = useSWR<Exercise[]>(`${apiUrl}/exercise?body_part_name=${part.name}`, (url: string) =>
     fetch(url, {
       credentials: "include",
-      headers: {"X-CSRFToken": authStore.getCookieOrUndefined("csrftoken")},
     }).then((res) => res.json())
   );
 

@@ -1,6 +1,5 @@
 import {CircleX} from "lucide-react";
 import {useState} from "react";
-import authStore from "@/app/store/authStore";
 import config from "@/utils/config";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { showToast } from "@/lib/toast";
@@ -20,7 +19,6 @@ function RemoveExerciseButton({exercise, mutate}: RemoveExerciseButtonProps) {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
       },
       credentials: "include",
     })

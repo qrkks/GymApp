@@ -1,5 +1,5 @@
-import RemoveSetButton from "./RemoveButton";
-import SetEditPopover from "./EditPopover";
+import RemoveSetButton from "../../ExerciseSet/SetRow/RemoveButton";
+import SetEditPopover from "../../ExerciseSet/SetRow/EditPopover";
 import SetTable from "../SetTableContainer";
 import {TableCell, TableRow} from "@/components/ui/table";
 import type { Set, ExerciseBlock, MutateFunction } from "@/app/types/workout.types";

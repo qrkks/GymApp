@@ -32,7 +32,19 @@ export async function GET(request: NextRequest) {
     // Get today's date
     const today = new Date().toISOString().split('T')[0];
 
-    let query = db
+    // 构建 where 条件
+    const baseConditions = [
+      eq(workoutSets.userId, user.id),
+      ne(workouts.date, today),
+    ];
+
+    if (exerciseId) {
+      baseConditions.push(eq(exercises.id, parseInt(exerciseId)));
+    } else if (exerciseName) {
+      baseConditions.push(eq(exercises.name, exerciseName));
+    }
+
+    const query = db
       .select({
         workoutSetId: workoutSets.id,
         workoutDate: workouts.date,
@@ -42,24 +54,7 @@ export async function GET(request: NextRequest) {
       .from(workoutSets)
       .innerJoin(workouts, eq(workoutSets.workoutId, workouts.id))
       .innerJoin(exercises, eq(workoutSets.exerciseId, exercises.id))
-      .where(and(
-        eq(workoutSets.userId, user.id),
-        ne(workouts.date, today)
-      ));
-
-    if (exerciseId) {
-      query = query.where(and(
-        eq(workoutSets.userId, user.id),
-        eq(exercises.id, parseInt(exerciseId)),
-        ne(workouts.date, today)
-      ));
-    } else if (exerciseName) {
-      query = query.where(and(
-        eq(workoutSets.userId, user.id),
-        eq(exercises.name, exerciseName),
-        ne(workouts.date, today)
-      ));
-    }
+      .where(and(...baseConditions));
 
     const lastWorkoutSet = await query
       .orderBy(desc(workouts.date))

@@ -24,7 +24,7 @@ export async function insertUser(data: CreateUserData): Promise<User> {
     .values({
       id: data.id,
       email: data.email ?? undefined,
-      username: data.username ?? undefined,
+      username: data.username ?? '', // username 是 notNull，不能是 undefined
       password: data.password ?? undefined,
       image: data.image ?? undefined,
       emailVerified: false,

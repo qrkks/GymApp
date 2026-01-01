@@ -774,10 +774,8 @@ export async function updateSet(
     const updated = SetEntity.fromPersistence(updatedData);
 
     return success({
-      id: updated.id,
+      ...updatedData,
       set_number: updated.setNumber,
-      weight: updated.weight,
-      reps: updated.reps,
     });
   } catch (error: any) {
     return failure(

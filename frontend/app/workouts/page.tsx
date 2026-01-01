@@ -51,6 +51,7 @@ function Workouts() {
         onSelect={handleSelect}
         className="border rounded-md shadow"
         classNames={{}}
+        {...({} as any)}
       />
       <Button onClick={handleClick}>
         {date ? `前往 ${date.toLocaleDateString()}` : "没有选择日期"}

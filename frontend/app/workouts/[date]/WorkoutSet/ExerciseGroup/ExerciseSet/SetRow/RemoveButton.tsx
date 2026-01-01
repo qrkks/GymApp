@@ -1,5 +1,4 @@
 import {CircleX} from "lucide-react";
-import authStore from "@/app/store/authStore";
 import config from "@/utils/config";
 import type { Set, MutateFunction } from "@/app/types/workout.types";
 
@@ -18,7 +17,7 @@ function RemoveSetButton({item, mutateWorkoutSet}: RemoveSetButtonProps) {
 
     fetch(`${apiUrl}/set/${item.id}`, {
       method: "DELETE",
-      headers: {"Content-Type": "application/json", "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken")},
+      headers: {"Content-Type": "application/json"},
       credentials: "include",
     })
       .then((res) => {

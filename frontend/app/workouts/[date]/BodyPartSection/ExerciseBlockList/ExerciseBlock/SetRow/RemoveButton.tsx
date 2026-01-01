@@ -1,6 +1,5 @@
 import {CircleX} from "lucide-react";
 import {useState} from "react";
-import authStore from "@/app/store/authStore";
 import config from "@/utils/config";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { showToast } from "@/lib/toast";
@@ -18,7 +17,7 @@ function RemoveSetButton({item, mutateWorkoutSet}: RemoveSetButtonProps) {
   function handleConfirm() {
     fetch(`${apiUrl}/set/${item.id}`, {
       method: "DELETE",
-      headers: {"Content-Type": "application/json", "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken")},
+      headers: {"Content-Type": "application/json"},
       credentials: "include",
     })
       .then(async (res) => {

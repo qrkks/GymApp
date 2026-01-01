@@ -8,14 +8,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {useState} from "react";
-import authStore from "@/app/store/authStore";
 import config from "@/utils/config";
 
 interface SelectInputProps {
   placeholder: string;
   entries?: Array<{ id: number; name: string }>;
-  mutate: () => void;
+  mutate: (() => void) | ((...args: any[]) => void | Promise<any>);
   onSelectChange?: (value: string) => void;
+  className?: string;
+  name?: string;
 }
 
 export default function SelectInput({
@@ -36,7 +37,6 @@ export default function SelectInput({
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
-            "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken") || "",
           },
           body: JSON.stringify({
             name: newEntry,

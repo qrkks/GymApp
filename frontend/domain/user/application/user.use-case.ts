@@ -71,7 +71,7 @@ export async function createUser(
     let password: Password;
     
     try {
-      email = Email.create(data.email);
+      email = Email.create(data.email || '');
     } catch (error: any) {
       return failure('INVALID_EMAIL', '邮箱格式不正确，请输入有效的邮箱地址');
     }

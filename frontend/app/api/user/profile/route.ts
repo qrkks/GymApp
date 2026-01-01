@@ -40,7 +40,12 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const result = await userUseCase.updateUser(user.id, validationResult.data);
+    // 将 null 转换为 undefined 以匹配类型
+    const updateData = {
+      ...validationResult.data,
+      image: validationResult.data.image ?? undefined,
+    };
+    const result = await userUseCase.updateUser(user.id, updateData);
     const response = toHttpResponse(result);
 
     return NextResponse.json(response.body, { status: response.status });

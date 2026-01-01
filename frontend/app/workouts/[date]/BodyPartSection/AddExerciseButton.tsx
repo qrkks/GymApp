@@ -4,7 +4,6 @@ import {observer} from "mobx-react-lite";
 import SheetContainer from "@/components/SheetContainer";
 import ExerciseSelectInput from "./ExerciseSelectInput";
 import useSWR from "swr";
-import authStore from "@/app/store/authStore";
 import LastWorkout from "./LastWorkout";
 import {makeAutoObservable} from "mobx";
 import config from "@/utils/config";
@@ -49,7 +48,6 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
       },
     });
 
@@ -75,7 +73,6 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
           },
         }
       )
@@ -114,7 +111,6 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
         },
         body: JSON.stringify({
           workout_date: date,
@@ -149,7 +145,6 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
           },
           credentials: "include",
           body: JSON.stringify({

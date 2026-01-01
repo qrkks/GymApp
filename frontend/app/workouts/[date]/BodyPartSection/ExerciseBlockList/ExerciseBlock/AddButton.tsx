@@ -2,7 +2,6 @@ import {CirclePlus} from "lucide-react";
 import SheetContainer from "@/components/SheetContainer";
 import {useState, ChangeEvent} from "react";
 import {Input} from "@/components/ui/input";
-import authStore from "@/app/store/authStore";
 import LastWorkout from "../../LastWorkout";
 import {observer} from "mobx-react-lite";
 import useSWR from "swr";
@@ -43,7 +42,6 @@ function AddButton({date, exerciseBlock, part, mutateWorkoutSet}: AddButtonProps
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
       },
       credentials: "include",
       body: JSON.stringify({

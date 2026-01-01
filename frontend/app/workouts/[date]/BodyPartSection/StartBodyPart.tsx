@@ -4,7 +4,6 @@ import SheetContainer from "@/components/SheetContainer";
 import {useState} from "react";
 import useSWR from "swr";
 import {Button} from "@/components/ui/button";
-import authStore from "@/app/store/authStore";
 import config from "@/utils/config";
 import type { BodyPart, MutateFunction } from "@/app/types/workout.types";
 
@@ -40,7 +39,6 @@ function StartBodyPart({date, mutateWorkout}: StartBodyPartProps) {
       credentials: "include",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
       },
       body: JSON.stringify({body_part_names: [selectedValue]}),
     })

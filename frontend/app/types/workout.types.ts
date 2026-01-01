@@ -35,7 +35,7 @@ export interface ExerciseBlock {
 
 // Mutate 函数类型
 // 兼容 SWR 的 mutate 函数，它可能返回 Promise<void | T | undefined>
-export type MutateFunction = () => void | Promise<void | unknown>;
+export type MutateFunction = (() => void | Promise<void | unknown>) | ((...args: any[]) => void | Promise<void | unknown>);
 
 // React 类型
 import type { ReactNode } from "react";

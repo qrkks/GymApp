@@ -24,7 +24,13 @@ export async function findExercises(
   userId: string,
   bodyPartName?: string
 ): Promise<ExerciseWithBodyPart[]> {
-  let query = db
+  // 构建 where 条件
+  const conditions = [eq(exercises.userId, userId)];
+  if (bodyPartName) {
+    conditions.push(eq(bodyParts.name, bodyPartName));
+  }
+
+  return await db
     .select({
       id: exercises.id,
       name: exercises.name,
@@ -35,19 +41,8 @@ export async function findExercises(
       },
     })
     .from(exercises)
-    .innerJoin(bodyParts, eq(exercises.bodyPartId, bodyParts.id));
-
-  // 构建where条件
-  if (bodyPartName) {
-    query = query.where(and(
-      eq(exercises.userId, userId),
-      eq(bodyParts.name, bodyPartName)
-    ));
-  } else {
-    query = query.where(eq(exercises.userId, userId));
-  }
-
-  return await query;
+    .innerJoin(bodyParts, eq(exercises.bodyPartId, bodyParts.id))
+    .where(conditions.length > 1 ? and(...conditions) : conditions[0]!);
 }
 
 /**

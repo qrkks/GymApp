@@ -99,6 +99,7 @@ describe('User Application Service', () => {
         id: 'test-user-1',
         email: 'invalid-email',
         username: 'Test User',
+        password: 'password123',
       });
       
       expect(result.success).toBe(false);

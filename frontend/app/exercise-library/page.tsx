@@ -1,5 +1,4 @@
 "use client";
-import authStore from "@/app/store/authStore";
 import Exercises from "./Exercises";
 import useSWR from "swr";
 import BodyPartEditPopover from "./../workouts/[date]/BodyPartSection/BodyPartEditPopover";
@@ -21,7 +20,6 @@ function page() {
   } = useSWR<BodyPart[]>(`${apiUrl}/body-part`, (url: string) =>
     fetch(url, {
       credentials: "include",
-      headers: {"X-CSRFToken": authStore.getCookieOrUndefined("csrftoken")},
     }).then((res) => res.json())
   );
 

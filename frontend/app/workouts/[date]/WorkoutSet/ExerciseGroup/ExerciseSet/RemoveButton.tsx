@@ -1,5 +1,4 @@
 import {CircleX} from "lucide-react";
-import authStore from "@/app/store/authStore";
 import config from "@/utils/config";
 import type { ExerciseBlock, MutateFunction } from "@/app/types/workout.types";
 import type { BodyPart } from "@/app/types/workout.types";
@@ -23,7 +22,6 @@ function RemoveExerciseBlockButton({date, mutateWorkoutSet, set, part}: RemoveEx
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
       },
       credentials: "include",
     })

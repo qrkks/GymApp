@@ -41,24 +41,24 @@ export const authOptions = {
 
         return {
           id: result.data.id,
-          email: result.data.email,
+          email: result.data.email || '', // 确保 email 不为 null
           name: result.data.username, // NextAuth 使用 name 字段，我们映射 username
         };
       },
     }),
   ],
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as const,
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: any; user: any }) {
       if (user) {
         token.id = user.id;
         token.email = user.email;
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: any; token: any }) {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.email = token.email as string;

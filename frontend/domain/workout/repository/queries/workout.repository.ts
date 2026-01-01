@@ -154,30 +154,6 @@ export async function findExerciseBlocks(
   userId: string,
   filters?: FindExerciseBlocksFilters
 ): Promise<ExerciseBlockWithDetails[]> {
-  let query = db
-    .select({
-      id: workoutSets.id,
-      workout: {
-        id: workouts.id,
-        date: workouts.date,
-        startTime: workouts.startTime,
-        endTime: workouts.endTime,
-      },
-      exercise: {
-        id: exercises.id,
-        name: exercises.name,
-        description: exercises.description,
-        body_part: {
-          id: bodyParts.id,
-          name: bodyParts.name,
-        },
-      },
-    })
-    .from(workoutSets)
-    .innerJoin(workouts, eq(workoutSets.workoutId, workouts.id))
-    .innerJoin(exercises, eq(workoutSets.exerciseId, exercises.id))
-    .innerJoin(bodyParts, eq(exercises.bodyPartId, bodyParts.id));
-
   // 构建where条件
   const conditions = [eq(workoutSets.userId, userId)];
   
@@ -193,9 +169,30 @@ export async function findExerciseBlocks(
     conditions.push(eq(bodyParts.name, filters.bodyPartName));
   }
 
-  query = query.where(conditions.length > 1 ? and(...conditions) : conditions[0]!);
-
-  const workoutSetsList = await query;
+  const workoutSetsList = await db
+    .select({
+      id: workoutSets.id,
+      workout: {
+        id: workouts.id,
+        date: workouts.date,
+        startTime: workouts.startTime,
+        endTime: workouts.endTime,
+      },
+      exercise: {
+        id: exercises.id,
+        name: exercises.name,
+        description: exercises.description,
+        body_part: {
+          id: bodyParts.id,
+          name: bodyParts.name,
+        } as any,
+      },
+    })
+    .from(workoutSets)
+    .innerJoin(workouts, eq(workoutSets.workoutId, workouts.id))
+    .innerJoin(exercises, eq(workoutSets.exerciseId, exercises.id))
+    .innerJoin(bodyParts, eq(exercises.bodyPartId, bodyParts.id))
+    .where(conditions.length > 1 ? and(...conditions) : conditions[0]!);
 
   // Get sets for each workout set
   const result = await Promise.all(
@@ -203,7 +200,7 @@ export async function findExerciseBlocks(
       const setsList = await db
         .select()
         .from(sets)
-        .where(eq(sets.workoutSetId, ws.id))
+        .where(eq(sets.workoutSetId, ws.id as number))
         .orderBy(sets.setNumber);
 
       return {
@@ -260,7 +257,7 @@ export async function findExerciseBlockById(
   const setsList = await db
     .select()
     .from(sets)
-    .where(eq(sets.workoutSetId, workoutSet.id))
+    .where(eq(sets.workoutSetId, workoutSet.id as number))
     .orderBy(sets.setNumber);
 
   return {

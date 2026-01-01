@@ -5,13 +5,11 @@ import {useEffect, useState} from "react";
 import useSWR from "swr";
 import BodyPartSection from "./BodyPartSection";
 import {Button} from "@/components/ui/button";
-import authStore from "@/app/store/authStore";
 import config from "@/utils/config";
 import DateHead from "./DateHead";
 import WorkoutSkeleton from "@/components/loading/WorkoutSkeleton";
 import RefreshIndicator from "@/components/loading/RefreshIndicator";
 import { useLoadingState } from "@/hooks/useLoadingState";
-import { useState } from "react";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { showToast } from "@/lib/toast";
 import type { BodyPart, MutateFunction } from "@/app/types/workout.types";
@@ -108,7 +106,6 @@ function WorkoutById({params}: WorkoutByIdProps) {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
         },
         body: JSON.stringify({date: params.date}),
       })
@@ -136,7 +133,6 @@ function WorkoutById({params}: WorkoutByIdProps) {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": authStore.getCookie("csrftoken"),
       },
       credentials: "include",
     })

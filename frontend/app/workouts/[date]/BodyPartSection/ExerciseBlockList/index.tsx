@@ -1,7 +1,6 @@
 import React, { useEffect, useCallback } from 'react';
 import useSWR from "swr";
 import ExerciseBlock from "./ExerciseBlock";
-import authStore from "@/app/store/authStore";
 import config from "@/utils/config";
 import type { BodyPart, ExerciseBlock as ExerciseBlockType, MutateFunction } from "@/app/types/workout.types";
 
@@ -20,7 +19,6 @@ function ExerciseBlockList({ part, date, addedExercise, setMutateRef }: Exercise
     try {
       const response = await fetch(url, {
         credentials: "include",
-        headers: {"X-CSRFToken": authStore.getCookieOrUndefined("csrftoken")},
       });
       
       const data = await response.json();

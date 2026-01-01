@@ -4,7 +4,6 @@ import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {useState, FormEvent} from "react";
-import authStore from "@/app/store/authStore";
 import config from "@/utils/config";
 import type { Set, MutateFunction } from "@/app/types/workout.types";
 
@@ -30,7 +29,6 @@ export default function SetEditPopover({item, mutateWorkoutSet}: SetEditPopoverP
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
       },
       credentials: "include",
       body: JSON.stringify(formDataObj),
