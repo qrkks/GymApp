@@ -36,7 +36,11 @@ jobs:
 
       - name: Build Frontend Docker image
         working-directory: ./frontend
-        run: docker build -t gymapp-frontend:latest .
+        run: |
+          docker build \
+            --build-arg AUTH_SECRET=${{ secrets.AUTH_SECRET }} \
+            --build-arg DATABASE_PATH=${{ secrets.DATABASE_PATH }} \
+            -t gymapp-frontend:latest .
 
       - name: Save Frontend Docker image as tar
         working-directory: ./frontend
@@ -80,6 +84,8 @@ jobs:
             docker stop gymapp-frontend || true
             docker rm gymapp-frontend || true
             docker run -d --name gymapp-frontend -p 3000:3000 \
+              -e AUTH_SECRET=${{ secrets.AUTH_SECRET }} \
+              -e DATABASE_PATH=${{ secrets.DATABASE_PATH }} \
               --network traefik_net \
               --label 'traefik.enable=true' \
               --label 'traefik.http.routers.gymapp.rule=Host(`39.107.126.13`)' \
