@@ -166,7 +166,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
           })
           .catch((error) => {
             console.error("Error creating new exercise:", error);
-            alert("Failed to create a new exercise. Please try again.");
+            showToast.error("创建失败", "创建新动作失败，请稍后重试");
           });
       }
     } else {

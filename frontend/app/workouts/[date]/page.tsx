@@ -11,6 +11,9 @@ import DateHead from "./DateHead";
 import WorkoutSkeleton from "@/components/loading/WorkoutSkeleton";
 import RefreshIndicator from "@/components/loading/RefreshIndicator";
 import { useLoadingState } from "@/hooks/useLoadingState";
+import { useState } from "react";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import { showToast } from "@/lib/toast";
 import type { BodyPart, MutateFunction } from "@/app/types/workout.types";
 
 interface WorkoutData {
@@ -29,6 +32,7 @@ function WorkoutById({params}: WorkoutByIdProps) {
   const { apiUrl} = config
   const [resData, setResData] = useState<WorkoutData>({});
   const [isWorkoutCreated, setIsWorkoutCreated] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const fetcher = async (url: string) => {
     try {
@@ -108,47 +112,47 @@ function WorkoutById({params}: WorkoutByIdProps) {
         },
         body: JSON.stringify({date: params.date}),
       })
-        .then((res) => {
+        .then(async (res) => {
+          const data = await res.json();
           if (!res.ok) {
-            throw new Error(`HTTP error! Status: ${res.status}`);
+            throw new Error(data.error || `HTTP error! Status: ${res.status}`);
           }
-          return res.json();
-        })
-        .then((data) => {
+          showToast.success("创建成功", "已创建今日的训练记录");
           setResData(data);
           setIsWorkoutCreated(true);
           mutateWorkout();
         })
         .catch((error) => {
           console.error("Fetch error:", error);
+          showToast.error("创建失败", error.message || "请稍后重试");
         });
     }
   }
 
   function handleDeleteWorkout() {
-    if (params?.date && isWorkoutCreated) {
-      const isConfirmed = window.confirm("你确定要删除今日的训练吗？");
-      if (!isConfirmed) return;
+    if (!params?.date || !isWorkoutCreated) return;
 
-      fetch(`${apiUrl}/workout/${params.date}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": authStore.getCookie("csrftoken"),
-        },
-        credentials: "include",
+    fetch(`${apiUrl}/workout/${params.date}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": authStore.getCookie("csrftoken"),
+      },
+      credentials: "include",
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || `HTTP error! Status: ${res.status}`);
+        }
+        showToast.success("删除成功", "已删除今日的训练记录");
+        setIsWorkoutCreated(false);
+        mutateWorkout();
       })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! Status: ${res.status}`);
-          }
-          setIsWorkoutCreated(false);
-          mutateWorkout();
-        })
-        .catch((error) => {
-          console.error("Fetch error:", error);
-        });
-    }
+      .catch((error) => {
+        console.error("Fetch error:", error);
+        showToast.error("删除失败", error.message || "请稍后重试");
+      });
   }
 
   const handleMutateWorkout: MutateFunction = async () => {
@@ -203,11 +207,22 @@ function WorkoutById({params}: WorkoutByIdProps) {
             />
           ))}
 
-          <button onClick={handleDeleteWorkout} className="btn btn-danger">
+          <button onClick={() => setShowDeleteDialog(true)} className="btn btn-danger">
             删除今日训练
           </button>
         </>
       )}
+
+      <ConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="确认删除"
+        description="你确定要删除今日的训练吗？此操作不可恢复。"
+        confirmText="删除"
+        cancelText="取消"
+        variant="destructive"
+        onConfirm={handleDeleteWorkout}
+      />
     </div>
   );
 }

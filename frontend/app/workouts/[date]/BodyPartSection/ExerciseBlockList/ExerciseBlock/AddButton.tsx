@@ -7,6 +7,7 @@ import LastWorkout from "../../LastWorkout";
 import {observer} from "mobx-react-lite";
 import useSWR from "swr";
 import config from "@/utils/config";
+import { showToast } from "@/lib/toast";
 import type { ExerciseBlock, BodyPart, MutateFunction } from "@/app/types/workout.types";
 
 interface AddButtonProps {
@@ -56,9 +57,17 @@ function AddButton({date, exerciseBlock, part, mutateWorkoutSet}: AddButtonProps
         ],
       }),
     })
-      .then((res) => res.json())
-      .then((data) => {
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "添加失败");
+        }
+        showToast.success("添加成功", "已添加训练组");
         mutateWorkoutSet();
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        showToast.error("添加失败", error.message || "请稍后重试");
       });
   }
 

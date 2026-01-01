@@ -9,6 +9,7 @@ import LastWorkout from "./LastWorkout";
 import {makeAutoObservable} from "mobx";
 import config from "@/utils/config";
 import {Button} from "@/components/ui/button";
+import { showToast } from "@/lib/toast";
 import type { BodyPart, Exercise, MutateFunction } from "@/app/types/workout.types";
 import type { LastWorkoutData } from "./LastWorkout";
 
@@ -123,11 +124,17 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
 
       const data = await response.json();
 
+      if (!response.ok) {
+        throw new Error(data.error || "添加失败");
+      }
+
+      showToast.success("添加成功", `已添加动作 ${store.currentSelectedExercise}`);
       await mutateWorkout();
 
       store.setCurrentExercise("");
     } catch (error) {
       console.error("Submission error:", error);
+      showToast.error("添加失败", error instanceof Error ? error.message : "请稍后重试");
     }
   };
 
@@ -161,7 +168,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
           })
           .catch((error) => {
             console.error("Error creating new exercise:", error);
-            alert("Failed to create a new exercise. Please try again.");
+            showToast.error("创建失败", "创建新动作失败，请稍后重试");
           });
       }
     } else {
