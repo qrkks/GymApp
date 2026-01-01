@@ -18,7 +18,7 @@ function RemoveSetButton({item, mutateWorkoutSet}: RemoveSetButtonProps) {
   function handleConfirm() {
     fetch(`${apiUrl}/set/${item.id}`, {
       method: "DELETE",
-      headers: {"Content-Type": "application/json", "X-CSRFToken": authStore.getCookie("csrftoken")},
+      headers: {"Content-Type": "application/json", "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken")},
       credentials: "include",
     })
       .then(async (res) => {

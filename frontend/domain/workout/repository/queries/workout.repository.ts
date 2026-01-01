@@ -176,29 +176,24 @@ export async function findExerciseBlocks(
     .from(workoutSets)
     .innerJoin(workouts, eq(workoutSets.workoutId, workouts.id))
     .innerJoin(exercises, eq(workoutSets.exerciseId, exercises.id))
-    .innerJoin(bodyParts, eq(exercises.bodyPartId, bodyParts.id))
-    .where(eq(workoutSets.userId, userId));
+    .innerJoin(bodyParts, eq(exercises.bodyPartId, bodyParts.id));
 
+  // 构建where条件
+  const conditions = [eq(workoutSets.userId, userId)];
+  
   if (filters?.workoutDate) {
-    query = query.where(and(
-      eq(workoutSets.userId, userId),
-      eq(workouts.date, filters.workoutDate)
-    ));
+    conditions.push(eq(workouts.date, filters.workoutDate));
   }
 
   if (filters?.exerciseName) {
-    query = query.where(and(
-      eq(workoutSets.userId, userId),
-      eq(exercises.name, filters.exerciseName)
-    ));
+    conditions.push(eq(exercises.name, filters.exerciseName));
   }
 
   if (filters?.bodyPartName) {
-    query = query.where(and(
-      eq(workoutSets.userId, userId),
-      eq(bodyParts.name, filters.bodyPartName)
-    ));
+    conditions.push(eq(bodyParts.name, filters.bodyPartName));
   }
+
+  query = query.where(conditions.length > 1 ? and(...conditions) : conditions[0]!);
 
   const workoutSetsList = await query;
 
@@ -212,9 +207,9 @@ export async function findExerciseBlocks(
         .orderBy(sets.setNumber);
 
       return {
-        id: ws.id,
-        workout: ws.workout,
-        exercise: ws.exercise,
+        id: ws.id as number,
+        workout: ws.workout as ExerciseBlockWithDetails['workout'],
+        exercise: ws.exercise as ExerciseBlockWithDetails['exercise'],
         sets: setsList,
       };
     })

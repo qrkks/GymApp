@@ -27,7 +27,7 @@ describe('BodyPart Repository - Commands', () => {
     await userCommands.insertUser({
       id: testUserId,
       email: 'test@example.com',
-      name: 'Test User',
+      username: 'Test User',
     });
   });
 
@@ -77,7 +77,7 @@ describe('BodyPart Repository - Commands', () => {
       await userCommands.insertUser({
         id: otherUserId,
         email: 'other@example.com',
-        name: 'Other User',
+        username: 'Other User',
       });
       
       const created = await bodyPartCommands.insertBodyPart(otherUserId, 'Chest');
@@ -114,7 +114,7 @@ describe('BodyPart Repository - Commands', () => {
       await userCommands.insertUser({
         id: otherUserId,
         email: 'other@example.com',
-        name: 'Other User',
+        username: 'Other User',
       });
       
       const created = await bodyPartCommands.insertBodyPart(otherUserId, 'Chest');
@@ -142,7 +142,7 @@ describe('BodyPart Repository - Commands', () => {
       await userCommands.insertUser({
         id: otherUserId,
         email: 'other@example.com',
-        name: 'Other User',
+        username: 'Other User',
       });
       
       await bodyPartCommands.insertBodyPart(testUserId, 'Chest');

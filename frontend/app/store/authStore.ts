@@ -20,6 +20,11 @@ class Store {
     }
     return cookieValue;
   }
+
+  // 工具函数：获取 Cookie，返回 string | undefined（用于 fetch headers）
+  getCookieOrUndefined(name: string): string | undefined {
+    return this.getCookie(name) ?? undefined;
+  }
 }
 
 export default new Store();

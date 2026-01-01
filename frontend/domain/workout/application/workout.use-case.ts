@@ -12,7 +12,7 @@ import { Workout as WorkoutEntity } from '@domain/workout/model/workout.entity';
 import { ExerciseBlock as ExerciseBlockEntity } from '@domain/workout/model/exercise-block.entity';
 import { Set as SetEntity } from '@domain/workout/model/set.entity';
 import { db } from '@/lib/db';
-import { exercises, bodyParts } from '@/lib/db/schema';
+import { exercises, bodyParts, workoutSets } from '@/lib/db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
 
 export type Workout = workoutQueries.WorkoutWithBodyParts;

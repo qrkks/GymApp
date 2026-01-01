@@ -67,6 +67,7 @@ export class ExerciseBlock {
 
     return new ExerciseBlock(
       this.id,
+      this.userId,
       this.workoutId,
       this.exerciseId,
       [...this.sets, newSet]
@@ -85,6 +86,7 @@ export class ExerciseBlock {
 
     return new ExerciseBlock(
       this.id,
+      this.userId,
       this.workoutId,
       this.exerciseId,
       updatedSets
@@ -102,6 +104,7 @@ export class ExerciseBlock {
 
     return new ExerciseBlock(
       this.id,
+      this.userId,
       this.workoutId,
       this.exerciseId,
       reorderedSets

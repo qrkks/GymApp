@@ -55,7 +55,6 @@ export default function NavBar() {
       {/* 移动端菜单按钮 */}
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
-          {/* @ts-ignore - UI component types */}
           <Button
             variant="outline"
             size="icon"
@@ -65,7 +64,6 @@ export default function NavBar() {
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
         </SheetTrigger>
-        {/* @ts-ignore - UI component types */}
         <SheetContent side="left">
           <nav className="grid gap-6 text-lg font-medium">
             <Link
@@ -108,27 +106,21 @@ export default function NavBar() {
         {isAuthenticated ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              {/* @ts-ignore - UI component types */}
               <Button variant="secondary" size="icon" className="rounded-full">
                 <CircleUser className="w-5 h-5" />
                 <span className="sr-only">Toggle user menu</span>
               </Button>
             </DropdownMenuTrigger>
-            {/* @ts-ignore - UI component types */}
             <DropdownMenuContent align="end">
-              {/* @ts-ignore - UI component types */}
               <DropdownMenuLabel>我的账户</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {/* @ts-ignore - UI component types */}
               <DropdownMenuItem onClick={() => router.push("/user/profile")}>
                 个人资料
               </DropdownMenuItem>
-              {/* @ts-ignore - UI component types */}
               <DropdownMenuItem onClick={() => router.push("/user/password")}>
                 修改密码
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              {/* @ts-ignore - UI component types */}
               <DropdownMenuItem
                 onClick={async () => {
                   await signOut({ redirect: true, callbackUrl: '/auth/signin' });
@@ -141,13 +133,11 @@ export default function NavBar() {
         ) : (
           <div className="flex gap-2">
             <Link href="/auth/signin">
-              {/* @ts-ignore - UI component types */}
               <Button variant="ghost" size="sm">
                 登录
               </Button>
             </Link>
             <Link href="/auth/signup">
-              {/* @ts-ignore - UI component types */}
               <Button variant="default" size="sm">
                 注册
               </Button>

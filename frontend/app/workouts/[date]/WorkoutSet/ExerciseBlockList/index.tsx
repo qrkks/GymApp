@@ -20,7 +20,7 @@ function ExerciseBlockList({ part, date, addedExercise, setMutateRef }: Exercise
     try {
       const response = await fetch(url, {
         credentials: "include",
-        headers: {"X-CSRFToken": authStore.getCookie("csrftoken")},
+        headers: {"X-CSRFToken": authStore.getCookieOrUndefined("csrftoken")},
       });
       
       const data = await response.json();
@@ -46,7 +46,7 @@ function ExerciseBlockList({ part, date, addedExercise, setMutateRef }: Exercise
 
   useEffect(() => {
     if (setMutateRef) {
-      setMutateRef(mutateWorkoutSet);
+      setMutateRef(() => mutateWorkoutSet());
     }
     
     if (addedExercise) {

@@ -42,7 +42,7 @@ function AddButton({date, exerciseBlock, part, mutateWorkoutSet}: AddButtonProps
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": authStore.getCookie("csrftoken"),
+        "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
       },
       credentials: "include",
       body: JSON.stringify({

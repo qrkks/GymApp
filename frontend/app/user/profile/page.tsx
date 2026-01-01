@@ -92,7 +92,7 @@ export default function ProfilePage() {
         updateData.email = formData.email;
       }
       if (formData.image !== (user?.image || "")) {
-        updateData.image = formData.image || null;
+        updateData.image = formData.image || undefined;
       }
 
       // 如果没有变化，直接返回

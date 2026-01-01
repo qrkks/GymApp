@@ -21,7 +21,7 @@ function RemoveBodyPartButton({part, date, mutateWorkout}: RemoveBodyPartButtonP
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": authStore.getCookie("csrftoken"),
+        "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
       },
       credentials: "include",
       body: JSON.stringify({body_part_names: [part.name]}),

@@ -33,7 +33,7 @@ describe('BodyPart Application Service', () => {
     await userCommands.insertUser({
       id: testUserId,
       email: 'test@example.com',
-      name: 'Test User',
+      username: 'Test User',
     });
   });
 

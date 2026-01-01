@@ -7,7 +7,7 @@ import { Username } from './username.value-object';
 
 export interface UserPersistence {
   id: string;
-  email: string;
+  email: string | null; // 数据库可能返回null
   username: string; // 必选，有唯一性约束
   password: string | null;
   emailVerified: boolean | null;
@@ -19,7 +19,7 @@ export interface UserPersistence {
 export class User {
   private constructor(
     public readonly id: string,
-    private readonly email: Email,
+    private readonly email: Email | null, // 允许为null
     private readonly username: Username, // 必选
     private readonly password: string | null, // 已哈希的密码
     public readonly emailVerified: boolean | null,
@@ -51,7 +51,7 @@ export class User {
 
     return new User(
       data.id,
-      Email.create(data.email),
+      data.email ? Email.create(data.email) : null,
       Username.create(data.username),
       data.password,
       data.emailVerified,
@@ -67,7 +67,7 @@ export class User {
   toPersistence(): UserPersistence {
     return {
       id: this.id,
-      email: this.email.getValue(),
+      email: this.email?.getValue() ?? null,
       username: this.username.getValue(),
       password: this.password,
       emailVerified: this.emailVerified,
@@ -80,8 +80,8 @@ export class User {
   /**
    * 获取邮箱
    */
-  getEmail(): string {
-    return this.email.getValue();
+  getEmail(): string | null {
+    return this.email?.getValue() ?? null;
   }
 
   /**
@@ -109,7 +109,7 @@ export class User {
    * 业务规则：检查邮箱是否匹配
    */
   hasEmail(email: string): boolean {
-    return this.email.getValue() === email;
+    return this.email?.getValue() === email;
   }
 
   /**

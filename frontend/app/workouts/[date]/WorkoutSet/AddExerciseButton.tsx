@@ -53,7 +53,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": authStore.getCookie("csrftoken"),
+        "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
       },
     });
 
@@ -79,7 +79,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "X-CSRFToken": authStore.getCookie("csrftoken"),
+            "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
           },
         }
       )
@@ -118,7 +118,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": authStore.getCookie("csrftoken"),
+          "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
         },
         body: JSON.stringify({
           workout_date: date,
@@ -147,7 +147,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-CSRFToken": authStore.getCookie("csrftoken"),
+            "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
           },
           credentials: "include",
           body: JSON.stringify({

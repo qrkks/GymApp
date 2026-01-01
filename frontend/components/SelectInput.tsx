@@ -36,7 +36,7 @@ export default function SelectInput({
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
-            "X-CSRFToken": authStore.getCookie("csrftoken") || "",
+            "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken") || "",
           },
           body: JSON.stringify({
             name: newEntry,

@@ -18,14 +18,14 @@ function Exercises({part, mutate}: ExercisesProps) {
     data: exercises,
     error,
     mutate: mutateExercises,
-  } = useSWR<Exercise[]>(`${apiUrl}/exercise?body_part_name=${part.name}`, (url) =>
+  } = useSWR<Exercise[]>(`${apiUrl}/exercise?body_part_name=${part.name}`, (url: string) =>
     fetch(url, {
       credentials: "include",
-      headers: {"X-CSRFToken": authStore.getCookie("csrftoken")},
+      headers: {"X-CSRFToken": authStore.getCookieOrUndefined("csrftoken")},
     }).then((res) => res.json())
   );
 
-  const mutateFn = mutate || mutateExercises;
+  const mutateFn: MutateFunction = mutate || (() => mutateExercises());
 
   if (error) return <div>Failed to load</div>;
 

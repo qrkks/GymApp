@@ -108,7 +108,7 @@ function WorkoutById({params}: WorkoutByIdProps) {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": authStore.getCookie("csrftoken"),
+          "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
         },
         body: JSON.stringify({date: params.date}),
       })

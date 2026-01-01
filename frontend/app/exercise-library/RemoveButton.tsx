@@ -20,7 +20,7 @@ function RemoveBodyPartButton({ part, mutate}: RemoveBodyPartButtonProps) {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": authStore.getCookie("csrftoken"),
+        "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
       },
       credentials: "include",
     })

@@ -30,7 +30,7 @@ export default function SetEditPopover({item, mutateWorkoutSet}: SetEditPopoverP
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": authStore.getCookie("csrftoken"),
+        "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
       },
       credentials: "include",
       body: JSON.stringify(formDataObj),

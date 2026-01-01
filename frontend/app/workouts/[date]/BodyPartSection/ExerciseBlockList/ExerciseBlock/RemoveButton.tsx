@@ -23,7 +23,7 @@ function RemoveExerciseBlockButton({date, mutateWorkoutSet, exerciseBlock, part}
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": authStore.getCookie("csrftoken"),
+        "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
       },
       credentials: "include",
     })

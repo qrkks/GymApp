@@ -40,7 +40,7 @@ function StartBodyPart({date, mutateWorkout}: StartBodyPartProps) {
       credentials: "include",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": authStore.getCookie("csrftoken"),
+        "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
       },
       body: JSON.stringify({body_part_names: [selectedValue]}),
     })

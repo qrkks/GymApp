@@ -35,14 +35,16 @@ export async function findExercises(
       },
     })
     .from(exercises)
-    .innerJoin(bodyParts, eq(exercises.bodyPartId, bodyParts.id))
-    .where(eq(exercises.userId, userId));
+    .innerJoin(bodyParts, eq(exercises.bodyPartId, bodyParts.id));
 
+  // 构建where条件
   if (bodyPartName) {
     query = query.where(and(
       eq(exercises.userId, userId),
       eq(bodyParts.name, bodyPartName)
     ));
+  } else {
+    query = query.where(eq(exercises.userId, userId));
   }
 
   return await query;

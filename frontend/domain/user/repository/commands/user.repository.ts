@@ -9,7 +9,7 @@ export type User = typeof users.$inferSelect;
 
 export interface CreateUserData {
   id: string;
-  email: string;
+  email?: string; // 允许为undefined
   username?: string;
   password?: string; // 密码哈希
   image?: string;
@@ -23,10 +23,10 @@ export async function insertUser(data: CreateUserData): Promise<User> {
     .insert(users)
     .values({
       id: data.id,
-      email: data.email,
-      username: data.username,
-      password: data.password,
-      image: data.image,
+      email: data.email ?? undefined,
+      username: data.username ?? undefined,
+      password: data.password ?? undefined,
+      image: data.image ?? undefined,
       emailVerified: false,
       createdAt: new Date(),
       updatedAt: new Date(),

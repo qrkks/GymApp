@@ -32,7 +32,7 @@ export default function ExerciseEditPopover({exercise, mutate}: ExerciseEditPopo
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": authStore.getCookie("csrftoken"),
+        "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
       },
       credentials: "include",
       body: JSON.stringify(formDataObj),

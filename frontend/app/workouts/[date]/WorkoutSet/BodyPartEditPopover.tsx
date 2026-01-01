@@ -30,7 +30,7 @@ export default function BodyPartEditPopover({set, part, date, mutateWorkout}: Bo
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": authStore.getCookie("csrftoken"),
+        "X-CSRFToken": authStore.getCookieOrUndefined("csrftoken"),
       },
       credentials: "include",
       body: JSON.stringify({body_part_name: body_part_name}),

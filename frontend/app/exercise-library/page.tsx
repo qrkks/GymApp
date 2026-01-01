@@ -18,10 +18,10 @@ function page() {
     isLoading,
     isValidating,
     mutate,
-  } = useSWR<BodyPart[]>(`${apiUrl}/body-part`, (url) =>
+  } = useSWR<BodyPart[]>(`${apiUrl}/body-part`, (url: string) =>
     fetch(url, {
       credentials: "include",
-      headers: {"X-CSRFToken": authStore.getCookie("csrftoken")},
+      headers: {"X-CSRFToken": authStore.getCookieOrUndefined("csrftoken")},
     }).then((res) => res.json())
   );
 
@@ -52,25 +52,24 @@ function page() {
       {isRefreshing && (
         <RefreshIndicator className="fixed top-20 right-4 z-50" />
       )}
-    <div className="flex flex-col items-center justify-center gap-4">
       <h2 className="text-center">Exercise Library</h2>
       {!bodyParts || bodyParts.length === 0 ? (
         <div className="text-muted-foreground">暂无训练部位，请先添加训练部位</div>
       ) : (
         bodyParts.map((part) => (
-        <div
-          key={part.id}
-          className="flex flex-col items-center justify-center "
-        >
-          <div className="flex items-center gap-2">
-            <h3>{part.name}</h3>
-            <div className="flex items-center gap-1">
-              <RemoveBodyPartButton part={part} mutate={mutate} />
-              <BodyPartEditPopover part={part} mutateWorkout={mutate} />
+          <div
+            key={part.id}
+            className="flex flex-col items-center justify-center "
+          >
+            <div className="flex items-center gap-2">
+              <h3>{part.name}</h3>
+              <div className="flex items-center gap-1">
+                <RemoveBodyPartButton part={part} mutate={() => mutate()} />
+                <BodyPartEditPopover part={part} mutateWorkout={() => mutate()} />
+              </div>
             </div>
+            <Exercises part={part} mutate={() => mutate()} />
           </div>
-          <Exercises part={part} mutate={mutate} />
-        </div>
         ))
       )}
     </div>
