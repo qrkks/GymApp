@@ -2,7 +2,7 @@
 import authStore from "@/app/store/authStore";
 import Exercises from "./Exercises";
 import useSWR from "swr";
-import BodyPartEditPopover from "./../workouts/[date]/WorkoutSet/BodyPartEditPopover";
+import BodyPartEditPopover from "./../workouts/[date]/BodyPartSection/BodyPartEditPopover";
 import RemoveBodyPartButton from "./RemoveButton";
 import config from "@/utils/config";
 import type { BodyPart, MutateFunction } from "@/app/types/workout.types";

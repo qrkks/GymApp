@@ -1,18 +1,18 @@
 import React, { useEffect, useCallback } from 'react';
 import useSWR from "swr";
-import ExerciseSet from "./ExerciseSet";
+import ExerciseBlock from "./ExerciseBlock";
 import authStore from "@/app/store/authStore";
 import config from "@/utils/config";
-import type { BodyPart, ExerciseBlock, MutateFunction } from "@/app/types/workout.types";
+import type { BodyPart, ExerciseBlock as ExerciseBlockType, MutateFunction } from "@/app/types/workout.types";
 
-interface ExerciseGroupProps {
+interface ExerciseBlockListProps {
   part: BodyPart;
   date: string;
   addedExercise: string;
   setMutateRef: (mutate: MutateFunction) => void;
 }
 
-function ExerciseGroup({ part, date, addedExercise, setMutateRef }: ExerciseGroupProps) {
+function ExerciseBlockList({ part, date, addedExercise, setMutateRef }: ExerciseBlockListProps) {
   const {apiUrl} = config;
 
   const fetcher = useCallback(async (url: string) => {
@@ -24,7 +24,7 @@ function ExerciseGroup({ part, date, addedExercise, setMutateRef }: ExerciseGrou
       });
       
       const data = await response.json();
-      return data as ExerciseBlock[];
+      return data as ExerciseBlockType[];
     } catch (error) {
       console.error('❌ Fetch error:', error);
       throw error;
@@ -35,7 +35,7 @@ function ExerciseGroup({ part, date, addedExercise, setMutateRef }: ExerciseGrou
     data: workoutSetData,
     error: workoutSetError,
     mutate: mutateWorkoutSet,
-  } = useSWR<ExerciseBlock[]>(
+  } = useSWR<ExerciseBlockType[]>(
     `${apiUrl}/exercise-block?workout_date=${date}&body_part_name=${part.name}`,
     fetcher,
     {
@@ -58,11 +58,11 @@ function ExerciseGroup({ part, date, addedExercise, setMutateRef }: ExerciseGrou
 
   return (
     <div>
-      {workoutSetData?.map((set) => (
-        <ExerciseSet
-          key={set.id}
+      {workoutSetData?.map((exerciseBlock) => (
+        <ExerciseBlock
+          key={exerciseBlock.id}
           part={part}
-          set={set}
+          exerciseBlock={exerciseBlock}
           date={date}
           mutateWorkoutSet={mutateWorkoutSet}
         />
@@ -71,5 +71,5 @@ function ExerciseGroup({ part, date, addedExercise, setMutateRef }: ExerciseGrou
   );
 }
 
-export default React.memo(ExerciseGroup);
+export default React.memo(ExerciseBlockList);
 

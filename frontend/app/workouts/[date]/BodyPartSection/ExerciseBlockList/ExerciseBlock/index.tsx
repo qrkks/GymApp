@@ -1,41 +1,41 @@
 import AddButton from "./AddButton";
 import RemoveExerciseBlockButton from "./RemoveButton";
-import ExerciseItem from "./ExerciseItem";
+import SetRow from "./SetRow";
 import SetTableContainer from "./SetTableContainer";
 import ExerciseBlockEditPopover from "./ExerciseEditPopover";
 import type { ExerciseBlock, BodyPart, MutateFunction } from "@/app/types/workout.types";
 
-interface ExerciseSetProps {
-  set: ExerciseBlock;
+interface ExerciseBlockProps {
+  exerciseBlock: ExerciseBlock;
   part: BodyPart;
   date: string;
   mutateWorkoutSet: MutateFunction;
 }
 
-function ExerciseSet({set, part, date, mutateWorkoutSet}: ExerciseSetProps) {
+function ExerciseBlock({exerciseBlock, part, date, mutateWorkoutSet}: ExerciseBlockProps) {
   return (
     <div className="flex flex-col items-center p-2">
       <div className="flex items-center gap-2">
-        <h4>{set.exercise.name}</h4>
+        <h4>{exerciseBlock.exercise.name}</h4>
         <div className="flex items-center gap-1">
           <RemoveExerciseBlockButton
-            set={set}
+            exerciseBlock={exerciseBlock}
             part={part}
             date={date}
             mutateWorkoutSet={mutateWorkoutSet}
           />
           {/* <ExerciseBlockEditPopover
-            set={set}
+            exerciseBlock={exerciseBlock}
             part={part}
             date={date}
             mutateWorkoutSet={mutateWorkoutSet}
           /> */}
         </div>
       </div>
-      <SetTableContainer set={set} mutateWorkoutSet={mutateWorkoutSet}>
-        {set.sets.map((item) => (
-          <ExerciseItem
-            set={set}
+      <SetTableContainer exerciseBlock={exerciseBlock} mutateWorkoutSet={mutateWorkoutSet}>
+        {exerciseBlock.sets.map((item) => (
+          <SetRow
+            exerciseBlock={exerciseBlock}
             key={item.id}
             item={item}
             mutateWorkoutSet={mutateWorkoutSet}
@@ -43,7 +43,7 @@ function ExerciseSet({set, part, date, mutateWorkoutSet}: ExerciseSetProps) {
         ))}
       </SetTableContainer>
       <AddButton
-        set={set}
+        exerciseBlock={exerciseBlock}
         part={part}
         date={date}
         mutateWorkoutSet={mutateWorkoutSet}
@@ -52,5 +52,5 @@ function ExerciseSet({set, part, date, mutateWorkoutSet}: ExerciseSetProps) {
   );
 }
 
-export default ExerciseSet;
+export default ExerciseBlock;
 

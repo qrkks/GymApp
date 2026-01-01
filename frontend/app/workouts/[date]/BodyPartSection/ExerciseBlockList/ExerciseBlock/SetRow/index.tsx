@@ -4,13 +4,13 @@ import SetTable from "../SetTableContainer";
 import {TableCell, TableRow} from "@/components/ui/table";
 import type { Set, ExerciseBlock, MutateFunction } from "@/app/types/workout.types";
 
-interface ExerciseItemProps {
+interface SetRowProps {
   item: Set;
   mutateWorkoutSet: MutateFunction;
-  set?: ExerciseBlock;
+  exerciseBlock?: ExerciseBlock;
 }
 
-function ExerciseItem({item, mutateWorkoutSet, set}: ExerciseItemProps) {
+function SetRow({item, mutateWorkoutSet, exerciseBlock}: SetRowProps) {
   return (
     <>
       <TableRow>
@@ -31,5 +31,5 @@ function ExerciseItem({item, mutateWorkoutSet, set}: ExerciseItemProps) {
   );
 }
 
-export default ExerciseItem;
+export default SetRow;
 

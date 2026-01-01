@@ -1,9 +1,9 @@
 "use client";
 
-import StartBodyPart from "./WorkoutSet/StartBodyPart";
+import StartBodyPart from "./BodyPartSection/StartBodyPart";
 import {useEffect, useState} from "react";
 import useSWR from "swr";
-import WorkoutSet from "./WorkoutSet";
+import BodyPartSection from "./BodyPartSection";
 import {Button} from "@/components/ui/button";
 import authStore from "@/app/store/authStore";
 import config from "@/utils/config";
@@ -164,7 +164,7 @@ function WorkoutById({params}: WorkoutByIdProps) {
         <>
           <StartBodyPart date={params.date} mutateWorkout={handleMutateWorkout} />
           {workoutData?.body_parts?.map((part) => (
-            <WorkoutSet
+            <BodyPartSection
               key={part.id}
               part={part}
               date={params.date}

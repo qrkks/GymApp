@@ -4,13 +4,13 @@ import ExerciseBlockList from "./ExerciseBlockList";
 import {useState, useRef} from "react";
 import type { BodyPart, MutateFunction } from "@/app/types/workout.types";
 
-interface WorkoutSetProps {
+interface BodyPartSectionProps {
   part: BodyPart;
   date: string;
   mutateWorkout: MutateFunction;
 }
 
-function WorkoutSet({part, date, mutateWorkout}: WorkoutSetProps) {
+function BodyPartSection({part, date, mutateWorkout}: BodyPartSectionProps) {
   const [addedExercise, setAddedExercise] = useState("");
   const mutateWorkoutSetRef = useRef<MutateFunction | null>(null);
 
@@ -49,5 +49,5 @@ function WorkoutSet({part, date, mutateWorkout}: WorkoutSetProps) {
   );
 }
 
-export default WorkoutSet;
+export default BodyPartSection;
 
