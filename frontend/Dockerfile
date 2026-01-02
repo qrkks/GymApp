@@ -22,7 +22,7 @@ RUN pnpm install --frozen-lockfile && \
 
 # 复制源码并构建
 COPY . .
-RUN pnpm run build
+RUN mkdir -p public && pnpm run build
 
 # 确保构建产物存在
 RUN ls -la .next || true
@@ -55,8 +55,8 @@ USER nextjs
 
 EXPOSE 3000
 
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 ENV NODE_ENV=production
 
 CMD ["bash", "./scripts/start.sh"]
