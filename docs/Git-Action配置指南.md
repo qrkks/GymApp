@@ -54,6 +54,14 @@ DOMAIN_NAME=39.107.126.13
 3. 点击 **New repository secret**
 4. 逐个添加上述所有 secrets
 
+#### 关于 PROJECT_PATH
+
+- **如果不设置**: 默认使用 `/home/{SERVER_USER}/gymapp`
+- **如果设置**: 使用你指定的绝对路径
+- **推荐**: 设置为 `/home/{你的用户名}/gymapp` 或其他你想要的路径
+
+部署时会自动创建目录并克隆代码，无需手动准备。
+
 ## 验证配置
 
 ### 检查 Secrets 是否正确配置
@@ -139,7 +147,7 @@ docker build \
 | `SERVER_IP` | 是 | 服务器公网IP | `39.107.126.13` |
 | `SERVER_USER` | 是 | SSH用户名 | `ubuntu` |
 | `SERVER_PASSWORD` | 是 | SSH密码 | `********` |
-| `PROJECT_PATH` | 否 | 项目绝对路径 | `/home/ubuntu/gymapp` |
+| `PROJECT_PATH` | 否 | 部署目录路径 | `/home/ubuntu/gymapp` |
 | `AUTH_SECRET` | 是 | NextAuth密钥 | `base64字符串` |
 | `DATABASE_PATH` | 是 | 数据库路径 | `/app/db/prod.sqlite3` |
 | `NEXTAUTH_URL` | 是 | 应用URL | `https://app.com` |

@@ -20,57 +20,33 @@ jobs:
         mkdir -p ~/.ssh
         ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
 
-    - name: Check server directory structure
-      run: |
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << EOF
-          echo "🔍 Server directory structure:"
-          pwd
-          ls -la
-          echo ""
-          echo "📁 Checking for project directories:"
-          find /home -maxdepth 2 -name "*gymapp*" -o -name "*GymApp*" 2>/dev/null || echo "No gymapp directories found"
-          find /opt -maxdepth 2 -name "*gymapp*" -o -name "*GymApp*" 2>/dev/null || echo "No gymapp directories found"
-        EOF
-
     - name: Deploy to server
       run: |
         sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << EOF
-          # Find the correct project directory
-          echo "🔍 Finding project directory..."
-          PROJECT_DIR="${{ secrets.PROJECT_PATH }}"
-
-          if [ -z "$PROJECT_DIR" ]; then
-            echo "📋 PROJECT_PATH not set, auto-detecting..."
-            if [ -d "/opt/gymapp" ]; then
-              PROJECT_DIR="/opt/gymapp"
-            elif [ -d "/home/${{ secrets.SERVER_USER }}/gymapp" ]; then
-              PROJECT_DIR="/home/${{ secrets.SERVER_USER }}/gymapp"
-            elif [ -d "/home/${{ secrets.SERVER_USER }}/GymApp" ]; then
-              PROJECT_DIR="/home/${{ secrets.SERVER_USER }}/GymApp"
-            else
-              # Find any directory containing frontend/deploy
-              PROJECT_DIR=$(find /home -maxdepth 3 -name "deploy" -type d -path "*/frontend/deploy" 2>/dev/null | head -1)
-              if [ -n "$PROJECT_DIR" ]; then
-                PROJECT_DIR=$(dirname "$PROJECT_DIR")
-              fi
-            fi
+          # Define deployment directory
+          DEPLOY_DIR="${{ secrets.PROJECT_PATH }}"
+          if [ -z "$DEPLOY_DIR" ]; then
+            DEPLOY_DIR="/home/${{ secrets.SERVER_USER }}/gymapp"
           fi
 
-          if [ -z "$PROJECT_DIR" ] || [ ! -d "$PROJECT_DIR" ]; then
-            echo "❌ Could not find project directory"
-            echo "Searched paths:"
-            echo "  - /opt/gymapp"
-            echo "  - /home/${{ secrets.SERVER_USER }}/gymapp"
-            echo "  - /home/${{ secrets.SERVER_USER }}/GymApp"
-            echo "  - Auto-detected paths"
-            echo ""
-            echo "Available directories:"
-            ls -la /home/ 2>/dev/null || echo "Cannot list /home/"
-            exit 1
+          echo "📁 Deployment directory: $DEPLOY_DIR"
+
+          # Create directory if it doesn't exist
+          if [ ! -d "$DEPLOY_DIR" ]; then
+            echo "📁 Creating deployment directory..."
+            mkdir -p "$DEPLOY_DIR" || exit 1
           fi
 
-          echo "📁 Using project directory: $PROJECT_DIR"
-          cd "$PROJECT_DIR"
+          cd "$DEPLOY_DIR"
+
+          # Clone or update code
+          if [ ! -d ".git" ]; then
+            echo "📥 Cloning repository..."
+            git clone https://github.com/${{ github.repository }} . || exit 1
+          else
+            echo "📥 Updating existing repository..."
+            git fetch origin && git reset --hard origin/${{ github.ref_name }} || exit 1
+          fi
 
           # Set environment variables directly
           export AUTH_SECRET="${{ secrets.AUTH_SECRET }}"
@@ -89,16 +65,7 @@ jobs:
           echo "🛑 Stopping existing containers..."
           cd frontend/deploy
           docker compose down || true
-          cd "$PROJECT_DIR"
-
-          # Pull latest code if it's a git repo
-          if [ -d ".git" ]; then
-            echo ""
-            echo "📥 Pulling latest code..."
-            git pull origin main || echo "⚠️ Git pull failed, continuing..."
-          else
-            echo "⚠️ Not a git repository, skipping pull"
-          fi
+          cd "$DEPLOY_DIR"
 
           # Deploy with environment variables
           echo ""
