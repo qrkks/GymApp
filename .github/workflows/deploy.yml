@@ -39,7 +39,7 @@ jobs:
           docker build \
             --build-arg AUTH_SECRET=${{ secrets.AUTH_SECRET }} \
             --build-arg DATABASE_PATH=${{ secrets.DATABASE_PATH }} \
-            --build-arg NEXTAUTH_URL=https://39.107.126.13 \
+            --build-arg NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }} \
             -t gymapp-frontend:latest .
 
       - name: Save Frontend Docker image as tar
@@ -90,10 +90,10 @@ jobs:
               -e AUTH_SECRET=${{ secrets.AUTH_SECRET }} \
               -e DATABASE_PATH=${{ secrets.DATABASE_PATH }} \
               -e AUTH_TRUST_HOST=true \
-              -e NEXTAUTH_URL=https://39.107.126.13 \
-              -v /home/${USER}/app/frontend/db:/app/db \
+              -e NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }} \
+              -v /home/${{ secrets.SERVER_USER }}/app/frontend/db:/app/db \
               --label 'traefik.enable=true' \
-              --label 'traefik.http.routers.gymapp.rule=Host(`39.107.126.13`)' \
+              --label 'traefik.http.routers.gymapp.rule=Host(`${{ secrets.DOMAIN_NAME }}`)' \
               --label 'traefik.http.routers.gymapp.entrypoints=websecure' \
               --label 'traefik.http.routers.gymapp.tls=true' \
               --label 'traefik.http.services.gymapp.loadbalancer.server.port=3000' \
@@ -107,6 +107,31 @@ jobs:
               echo "Error: Frontend container failed to start. Checking logs..."
               docker logs gymapp-frontend
               exit 1
+            fi
+
+      # ===== 备份数据库 =====
+      - name: Backup Database on Server
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            # 创建备份目录
+            mkdir -p /home/${{ secrets.SERVER_USER }}/backups
+
+            # 备份数据库（如果存在）
+            if [ -f /home/${{ secrets.SERVER_USER }}/app/frontend/db/db.production.sqlite3 ]; then
+              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+              BACKUP_FILE="/home/${{ secrets.SERVER_USER }}/backups/backup_${TIMESTAMP}.sqlite3"
+              sqlite3 /home/${{ secrets.SERVER_USER }}/app/frontend/db/db.production.sqlite3 "VACUUM INTO '$BACKUP_FILE'"
+              echo "Database backup created: $BACKUP_FILE"
+
+              # 保留最近5个备份
+              ls -t /home/${{ secrets.SERVER_USER }}/backups/backup_*.sqlite3 2>/dev/null | tail -n +6 | xargs -r rm -f
+              echo "Old backups cleaned up"
+            else
+              echo "No database file found, skipping backup"
             fi
 
       # ===== 清理无用 Docker 资源 =====

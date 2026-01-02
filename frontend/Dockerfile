@@ -1,4 +1,4 @@
-FROM node:20-bookworm-slim
+FROM node:22-bookworm-slim
 
 ARG AUTH_SECRET
 ARG DATABASE_PATH
@@ -30,6 +30,9 @@ COPY . .
 
 RUN corepack enable pnpm && pnpm run build
 
+# 确保启动脚本可执行
+RUN chmod +x scripts/start.sh
+
 EXPOSE 3000
 
-CMD ["pnpm", "start"]
+CMD ["./scripts/start.sh"]

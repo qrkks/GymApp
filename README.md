@@ -63,10 +63,38 @@ pnpm dev
 
 应用将在 `http://localhost:3000` 启动，API 路由位于 `/api/*`。
 
+## 部署
+
+### 快速开始
+
+1. **配置环境变量**
+   ```bash
+   cp env.example.txt .env
+   # 编辑 .env 文件，设置必需的环境变量
+   ```
+
+2. **启动应用**
+   ```bash
+   docker-compose up -d
+   ```
+
+3. **初始化数据库**
+   ```bash
+   docker-compose exec gymapp pnpm run db:init
+   ```
+
+### 详细部署指南
+
+请参考以下文档：
+- [`docs/部署前检查清单.md`](docs/部署前检查清单.md) - 部署前准备工作
+- [`docs/部署指南.md`](docs/部署指南.md) - 详细部署说明
+- [`docs/Git-Action配置指南.md`](docs/Git-Action配置指南.md) - CI/CD配置指南
+
 ## 版本管理说明
 
 - **package.json**: 包含 `engines` 字段指定 Node 版本要求
-- **.nvmrc**: 为 nvm 用户提供版本提示
+- **env.example.txt**: 环境变量配置模板
+- **docker-compose.yml**: Docker Compose 配置
 - **Dockerfile**: 使用 Node 22 Alpine 镜像
 - **volta 配置**: 仅用于本地开发（可选），生产环境不需要
 

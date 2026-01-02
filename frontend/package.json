@@ -17,7 +17,9 @@
     "db:init-alt": "node scripts/init-db-alternative.js",
     "db:init-sqlite3": "scripts\\init-db-sqlite3.bat",
     "db:reset": "tsx scripts/reset-db.ts",
-    "db:import-production": "tsx scripts/import-production-db.ts"
+    "db:import-production": "tsx scripts/import-production-db.ts",
+    "db:backup": "node ../scripts/backup-db.js",
+    "db:check-health": "node ../scripts/check-db-health.js"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

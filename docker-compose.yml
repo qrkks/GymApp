@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  gymapp:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gymapp
+    ports:
+      - "3000:3000"
+    environment:
+      - AUTH_SECRET=${AUTH_SECRET}
+      - DATABASE_PATH=/app/db/db.production.sqlite3
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NODE_ENV=production
+      - AUTH_TRUST_HOST=true
+    volumes:
+      # 直接挂载数据库目录，确保SQLite文件持久化
+      - ./db:/app/db:rw
+      # 确保目录权限正确
+    user: "node"  # 使用非root用户运行
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - gymapp-network
+
+networks:
+  gymapp-network:
+    driver: bridge
+
+volumes:
+  db:
+    driver: local
