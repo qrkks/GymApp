@@ -1,6 +1,25 @@
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: gymapp-postgres
+    environment:
+      POSTGRES_DB: gymapp_prod
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - gymapp-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   gymapp:
     build:
       context: ./frontend
@@ -10,14 +29,13 @@ services:
       - "3000:3000"
     environment:
       - AUTH_SECRET=${AUTH_SECRET}
-      - DATABASE_PATH=/app/db/db.production.sqlite3
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-changeme}@postgres:5432/gymapp_prod
       - NEXTAUTH_URL=${NEXTAUTH_URL}
       - NODE_ENV=production
       - AUTH_TRUST_HOST=true
-    volumes:
-      # 直接挂载数据库目录，确保SQLite文件持久化
-      - ./db:/app/db:rw
-      # 确保目录权限正确
+    depends_on:
+      postgres:
+        condition: service_healthy
     user: "node"  # 使用非root用户运行
     restart: unless-stopped
     healthcheck:
@@ -34,5 +52,5 @@ networks:
     driver: bridge
 
 volumes:
-  db:
+  postgres_data:
     driver: local

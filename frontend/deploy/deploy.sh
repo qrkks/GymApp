@@ -33,10 +33,17 @@ if [ "$ACTION" = "start" ] || [ "$ACTION" = "restart" ]; then
     exit 1
   fi
 
+  if [ -z "$POSTGRES_PASSWORD" ]; then
+    echo "❌ 错误: POSTGRES_PASSWORD 环境变量未设置"
+    echo "请设置 POSTGRES_PASSWORD 环境变量"
+    exit 1
+  fi
+
   echo "✅ 环境变量验证通过:"
   echo "🔐 AUTH_SECRET: [已设置]"
   echo "🌐 NEXTAUTH_URL: $NEXTAUTH_URL"
   echo "🏠 DOMAIN_NAME: $DOMAIN_NAME"
+  echo "🐘 POSTGRES_PASSWORD: [已设置]"
 fi
 
 case $ACTION in
@@ -63,8 +70,11 @@ case $ACTION in
         echo "📊 服务状态:"
         docker compose -f $COMPOSE_FILE -p $PROJECT_NAME ps
         echo ""
-        echo "💾 磁盘使用:"
-        du -sh db/ 2>/dev/null || echo "数据库目录不存在"
+        echo "💾 PostgreSQL 磁盘使用:"
+        docker compose -f $COMPOSE_FILE -p $PROJECT_NAME exec postgres du -sh /var/lib/postgresql/data 2>/dev/null || echo "PostgreSQL 数据目录信息不可用"
+        echo ""
+        echo "📈 PostgreSQL 连接数:"
+        docker compose -f $COMPOSE_FILE -p $PROJECT_NAME exec postgres psql -U postgres -d gymapp_prod -c "SELECT count(*) as active_connections FROM pg_stat_activity WHERE state = 'active';" 2>/dev/null || echo "PostgreSQL 连接信息不可用"
         ;;
 
     "logs")
@@ -73,17 +83,24 @@ case $ACTION in
         ;;
 
     "backup")
-        echo "💾 备份数据库..."
-        if [ -f "db/db.production.sqlite3" ]; then
-            TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-            BACKUP_FILE="backups/backup_${TIMESTAMP}.sqlite3"
-            mkdir -p backups
-            sqlite3 db/db.production.sqlite3 "VACUUM INTO '$BACKUP_FILE'"
+        echo "💾 备份 PostgreSQL 数据库..."
+        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+        BACKUP_FILE="backups/backup_${TIMESTAMP}.sql"
+        mkdir -p backups
+
+        # 使用 pg_dump 备份数据库
+        if docker compose -f $COMPOSE_FILE -p $PROJECT_NAME exec -T postgres pg_dump \
+            -U postgres -d gymapp_prod > "$BACKUP_FILE" 2>/dev/null; then
             echo "✅ 备份完成: $BACKUP_FILE"
+            # 压缩备份文件
+            gzip "$BACKUP_FILE"
+            echo "✅ 备份文件已压缩: ${BACKUP_FILE}.gz"
+
             # 保留最近5个备份
-            ls -t backups/backup_*.sqlite3 2>/dev/null | tail -n +6 | xargs -r rm -f
+            ls -t backups/backup_*.sql.gz 2>/dev/null | tail -n +6 | xargs -r rm -f
         else
-            echo "❌ 数据库文件不存在"
+            echo "❌ 数据库备份失败"
+            echo "请确保 PostgreSQL 容器正在运行"
         fi
         ;;
 

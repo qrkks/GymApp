@@ -58,9 +58,11 @@ cd /path/to/app/deploy
 在 `docker-compose.yml` 中使用的环境变量：
 
 - `AUTH_SECRET`: NextAuth 认证密钥
-- `DATABASE_PATH`: SQLite 数据库路径
+- `POSTGRES_PASSWORD`: PostgreSQL 数据库密码
 - `NEXTAUTH_URL`: 应用 URL
 - `DOMAIN_NAME`: 域名（用于 Traefik）
+
+**注意**: 自 PostgreSQL 迁移后，不再使用 `DATABASE_PATH` 环境变量。
 
 ## 服务管理
 
@@ -82,7 +84,7 @@ cd /path/to/app/deploy
 # 查看日志
 ./deploy.sh logs
 
-# 备份数据库
+# 备份数据库 (PostgreSQL pg_dump)
 ./deploy.sh backup
 ```
 
@@ -113,8 +115,11 @@ docker compose logs -f gymapp
 # 检查环境变量
 docker compose exec gymapp env
 
-# 检查数据库
-docker compose exec gymapp ls -la /app/db/
+# 检查数据库连接
+docker compose exec postgres pg_isready -U postgres
+
+# 检查 PostgreSQL 日志
+docker compose logs postgres
 ```
 
 ### 端口冲突

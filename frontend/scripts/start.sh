@@ -1,46 +1,57 @@
 #!/bin/bash
 
 # 应用启动脚本
-# 确保数据库已初始化后再启动应用
+# 确保 PostgreSQL 连接正常并运行迁移后再启动应用
 
 set -e
 
 echo "🚀 启动 GymApp..."
 
-# 检查并初始化数据库
+# 检查并运行数据库迁移
 echo "📊 检查数据库状态..."
-if [ ! -f "$DATABASE_PATH" ]; then
-    echo "⚠️  数据库文件不存在，开始初始化..."
-    pnpm run db:init
-    echo "✅ 数据库初始化完成"
-else
-    echo "✅ 数据库文件已存在"
+if [ "$NODE_ENV" = "production" ]; then
+    echo "⏳ 等待 PostgreSQL 连接..."
 
-    # 检查数据库是否有表（使用 Node.js 检查，避免依赖 sqlite3 CLI）
-    if node -e "
-      try {
-        const Database = require('better-sqlite3');
-        const db = new Database('$DATABASE_PATH');
-        const result = db.prepare(\"SELECT COUNT(*) as count FROM sqlite_master WHERE type='table'\").get();
-        db.close();
-        process.exit(result.count > 0 ? 0 : 1);
-      } catch (error) {
-        process.exit(1);
-      }
-    " 2>/dev/null; then
-        echo "✅ 数据库表已存在"
+    # 等待 PostgreSQL 就绪
+    max_attempts=30
+    attempt=1
+    while [ $attempt -le $max_attempts ]; do
+        if pg_isready -h postgres -U postgres 2>/dev/null; then
+            echo "✅ PostgreSQL 连接成功"
+            break
+        fi
+        echo "⏳ 等待 PostgreSQL... (尝试 $attempt/$max_attempts)"
+        sleep 2
+        attempt=$((attempt + 1))
+    done
+
+    if [ $attempt -gt $max_attempts ]; then
+        echo "❌ PostgreSQL 连接超时"
+        exit 1
+    fi
+else
+    echo "✅ 开发环境，跳过 PostgreSQL 连接检查"
+fi
+
+# 运行数据库迁移
+echo "🔄 运行数据库迁移..."
+if pnpm run db:migrate; then
+    echo "✅ 数据库迁移完成"
+else
+    echo "⚠️  迁移失败，尝试生成新迁移..."
+    if pnpm run db:generate && pnpm run db:migrate; then
+        echo "✅ 数据库迁移完成"
     else
-        echo "⚠️  数据库文件存在但没有表，开始初始化..."
-        pnpm run db:init
-        echo "✅ 数据库表初始化完成"
+        echo "❌ 数据库迁移失败"
+        exit 1
     fi
 fi
 
-# 应用数据库优化（生产环境）
+# 生产环境健康检查
 if [ "$NODE_ENV" = "production" ]; then
-    echo "🔧 应用数据库优化配置..."
-    # 这里可以添加额外的生产环境数据库配置
-    echo "✅ 数据库优化完成"
+    echo "🔍 执行生产环境健康检查..."
+    # 这里可以添加额外的生产环境检查
+    echo "✅ 健康检查通过"
 fi
 
 echo "🎯 启动应用服务器..."

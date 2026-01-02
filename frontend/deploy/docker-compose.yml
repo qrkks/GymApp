@@ -1,18 +1,37 @@
 version: '3.8'
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: gymapp-postgres-prod
+    environment:
+      POSTGRES_DB: gymapp_prod
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - traefik_net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   gymapp:
     image: gymapp-frontend:latest
     container_name: gymapp-frontend
     ports:
       - "3000:3000"
     environment:
-      - AUTH_SECRET=${AUTH_SECRET:-your-secret-key}
-      - DATABASE_PATH=/app/db/db.production.sqlite3
-      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - AUTH_SECRET=${AUTH_SECRET}
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/gymapp_prod
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
       - NODE_ENV=production
       - AUTH_TRUST_HOST=true
-    volumes:
-      - ./db:/app/db:rw
+    depends_on:
+      postgres:
+        condition: service_healthy
     user: "node"
     restart: unless-stopped
     healthcheck:
@@ -33,3 +52,7 @@ services:
 networks:
   traefik_net:
     external: true
+
+volumes:
+  postgres_data:
+    driver: local

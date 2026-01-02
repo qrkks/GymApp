@@ -1,77 +1,113 @@
-# 数据库脚本说明
+# PostgreSQL 数据库管理
 
-## 当前可用脚本
+## 概述
 
-### 数据库初始化
+项目已迁移至 PostgreSQL，使用 Drizzle ORM 进行数据库管理。数据库模式通过 TypeScript 定义，迁移通过 Drizzle Kit 管理。
 
-#### 方案 1: 使用 SQLite3 命令行工具（推荐）
+## 可用的数据库脚本
 
-如果你已经安装了 SQLite3 命令行工具：
+### 模式生成
 
-```bash
-# Windows
-sqlite3 db.sqlite < scripts/init-db.sql
-
-# 或使用 npm 脚本
-npm run db:init-sqlite3
-```
-
-**安装 SQLite3:**
-- Windows: 从 https://www.sqlite.org/download.html 下载
-- 或使用 Chocolatey: `choco install sqlite`
-- 或使用 Scoop: `scoop install sqlite`
-
-#### 方案 2: 使用 Node.js 脚本
+生成 SQL 迁移文件：
 
 ```bash
-# 使用 better-sqlite3（需要编译工具）
-npm run db:init
-
-# 或使用替代方案（自动检测环境）
-npm run db:init-alt
+pnpm run db:generate
 ```
 
-**注意**: better-sqlite3 需要：
-- Visual Studio Build Tools (Windows)
-- Python
-- node-gyp
+### 数据库迁移
 
-#### 方案 3: 手动创建数据库
-
-参考 `create-db-manual.md` 文件，使用 GUI 工具或手动执行 SQL。
-
-### 数据库重置
-
-清空并重新初始化数据库（**警告：会删除所有数据**）：
+应用挂起的迁移到数据库：
 
 ```bash
-npm run db:reset
+pnpm run db:migrate
 ```
 
-## 已归档脚本
+### 直接推送模式
 
-以下脚本已移至 `archive/` 目录，为一次性使用的脚本：
-
-- `import-production-db.ts` - 生产数据迁移脚本（已使用）
-- `reset-all-passwords.ts` - 批量密码重置脚本（已使用）
-
-如需使用这些脚本，请从 `archive/` 目录中查找。
-
-## 验证数据库
-
-创建成功后，你可以使用 SQLite 工具验证：
+直接将当前模式推送到数据库（开发环境）：
 
 ```bash
-sqlite3 db.sqlite
-.tables
-.schema
+pnpm run db:push
 ```
 
-应该看到以下表：
-- users
-- body_parts
-- exercises
-- workouts
-- workout_body_parts
-- workout_sets
-- sets
+### 生产数据导入
+
+从归档脚本导入生产数据（一次性使用）：
+
+```bash
+pnpm run db:import-production
+```
+
+## 环境配置
+
+### 本地开发
+
+创建 `.env.local` 文件：
+
+```bash
+# PostgreSQL 连接配置
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=gymapp_dev
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your_password
+
+# 或使用 DATABASE_URL
+# DATABASE_URL=postgresql://user:password@localhost:5432/gymapp_dev
+```
+
+### Docker 部署
+
+使用 `docker-compose.yml` 自动启动 PostgreSQL：
+
+```bash
+docker-compose up -d
+```
+
+## 数据库表结构
+
+项目包含以下表：
+
+- `users` - 用户账户
+- `body_parts` - 身体部位
+- `exercises` - 运动项目
+- `workouts` - 训练记录
+- `workout_body_parts` - 训练-身体部位关联
+- `workout_sets` - 训练组
+- `sets` - 具体训练数据
+
+## 归档脚本
+
+`archive/` 目录包含一次性使用的脚本：
+
+- `import-production-db.ts` - 生产数据迁移脚本
+- `reset-all-passwords.ts` - 批量密码重置脚本
+
+## 注意事项
+
+1. **迁移优先**: 始终使用 `db:migrate` 而不是手动执行 SQL
+2. **备份重要**: 生产环境操作前务必备份数据
+3. **连接池**: PostgreSQL 使用连接池，注意并发连接数
+4. **事务**: 复杂操作使用 Drizzle 的事务支持
+
+## 故障排除
+
+### 连接问题
+
+```bash
+# 检查 PostgreSQL 状态
+pg_isready -h localhost -p 5432
+
+# 查看连接信息
+psql -h localhost -U postgres -d gymapp_dev -c "SELECT version();"
+```
+
+### 迁移失败
+
+```bash
+# 检查当前迁移状态
+pnpm run db:migrate --dry-run
+
+# 强制推送（仅开发环境）
+pnpm run db:push
+```

@@ -65,7 +65,7 @@ jobs:
           export AUTH_SECRET="${{ secrets.AUTH_SECRET }}"
           export NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}"
           export DOMAIN_NAME="${{ secrets.DOMAIN_NAME }}"
-          export DATABASE_PATH="/app/db/db.production.sqlite3"
+          export POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}"
           docker compose up -d
         EOF
 
@@ -187,13 +187,13 @@ jobs:
           export AUTH_SECRET="${{ secrets.AUTH_SECRET }}"
           export NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}"
           export DOMAIN_NAME="${{ secrets.DOMAIN_NAME }}"
-          export DATABASE_PATH="/app/db/db.production.sqlite3"
+          export POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}"
 
           echo "✅ Environment variables set:"
           echo "🔐 AUTH_SECRET: [HIDDEN - ${#AUTH_SECRET} chars]"
           echo "🌐 NEXTAUTH_URL: $NEXTAUTH_URL"
           echo "🏠 DOMAIN_NAME: $DOMAIN_NAME"
-          echo "🗄️  DATABASE_PATH: $DATABASE_PATH"
+          echo "🗄️  POSTGRES_PASSWORD: [HIDDEN]"
 
           # Stop existing containers
           echo ""
@@ -208,7 +208,7 @@ jobs:
           cd frontend/deploy
 
           # Export variables for docker compose
-          export AUTH_SECRET NEXTAUTH_URL DOMAIN_NAME DATABASE_PATH
+          export AUTH_SECRET NEXTAUTH_URL DOMAIN_NAME POSTGRES_PASSWORD
 
           echo "🔧 Docker Compose environment:"
           echo "AUTH_SECRET: $AUTH_SECRET"
@@ -243,7 +243,7 @@ jobs:
 
             echo ""
             echo "📋 Container environment variables:"
-            docker exec gymapp-frontend env | grep -E "(AUTH_SECRET|NEXTAUTH_URL|DOMAIN_NAME|NODE_ENV|DATABASE_PATH)" | sed 's/AUTH_SECRET=.*/AUTH_SECRET=[HIDDEN]/' || echo "❌ Could not read env vars"
+            docker exec gymapp-frontend env | grep -E "(AUTH_SECRET|NEXTAUTH_URL|DOMAIN_NAME|NODE_ENV|POSTGRES_PASSWORD)" | sed 's/POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=[HIDDEN]/' | sed 's/AUTH_SECRET=.*/AUTH_SECRET=[HIDDEN]/' || echo "❌ Could not read env vars"
 
             echo ""
             echo "🏥 Testing internal health check:"
@@ -376,7 +376,7 @@ jobs:
           # 10. Environment variables summary
           echo ""
           echo "🔧 === ENVIRONMENT VARIABLES SUMMARY ==="
-          docker exec gymapp-frontend env | grep -E "(AUTH_SECRET|NEXTAUTH_URL|DOMAIN_NAME|NODE_ENV|DATABASE_PATH)" | \
+          docker exec gymapp-frontend env | grep -E "(AUTH_SECRET|NEXTAUTH_URL|DOMAIN_NAME|NODE_ENV|POSTGRES_PASSWORD)" | \
             sed 's/AUTH_SECRET=.*/AUTH_SECRET=[HIDDEN]/' | \
             sed 's/\(NEXTAUTH_URL=\)\(.*\)/\1[URL_SET]/' | \
             sed 's/\(DOMAIN_NAME=\)\(.*\)/\1[DOMAIN_SET]/' || echo "Could not read environment variables"

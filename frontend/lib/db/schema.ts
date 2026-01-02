@@ -1,21 +1,21 @@
-import { sqliteTable, text, integer, real, unique, primaryKey } from 'drizzle-orm/sqlite-core';
+import { pgTable, text, serial, integer, real, boolean, timestamp, unique, primaryKey } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // User table (for NextAuth.js)
-export const users = sqliteTable('users', {
+export const users = pgTable('users', {
   id: text('id').primaryKey(),
   username: text('username').notNull().unique(), // 用户名，必选且唯一
   email: text('email').unique(),
   password: text('password'), // 密码哈希
-  emailVerified: integer('emailVerified', { mode: 'boolean' }),
+  emailVerified: boolean('emailVerified'),
   image: text('image'),
-  createdAt: integer('createdAt', { mode: 'timestamp' }),
-  updatedAt: integer('updatedAt', { mode: 'timestamp' }),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 });
 
 // BodyPart table
-export const bodyParts = sqliteTable('body_parts', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const bodyParts = pgTable('body_parts', {
+  id: serial('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
 }, (table) => ({
@@ -23,8 +23,8 @@ export const bodyParts = sqliteTable('body_parts', {
 }));
 
 // Exercise table
-export const exercises = sqliteTable('exercises', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const exercises = pgTable('exercises', {
+  id: serial('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   description: text('description'),
@@ -34,18 +34,18 @@ export const exercises = sqliteTable('exercises', {
 }));
 
 // Workout table
-export const workouts = sqliteTable('workouts', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const workouts = pgTable('workouts', {
+  id: serial('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  date: text('date').notNull(), // SQLite stores dates as text
-  startTime: integer('start_time', { mode: 'timestamp' }).notNull(),
-  endTime: integer('end_time', { mode: 'timestamp' }),
+  date: text('date').notNull(), // Keep as text for flexibility
+  startTime: timestamp('start_time').notNull(),
+  endTime: timestamp('end_time'),
 }, (table) => ({
   uniqueUserDate: unique().on(table.userId, table.date),
 }));
 
 // WorkoutBodyPart junction table (many-to-many relationship)
-export const workoutBodyParts = sqliteTable('workout_body_parts', {
+export const workoutBodyParts = pgTable('workout_body_parts', {
   workoutId: integer('workout_id').notNull().references(() => workouts.id, { onDelete: 'cascade' }),
   bodyPartId: integer('body_part_id').notNull().references(() => bodyParts.id, { onDelete: 'cascade' }),
 }, (table) => ({
@@ -53,8 +53,8 @@ export const workoutBodyParts = sqliteTable('workout_body_parts', {
 }));
 
 // WorkoutSet table
-export const workoutSets = sqliteTable('workout_sets', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const workoutSets = pgTable('workout_sets', {
+  id: serial('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   workoutId: integer('workout_id').notNull().references(() => workouts.id, { onDelete: 'cascade' }),
   exerciseId: integer('exercise_id').notNull().references(() => exercises.id, { onDelete: 'cascade' }),
@@ -63,8 +63,8 @@ export const workoutSets = sqliteTable('workout_sets', {
 }));
 
 // Set table
-export const sets = sqliteTable('sets', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const sets = pgTable('sets', {
+  id: serial('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   workoutSetId: integer('workout_set_id').notNull().references(() => workoutSets.id, { onDelete: 'cascade' }),
   setNumber: integer('set_number').notNull(),

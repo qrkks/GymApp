@@ -1,39 +1,47 @@
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import Database from 'better-sqlite3';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
 import * as schema from './schema';
 
 // Lazy initialization to avoid database connection during build
-let sqliteInstance: InstanceType<typeof Database> | null = null;
+let poolInstance: Pool | null = null;
 let dbInstance: ReturnType<typeof drizzle> | null = null;
 
-function getDatabase(): InstanceType<typeof Database> {
-  if (!sqliteInstance) {
-    const dbPath = process.env.DATABASE_PATH || './db.sqlite';
-    sqliteInstance = new Database(dbPath, {
-      // 生产环境优化配置
-      ...(process.env.NODE_ENV === 'production' && {
-        // 启用WAL模式以提高并发性能
-        // WAL模式允许多个读取器和一个写入器同时工作
-      })
-    });
+// PostgreSQL connection configuration
+function getDatabase(): Pool {
+  if (!poolInstance) {
+    // Production: Use DATABASE_URL
+    if (process.env.DATABASE_URL) {
+      poolInstance = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      });
+    } else {
+      // Development: Construct from individual environment variables
+      const config = {
+        host: process.env.POSTGRES_HOST || 'localhost',
+        port: parseInt(process.env.POSTGRES_PORT || '5432'),
+        database: process.env.POSTGRES_DB || 'gymapp',
+        user: process.env.POSTGRES_USER || 'postgres',
+        password: process.env.POSTGRES_PASSWORD,
+        max: process.env.NODE_ENV === 'production' ? 10 : 5, // Max connections
+        idleTimeoutMillis: 20000, // Close idle connections after 20s
+        connectionTimeoutMillis: 10000, // Connection timeout 10s
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      };
 
-    // 仅在生产环境应用优化
-    if (process.env.NODE_ENV === 'production') {
-      try {
-        // 验证并应用数据库优化
-        sqliteInstance.pragma('journal_mode = WAL');
-        sqliteInstance.pragma('synchronous = NORMAL');
-        sqliteInstance.pragma('cache_size = 1000000'); // 1GB cache
-        sqliteInstance.pragma('temp_store = memory');
-        sqliteInstance.pragma('mmap_size = 268435456'); // 256MB memory map
-
-        console.log('✅ SQLite production optimizations applied');
-      } catch (error) {
-        console.warn('⚠️ Failed to apply SQLite optimizations:', error);
+      if (!config.password) {
+        throw new Error('POSTGRES_PASSWORD environment variable is required');
       }
+
+      poolInstance = new Pool(config);
+    }
+
+    // Connection health check
+    if (process.env.NODE_ENV === 'production') {
+      console.log('✅ PostgreSQL connection pool initialized');
     }
   }
-  return sqliteInstance;
+  return poolInstance;
 }
 
 export const db = new Proxy({} as ReturnType<typeof drizzle>, {
@@ -45,3 +53,23 @@ export const db = new Proxy({} as ReturnType<typeof drizzle>, {
   },
 });
 
+// Graceful shutdown handler
+if (typeof process !== 'undefined') {
+  process.on('SIGINT', async () => {
+    if (poolInstance) {
+      console.log('🔄 Closing PostgreSQL connections...');
+      await poolInstance.end();
+      console.log('✅ PostgreSQL connections closed');
+    }
+    process.exit(0);
+  });
+
+  process.on('SIGTERM', async () => {
+    if (poolInstance) {
+      console.log('🔄 Closing PostgreSQL connections...');
+      await poolInstance.end();
+      console.log('✅ PostgreSQL connections closed');
+    }
+    process.exit(0);
+  });
+}

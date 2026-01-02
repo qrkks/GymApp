@@ -2,9 +2,9 @@ FROM node:22-bookworm-slim AS builder
 
 WORKDIR /app
 
-# 安装构建时需要的系统依赖
+# 安装构建时需要的系统依赖 (PostgreSQL迁移后简化)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 make g++ sqlite3 curl \
+    python3 curl \
   && rm -rf /var/lib/apt/lists/*
 
 # 启用 pnpm
@@ -13,11 +13,9 @@ RUN corepack enable pnpm
 # 复制依赖文件以利用缓存
 COPY package.json pnpm-lock.yaml* ./
 
-# 安装依赖并重建 better-sqlite3
+# 安装依赖 (PostgreSQL驱动无需原生编译)
 RUN pnpm install --frozen-lockfile && \
-    echo "🔧 重建 better-sqlite3..." && \
-    pnpm rebuild better-sqlite3 --config.build_from_source=true && \
-    echo "✅ better-sqlite3 重建完成" && \
+    echo "✅ PostgreSQL依赖安装完成" && \
     pnpm store prune
 
 # 复制源码并构建
@@ -31,9 +29,9 @@ FROM node:22-bookworm-slim AS runner
 
 WORKDIR /app
 
-# 运行时所需最小系统依赖
+# 运行时所需最小系统依赖 (PostgreSQL迁移后)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    sqlite3 curl \
+    postgresql-client curl \
   && rm -rf /var/lib/apt/lists/*
 
 # 创建非 root 用户与组
@@ -46,9 +44,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/public ./public
 
-# 创建数据库目录并设置权限
-RUN mkdir -p db \
-  && chown -R nextjs:nodejs /app
+# 设置应用权限 (PostgreSQL无需本地数据库目录)
+RUN chown -R nextjs:nodejs /app
 
 # 切换到非root用户
 USER nextjs
