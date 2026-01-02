@@ -20,6 +20,12 @@ NEXTAUTH_URL     # 生产环境URL (例如: https://yourdomain.com)
 DOMAIN_NAME      # 域名 (例如: yourdomain.com)
 ```
 
+### Docker Hub 配置 (可选，用于加速国内部署)
+```
+DOCKER_USERNAME  # Docker Hub用户名
+DOCKER_PASSWORD  # Docker Hub密码或Access Token
+```
+
 ## 配置步骤
 
 ### 1. 生成 AUTH_SECRET

@@ -6,7 +6,33 @@ on:
   workflow_dispatch:
 
 jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/gymapp-frontend:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
   deploy:
+    needs: build-and-push
     runs-on: ubuntu-latest
 
     steps:
@@ -19,6 +45,43 @@ jobs:
         sudo apt-get install -y sshpass
         mkdir -p ~/.ssh
         ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+    - name: Configure server for China
+      run: |
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << EOF
+          echo "🇨🇳 配置服务器为国内环境..."
+
+          # Configure Docker daemon for China mirrors
+          echo "🐳 配置Docker镜像加速..."
+          sudo mkdir -p /etc/docker
+          sudo tee /etc/docker/daemon.json > /dev/null <<'EOL'
+          {
+            "registry-mirrors": [
+              "https://registry.docker-cn.com",
+              "https://docker.mirrors.ustc.edu.cn",
+              "https://hub-mirror.c.163.com",
+              "https://mirror.baidubce.com",
+              "https://dockerproxy.com"
+            ],
+            "dns": ["8.8.8.8", "114.114.114.114"]
+          }
+          EOL
+
+          # Restart Docker daemon
+          echo "🔄 重启Docker服务..."
+          sudo systemctl restart docker 2>/dev/null || true
+          sudo service docker restart 2>/dev/null || true
+
+          # Configure Git for China
+          echo "📥 配置Git使用国内镜像..."
+          git config --global url."https://github.com.cnpmjs.org/".insteadOf "https://github.com/"
+
+          # Test Docker connectivity
+          echo "🧪 测试Docker连接..."
+          timeout 30 docker pull hello-world:latest && echo "✅ Docker连接正常" || echo "⚠️ Docker连接可能较慢，继续部署..."
+
+          echo "✅ 服务器配置完成"
+        EOF
 
     - name: Deploy to server
       run: |
@@ -39,12 +102,13 @@ jobs:
 
           cd "$DEPLOY_DIR"
 
-          # Clone or update code
+          # Clone or update code (using China mirror)
           if [ ! -d ".git" ]; then
-            echo "📥 Cloning repository..."
+            echo "📥 从国内镜像克隆代码库..."
+            git clone https://github.com.cnpmjs.org/${{ github.repository }} . || \
             git clone https://github.com/${{ github.repository }} . || exit 1
           else
-            echo "📥 Updating existing repository..."
+            echo "📥 更新现有代码库..."
             git fetch origin && git reset --hard origin/${{ github.ref_name }} || exit 1
           fi
 
@@ -80,8 +144,15 @@ jobs:
           echo "NEXTAUTH_URL: $NEXTAUTH_URL"
           echo "DOMAIN_NAME: $DOMAIN_NAME"
 
-          docker compose pull || echo "⚠️ Pull failed, continuing with build..."
-          docker compose up -d --build
+          # Pull the pre-built image from Docker Hub
+          echo "📥 Pulling pre-built image from Docker Hub..."
+          docker pull ${{ secrets.DOCKER_USERNAME }}/gymapp-frontend:latest || echo "⚠️ Pull failed, will build locally..."
+
+          # Tag the image for docker-compose
+          docker tag ${{ secrets.DOCKER_USERNAME }}/gymapp-frontend:latest gymapp-frontend:latest || echo "⚠️ Tagging failed, continuing..."
+
+          # Run containers (without --build since we have the image)
+          docker compose up -d
 
           echo ""
           echo "⏳ Waiting for application to start..."
