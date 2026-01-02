@@ -13,38 +13,30 @@ PROJECT_NAME="gymapp"
 echo "🚀 GymApp 部署脚本"
 echo "📋 操作: $ACTION"
 
-# Load environment variables from .env file if it exists
-if [ -f "../.env" ]; then
-  echo "📄 加载环境变量..."
-  set -a  # automatically export all variables
-  source ../.env
-  set +a
-  echo "✅ 环境变量已加载"
-else
-  echo "⚠️  未找到 .env 文件"
-fi
-
 # Validate required environment variables
 if [ "$ACTION" = "start" ] || [ "$ACTION" = "restart" ]; then
   if [ -z "$AUTH_SECRET" ]; then
     echo "❌ 错误: AUTH_SECRET 环境变量未设置"
-    echo "请在 .env 文件中设置 AUTH_SECRET"
+    echo "请设置 AUTH_SECRET 环境变量"
     exit 1
   fi
 
   if [ -z "$NEXTAUTH_URL" ]; then
     echo "❌ 错误: NEXTAUTH_URL 环境变量未设置"
-    echo "请在 .env 文件中设置 NEXTAUTH_URL"
+    echo "请设置 NEXTAUTH_URL 环境变量"
     exit 1
   fi
 
   if [ -z "$DOMAIN_NAME" ]; then
     echo "❌ 错误: DOMAIN_NAME 环境变量未设置"
-    echo "请在 .env 文件中设置 DOMAIN_NAME"
+    echo "请设置 DOMAIN_NAME 环境变量"
     exit 1
   fi
 
-  echo "✅ 环境变量验证通过"
+  echo "✅ 环境变量验证通过:"
+  echo "🔐 AUTH_SECRET: [已设置]"
+  echo "🌐 NEXTAUTH_URL: $NEXTAUTH_URL"
+  echo "🏠 DOMAIN_NAME: $DOMAIN_NAME"
 fi
 
 case $ACTION in

@@ -6,9 +6,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - AUTH_SECRET=${AUTH_SECRET}
+      - AUTH_SECRET=${AUTH_SECRET:-your-secret-key}
       - DATABASE_PATH=/app/db/db.production.sqlite3
-      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
       - NODE_ENV=production
       - AUTH_TRUST_HOST=true
     volumes:

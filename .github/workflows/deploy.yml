@@ -20,58 +20,99 @@ jobs:
         mkdir -p ~/.ssh
         ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
 
-    - name: Create .env file on server
+    - name: Check server directory structure
       run: |
         sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << EOF
-          cd /opt/gymapp
-          cat > .env << EOL
-        # Production environment variables
-        AUTH_SECRET=${{ secrets.AUTH_SECRET }}
-        NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}
-        DOMAIN_NAME=${{ secrets.DOMAIN_NAME }}
-        DATABASE_PATH=/app/db/db.production.sqlite3
-        EOL
+          echo "🔍 Server directory structure:"
+          pwd
+          ls -la
+          echo ""
+          echo "📁 Checking for project directories:"
+          find /home -maxdepth 2 -name "*gymapp*" -o -name "*GymApp*" 2>/dev/null || echo "No gymapp directories found"
+          find /opt -maxdepth 2 -name "*gymapp*" -o -name "*GymApp*" 2>/dev/null || echo "No gymapp directories found"
         EOF
 
     - name: Deploy to server
       run: |
         sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << EOF
-          cd /opt/gymapp
+          # Find the correct project directory
+          echo "🔍 Finding project directory..."
+          PROJECT_DIR="${{ secrets.PROJECT_PATH }}"
 
-          # Stop existing containers
-          cd frontend/deploy
-          docker compose down || true
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "📋 PROJECT_PATH not set, auto-detecting..."
+            if [ -d "/opt/gymapp" ]; then
+              PROJECT_DIR="/opt/gymapp"
+            elif [ -d "/home/${{ secrets.SERVER_USER }}/gymapp" ]; then
+              PROJECT_DIR="/home/${{ secrets.SERVER_USER }}/gymapp"
+            elif [ -d "/home/${{ secrets.SERVER_USER }}/GymApp" ]; then
+              PROJECT_DIR="/home/${{ secrets.SERVER_USER }}/GymApp"
+            else
+              # Find any directory containing frontend/deploy
+              PROJECT_DIR=$(find /home -maxdepth 3 -name "deploy" -type d -path "*/frontend/deploy" 2>/dev/null | head -1)
+              if [ -n "$PROJECT_DIR" ]; then
+                PROJECT_DIR=$(dirname "$PROJECT_DIR")
+              fi
+            fi
+          fi
 
-          # Pull latest code (if using git)
-          cd /opt/gymapp
-          git pull origin main || true
-
-          # Load environment variables and deploy
-          cd frontend/deploy
-          echo "🔍 Checking .env file..."
-          if [ -f "../.env" ]; then
-            echo "📄 .env file found, content preview:"
-            cat ../.env | head -10
+          if [ -z "$PROJECT_DIR" ] || [ ! -d "$PROJECT_DIR" ]; then
+            echo "❌ Could not find project directory"
+            echo "Searched paths:"
+            echo "  - /opt/gymapp"
+            echo "  - /home/${{ secrets.SERVER_USER }}/gymapp"
+            echo "  - /home/${{ secrets.SERVER_USER }}/GymApp"
+            echo "  - Auto-detected paths"
             echo ""
-
-            echo "📄 Loading environment variables..."
-            set -a
-            source ../.env
-            set +a
-
-            echo "✅ Environment variables loaded"
-            echo "🔐 AUTH_SECRET length: $(if [ -n "$AUTH_SECRET" ]; then echo ${#AUTH_SECRET}; else echo 'NOT SET'; fi)"
-            echo "🌐 NEXTAUTH_URL: ${NEXTAUTH_URL:-'NOT SET'}"
-            echo "🏠 DOMAIN_NAME: ${DOMAIN_NAME:-'NOT SET'}"
-            echo "🗄️  DATABASE_PATH: ${DATABASE_PATH:-'NOT SET'}"
-          else
-            echo "❌ .env file not found in $(pwd)/../.env"
-            ls -la ../
+            echo "Available directories:"
+            ls -la /home/ 2>/dev/null || echo "Cannot list /home/"
             exit 1
           fi
 
+          echo "📁 Using project directory: $PROJECT_DIR"
+          cd "$PROJECT_DIR"
+
+          # Set environment variables directly
+          export AUTH_SECRET="${{ secrets.AUTH_SECRET }}"
+          export NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}"
+          export DOMAIN_NAME="${{ secrets.DOMAIN_NAME }}"
+          export DATABASE_PATH="/app/db/db.production.sqlite3"
+
+          echo "✅ Environment variables set:"
+          echo "🔐 AUTH_SECRET: [HIDDEN - ${#AUTH_SECRET} chars]"
+          echo "🌐 NEXTAUTH_URL: $NEXTAUTH_URL"
+          echo "🏠 DOMAIN_NAME: $DOMAIN_NAME"
+          echo "🗄️  DATABASE_PATH: $DATABASE_PATH"
+
+          # Stop existing containers
+          echo ""
+          echo "🛑 Stopping existing containers..."
+          cd frontend/deploy
+          docker compose down || true
+          cd "$PROJECT_DIR"
+
+          # Pull latest code if it's a git repo
+          if [ -d ".git" ]; then
+            echo ""
+            echo "📥 Pulling latest code..."
+            git pull origin main || echo "⚠️ Git pull failed, continuing..."
+          else
+            echo "⚠️ Not a git repository, skipping pull"
+          fi
+
+          # Deploy with environment variables
           echo ""
           echo "🐳 Starting Docker containers..."
+          cd frontend/deploy
+
+          # Export variables for docker compose
+          export AUTH_SECRET NEXTAUTH_URL DOMAIN_NAME DATABASE_PATH
+
+          echo "🔧 Docker Compose environment:"
+          echo "AUTH_SECRET: $AUTH_SECRET"
+          echo "NEXTAUTH_URL: $NEXTAUTH_URL"
+          echo "DOMAIN_NAME: $DOMAIN_NAME"
+
           docker compose pull || echo "⚠️ Pull failed, continuing with build..."
           docker compose up -d --build
 

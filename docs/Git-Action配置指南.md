@@ -9,6 +9,7 @@
 SERVER_IP        # 服务器IP地址 (例如: 39.107.126.13)
 SERVER_USER      # 服务器用户名 (例如: root 或 ubuntu)
 SERVER_PASSWORD  # 服务器SSH密码
+PROJECT_PATH     # 项目在服务器上的绝对路径 (可选, 默认自动查找)
 ```
 
 ### 应用配置
@@ -138,6 +139,7 @@ docker build \
 | `SERVER_IP` | 是 | 服务器公网IP | `39.107.126.13` |
 | `SERVER_USER` | 是 | SSH用户名 | `ubuntu` |
 | `SERVER_PASSWORD` | 是 | SSH密码 | `********` |
+| `PROJECT_PATH` | 否 | 项目绝对路径 | `/home/ubuntu/gymapp` |
 | `AUTH_SECRET` | 是 | NextAuth密钥 | `base64字符串` |
 | `DATABASE_PATH` | 是 | 数据库路径 | `/app/db/prod.sqlite3` |
 | `NEXTAUTH_URL` | 是 | 应用URL | `https://app.com` |
