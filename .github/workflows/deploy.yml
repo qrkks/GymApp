@@ -55,9 +55,9 @@ jobs:
           rm -f ~/gymapp-image.tar || true
 
           DEPLOY_DIR="/home/${{ secrets.SERVER_USER }}/gymapp"
-          mkdir -p "$DEPLOY_DIR"
-          echo "📥 Extracting deploy files to $DEPLOY_DIR..."
-          tar -xzf ~/deploy-files.tar -C "$DEPLOY_DIR"
+          mkdir -p "$DEPLOY_DIR/frontend"
+          echo "📥 Extracting deploy files to $DEPLOY_DIR/frontend..."
+          tar -xzf ~/deploy-files.tar -C "$DEPLOY_DIR/frontend"
           rm -f ~/deploy-files.tar || true
 
           echo "📋 Starting docker compose..."
