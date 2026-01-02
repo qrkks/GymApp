@@ -66,25 +66,14 @@ jobs:
           FRONTEND_DIR="$DEPLOY_DIR/frontend"
 
           # ============================================
-          # 停止旧容器（为加载新镜像做准备）
+          # 加载新镜像（不停止旧容器，保持服务运行）
           # ============================================
-          echo "🛑 停止旧容器（如果存在）..."
-          mkdir -p "$FRONTEND_DIR"
-          if [ -f "$FRONTEND_DIR/docker-compose.yml" ]; then
-            cd "$FRONTEND_DIR"
-            docker compose down 2>/dev/null || true
-            echo "✅ 旧容器已停止"
-          else
-            echo "ℹ️  首次部署，没有旧容器需要停止"
-          fi
-
-          # ============================================
-          # 加载新镜像
-          # ============================================
-          echo ""
           echo "📦 Loading Docker image..."
           docker load < ~/gymapp-image.tar
           rm -f ~/gymapp-image.tar || true
+          
+          echo ""
+          echo "✅ 新镜像已加载（旧容器仍在运行，确保服务不中断）"
 
           echo "📁 Setting up deployment directory..."
           mkdir -p "$FRONTEND_DIR"
@@ -197,7 +186,7 @@ jobs:
           docker compose ps
 
           # ============================================
-          # 健康检查
+          # 健康检查（如果失败则回滚）
           # ============================================
           echo ""
           echo "🏥 健康检查..."
@@ -212,38 +201,48 @@ jobs:
             
             if [ "$HEALTH_STATUS" = "200" ]; then
               echo "✅ 应用健康检查通过 (HTTP $HEALTH_STATUS)"
+              
+              # 显示环境变量摘要（隐藏敏感信息）
+              echo ""
+              echo "🔧 环境变量摘要:"
+              docker exec gymapp-frontend env | grep -E "(NODE_ENV|NEXTAUTH_URL|DOMAIN_NAME)" | \
+                sed 's/NEXTAUTH_URL=.*/NEXTAUTH_URL=[SET]/' | \
+                sed 's/DOMAIN_NAME=.*/DOMAIN_NAME=[SET]/' || true
             else
-              echo "⚠️  应用健康检查失败 (HTTP $HEALTH_STATUS)"
+              echo "❌ 应用健康检查失败 (HTTP $HEALTH_STATUS)"
               echo "📝 查看应用日志:"
               docker compose logs gymapp --tail 20
+              echo ""
+              echo "⚠️  新容器健康检查失败，但旧容器可能仍在运行"
+              echo "   如需回滚，可以手动执行: docker compose down && docker compose up -d"
+              echo "   或检查日志后修复问题"
+              exit 1
             fi
-
-            # 显示环境变量摘要（隐藏敏感信息）
-            echo ""
-            echo "🔧 环境变量摘要:"
-            docker exec gymapp-frontend env | grep -E "(NODE_ENV|NEXTAUTH_URL|DOMAIN_NAME)" | \
-              sed 's/NEXTAUTH_URL=.*/NEXTAUTH_URL=[SET]/' | \
-              sed 's/DOMAIN_NAME=.*/DOMAIN_NAME=[SET]/' || true
 
           else
             echo "❌ 容器未运行"
             echo "📝 查看日志:"
             docker compose logs
+            echo ""
+            echo "⚠️  新容器启动失败，但旧容器可能仍在运行"
+            echo "   如需回滚，可以手动执行: docker compose down && docker compose up -d"
             exit 1
           fi
 
           # ============================================
           # 清理旧镜像和未使用的资源
+          # 注意：只有在健康检查通过后才会执行此步骤
+          # 如果健康检查失败，旧镜像和容器会保留，可用于回滚
           # ============================================
           echo ""
-          echo "🧹 清理旧镜像和未使用的资源..."
+          echo "🧹 清理旧镜像和未使用的资源（新容器已验证正常运行）..."
           
           # 显示清理前的镜像信息
           echo "📊 清理前的镜像:"
           docker images gymapp-frontend --format "table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}\t{{.CreatedAt}}" || true
           
           # 清理悬空镜像（dangling images）- 这些是旧版本的镜像，标签已被新镜像替换
-          DANGLING_IMAGES=$(docker images -f "dangling=true" -q)
+          DANGLING_IMAGES=$(docker images -f "dangling=true" -q 2>/dev/null || true)
           if [ -n "$DANGLING_IMAGES" ]; then
             echo "🗑️  发现悬空镜像，正在清理..."
             docker rmi $DANGLING_IMAGES 2>/dev/null || echo "   部分悬空镜像可能仍在使用中，跳过"
@@ -251,14 +250,14 @@ jobs:
             echo "✅ 没有悬空镜像需要清理"
           fi
           
-          # 清理旧的 gymapp-frontend 镜像（保留最新的 2 个版本）
+          # 清理旧的 gymapp-frontend 镜像（保留最新的 2 个版本，以便回滚）
           # 获取所有 gymapp-frontend 镜像，按创建时间排序，删除最旧的
-          OLD_IMAGES=$(docker images gymapp-frontend --format "{{.ID}}" | tail -n +3)
+          OLD_IMAGES=$(docker images gymapp-frontend --format "{{.ID}}" 2>/dev/null | tail -n +3 || true)
           if [ -n "$OLD_IMAGES" ]; then
-            echo "🗑️  发现旧版本的 gymapp-frontend 镜像，正在清理..."
+            echo "🗑️  发现旧版本的 gymapp-frontend 镜像，正在清理（保留最新 2 个版本）..."
             for IMAGE_ID in $OLD_IMAGES; do
               # 检查镜像是否正在被容器使用
-              if ! docker ps -a --format "{{.Image}}" | grep -q "$IMAGE_ID"; then
+              if ! docker ps -a --format "{{.Image}}" 2>/dev/null | grep -q "$IMAGE_ID"; then
                 echo "   删除旧镜像: $IMAGE_ID"
                 docker rmi "$IMAGE_ID" 2>/dev/null || echo "   无法删除镜像 $IMAGE_ID（可能仍在使用中）"
               else

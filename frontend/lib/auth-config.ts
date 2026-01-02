@@ -17,6 +17,9 @@ if (!secret) {
 
 export const authOptions = {
   secret: secret,
+  // NextAuth v5: 在生产环境中信任代理（Traefik/反向代理）
+  // 如果设置了 AUTH_TRUST_HOST=true，则信任所有主机
+  trustHost: process.env.AUTH_TRUST_HOST === 'true',
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -26,6 +29,7 @@ export const authOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.identifier || !credentials?.password) {
+          console.warn('[NextAuth] authorize: 缺少凭证');
           return null;
         }
 
@@ -33,21 +37,28 @@ export const authOptions = {
         const identifier = String(credentials.identifier);
         const password = String(credentials.password);
 
-        // 验证用户密码（支持用户名或邮箱）
-        const result = await userUseCase.verifyPassword(
-          identifier,
-          password
-        );
+        try {
+          // 验证用户密码（支持用户名或邮箱）
+          const result = await userUseCase.verifyPassword(
+            identifier,
+            password
+          );
 
-        if (!result.success) {
+          if (!result.success) {
+            console.warn(`[NextAuth] authorize: 密码验证失败 - ${result.error?.message || '未知错误'}`);
+            return null;
+          }
+
+          console.log(`[NextAuth] authorize: 登录成功 - ${result.data.email || result.data.username}`);
+          return {
+            id: result.data.id,
+            email: result.data.email || '', // 确保 email 不为 null
+            name: result.data.username, // NextAuth 使用 name 字段，我们映射 username
+          };
+        } catch (error) {
+          console.error('[NextAuth] authorize: 验证过程出错', error);
           return null;
         }
-
-        return {
-          id: result.data.id,
-          email: result.data.email || '', // 确保 email 不为 null
-          name: result.data.username, // NextAuth 使用 name 字段，我们映射 username
-        };
       },
     }),
   ],

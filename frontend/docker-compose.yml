@@ -33,7 +33,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    user: "node"
+    user: "nextjs"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]

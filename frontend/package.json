@@ -16,7 +16,8 @@
     "db:import-production": "tsx scripts/archive/import-production-db.ts",
     "db:backup": "node ../scripts/backup-db.js",
     "db:check-health": "node ../scripts/check-db-health.js",
-    "db:cleanup-test-schemas": "node scripts/cleanup-test-schemas.js"
+    "db:cleanup-test-schemas": "node scripts/cleanup-test-schemas.js",
+    "validate:config": "node validate-config.js"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
