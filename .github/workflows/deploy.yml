@@ -35,6 +35,17 @@ jobs:
         name: gymapp-image
         path: gymapp-image.tar
 
+    - name: Package deploy files
+      run: |
+        echo "📦 Packaging deploy files..."
+        tar -czf deploy-files.tar -C frontend deploy
+
+    - name: Upload deploy artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: deploy-files
+        path: deploy-files.tar
+
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
@@ -47,6 +58,11 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: gymapp-image
+ 
+    - name: Download deploy files
+      uses: actions/download-artifact@v4
+      with:
+        name: deploy-files
 
     - name: Setup SSH
       run: |
@@ -59,6 +75,11 @@ jobs:
       run: |
         echo "📤 Transferring Docker image to server..."
         scp -o StrictHostKeyChecking=no gymapp-image.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/
+
+    - name: Transfer deploy files to server
+      run: |
+        echo "📤 Transferring deploy files to server..."
+        scp -o StrictHostKeyChecking=no deploy-files.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/
 
     - name: Setup SSH
       run: |
@@ -97,9 +118,13 @@ jobs:
           echo "📥 配置Git使用国内镜像..."
           git config --global url."https://github.com.cnpmjs.org/".insteadOf "https://github.com/"
 
-          # Test Docker connectivity
-          echo "🧪 测试Docker连接..."
-          timeout 30 docker pull hello-world:latest && echo "✅ Docker连接正常" || echo "⚠️ Docker连接可能较慢，继续部署..."
+          # Test Docker daemon status (avoid pulling external images on domestic servers)
+          echo "🧪 测试Docker守护进程状态..."
+          if docker info > /dev/null 2>&1; then
+            echo "✅ Docker守护进程运行正常"
+          else
+            echo "⚠️ Docker守护进程未运行或无法访问 - 请检查Docker服务"
+          fi
 
           echo "✅ 服务器配置完成"
         EOF
@@ -131,14 +156,15 @@ jobs:
 
           cd "$DEPLOY_DIR"
 
-          # Clone or update code (using China mirror)
-          if [ ! -d ".git" ]; then
-            echo "📥 从国内镜像克隆代码库..."
-            git clone https://github.com.cnpmjs.org/${{ github.repository }} . || \
-            git clone https://github.com/${{ github.repository }} . || exit 1
+          # Extract deploy files (provided by CI) into frontend/
+          echo "📥 Extracting deploy files into $DEPLOY_DIR/frontend..."
+          if [ -f "~/deploy-files.tar" ]; then
+            mkdir -p frontend
+            tar -xzf ~/deploy-files.tar -C frontend
+            echo "✅ Deploy files extracted to $DEPLOY_DIR/frontend/deploy"
+            rm ~/deploy-files.tar
           else
-            echo "📥 更新现有代码库..."
-            git fetch origin && git reset --hard origin/${{ github.ref_name }} || exit 1
+            echo "⚠️ deploy-files.tar not found on server; ensure CI uploaded the artifact"
           fi
 
           # Set environment variables directly
