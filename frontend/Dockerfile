@@ -1,4 +1,3 @@
-# ======================== 优化构建策略 ========================
 FROM node:22-bookworm-slim
 
 ARG AUTH_SECRET
@@ -13,41 +12,37 @@ ENV NODE_ENV=production
 
 WORKDIR /app
 
-# 1. 首先安装系统依赖（构建阶段需要）
+# 安装系统依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 make g++ sqlite3 curl \
   && rm -rf /var/lib/apt/lists/* \
   && groupadd --gid 1001 nodejs \
   && useradd --uid 1001 --gid nodejs --shell /bin/bash --create-home nextjs
 
-# 2. 启用 pnpm
+# 启用 pnpm
 RUN corepack enable pnpm
 
-# 3. 复制依赖文件（利用Docker层缓存）
+# 复制依赖文件（利用缓存）
 COPY package.json pnpm-lock.yaml* ./
 
-# 4. 安装所有依赖
+# 安装依赖并重建 better-sqlite3
 RUN pnpm install --frozen-lockfile && \
     echo "🔧 重建 better-sqlite3..." && \
     pnpm rebuild better-sqlite3 --config.build_from_source=true && \
-    echo "✅ better-sqlite3 重建完成"
+    echo "✅ better-sqlite3 重建完成" && \
+    pnpm store prune
 
-# 5. 复制源码（在依赖之后，源码变化不会影响依赖安装缓存）
+# 复制源码
 COPY . .
 
-# 6. 构建应用
+# 构建应用
 RUN pnpm run build
 
-# 7. 创建数据库目录（在切换用户之前）
+# 创建数据库目录并设置权限
 RUN mkdir -p db && chown nextjs:nodejs db
 
-# 8. 切换到非root用户
+# 切换到非root用户
 USER nextjs
-
-# 9. 清理构建缓存（减小镜像大小）
-RUN rm -rf /tmp/* && \
-    pnpm store prune && \
-    pnpm cache clean --force || true
 
 EXPOSE 3000
 
