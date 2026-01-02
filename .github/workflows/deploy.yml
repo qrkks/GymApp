@@ -81,9 +81,23 @@ jobs:
           # ============================================
           # .env 文件处理（首次部署）
           # ============================================
+          echo ""
+          echo "🔍 检查 .env 文件..."
+          echo "   当前目录: $(pwd)"
+          echo "   查找路径: $FRONTEND_DIR/.env"
+          echo ""
+          echo "📂 目录内容:"
+          ls -la "$FRONTEND_DIR" | head -20 || true
+          echo ""
+          
+          # 检查 .env 文件是否存在
           if [ ! -f .env ]; then
+            echo "⚠️  .env 文件不存在于预期位置: $FRONTEND_DIR/.env"
             echo ""
-            echo "⚠️  .env 文件不存在，正在创建模板..."
+            echo "🔍 搜索其他位置的 .env 文件..."
+            find "$DEPLOY_DIR" -name ".env" -type f 2>/dev/null | head -5 || echo "   未找到其他 .env 文件"
+            echo ""
+            echo "⚠️  正在创建模板..."
             
             if [ -f .env.example ]; then
               cp .env.example .env
@@ -110,12 +124,21 @@ jobs:
               echo "❌ 错误：.env.example 文件不存在"
               exit 1
             fi
+          else
+            echo "✅ 找到 .env 文件: $FRONTEND_DIR/.env"
+            echo "   文件大小: $(stat -c%s .env 2>/dev/null || stat -f%z .env 2>/dev/null || echo 'unknown') 字节"
+            echo "   文件权限: $(ls -l .env | awk '{print $1}')"
+            echo ""
           fi
 
           # 验证 .env 文件是否包含占位符
+          echo "🔍 验证 .env 文件内容..."
           if grep -q "your-.*-here\|请替换" .env 2>/dev/null; then
             echo ""
             echo "❌ 部署失败：.env 文件包含模板占位符"
+            echo ""
+            echo "📋 发现以下占位符:"
+            grep -n "your-.*-here\|请替换" .env 2>/dev/null | head -10 || true
             echo ""
             echo "📋 请按以下步骤操作："
             echo "   1. SSH 到服务器: ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}"

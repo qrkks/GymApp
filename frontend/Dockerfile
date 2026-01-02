@@ -88,6 +88,21 @@ COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
 
+# 复制 package.json 和 pnpm-lock.yaml（用于安装 drizzle-kit）
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/pnpm-lock.yaml* ./pnpm-lock.yaml* || true
+
+# 确保 drizzle-kit 在运行时可用（standalone 模式可能不包含命令行工具）
+# 如果 standalone 的 node_modules 中没有 drizzle-kit，则安装它
+USER root
+RUN if [ ! -d "node_modules/drizzle-kit" ]; then \
+      echo "📦 安装 drizzle-kit 到运行时环境..."; \
+      pnpm add drizzle-kit@^0.30.6 --save-prod --frozen-lockfile || \
+      pnpm install drizzle-kit@^0.30.6 --save-prod || true; \
+      chown -R nextjs:nodejs node_modules package.json pnpm-lock.yaml* 2>/dev/null || true; \
+    fi
+USER nextjs
+
 # 确保脚本可执行
 RUN chmod +x ./scripts/start.sh || true
 

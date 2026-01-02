@@ -35,11 +35,12 @@ fi
 
 # 运行数据库迁移
 echo "🔄 运行数据库迁移..."
-if pnpm run db:migrate; then
+# 使用 pnpm exec 确保能找到 drizzle-kit（即使不在 PATH 中）
+if pnpm exec drizzle-kit migrate; then
     echo "✅ 数据库迁移完成"
-    else
+else
     echo "⚠️  迁移失败，尝试生成新迁移..."
-    if pnpm run db:generate && pnpm run db:migrate; then
+    if pnpm exec drizzle-kit generate && pnpm exec drizzle-kit migrate; then
         echo "✅ 数据库迁移完成"
     else
         echo "❌ 数据库迁移失败"
