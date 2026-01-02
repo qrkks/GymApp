@@ -1,27 +1,24 @@
 /**
  * Workout Repository Queries 单元测试
  */
-import { getTestDb } from '@/tests/setup/test-db';
+import { createTestDb, cleanupTestDb } from '@/tests/setup/test-db';
 import * as workoutQueries from '../workout.repository';
 import * as workoutCommands from '../../commands/workout.repository';
 import * as userCommands from '@domain/user/repository/commands/user.repository';
 import * as bodyPartCommands from '@domain/body-part/repository/commands/body-part.repository';
 import { workouts, users, bodyParts, workoutBodyParts } from '@/lib/db/schema';
 
-// Mock the database module
-jest.mock('@/lib/db', () => {
-  const { getTestDb } = require('@/tests/setup/test-db');
-  return {
-    db: getTestDb(),
-  };
-});
+// Mock the database module - 使用独立的schema进行测试隔离
+jest.mock('@/lib/db', () => ({
+  db: createTestDb(__filename),
+}));
 
 describe('Workout Repository - Queries', () => {
-  const testDb = getTestDb();
-  const testUserId = 'test-user-1';
+  const testDb = createTestDb(__filename);
+  const testUserId = 'test-user-workout-queries';
 
   beforeEach(async () => {
-    // 清理数据库
+    // 清理数据库 - 按依赖关系逆序
     await testDb.delete(workoutBodyParts);
     await testDb.delete(workouts);
     await testDb.delete(bodyParts);
@@ -31,7 +28,7 @@ describe('Workout Repository - Queries', () => {
     await userCommands.insertUser({
       id: testUserId,
       email: 'test@example.com',
-      username: 'testuser',
+      username: 'testuser-workout-queries',
     });
   });
 
@@ -103,6 +100,11 @@ describe('Workout Repository - Queries', () => {
       expect(result?.body_parts).toHaveLength(1);
       expect(result?.body_parts[0].name).toBe('Chest');
     });
+  });
+
+  // 清理测试数据库schema
+  afterAll(async () => {
+    await cleanupTestDb(__filename);
   });
 });
 

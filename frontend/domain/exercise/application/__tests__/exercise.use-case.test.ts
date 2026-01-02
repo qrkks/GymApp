@@ -25,7 +25,7 @@ jest.mock('@/lib/db', () => {
 
 describe('Exercise Application Service', () => {
   const testDb = getTestDb();
-  const testUserId = 'test-user-1';
+  const testUserId = 'test-user-exercise-app';
 
   beforeEach(async () => {
     // 清理数据库
@@ -37,7 +37,7 @@ describe('Exercise Application Service', () => {
     await userCommands.insertUser({
       id: testUserId,
       email: 'test@example.com',
-      username: 'testuser',
+      username: 'testuser-exercise-app',
     });
   });
 

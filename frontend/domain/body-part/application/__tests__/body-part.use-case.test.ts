@@ -23,7 +23,7 @@ jest.mock('@/lib/db', () => {
 
 describe('BodyPart Application Service', () => {
   const db = getTestDb();
-  const testUserId = 'test-user-1';
+  const testUserId = 'test-user-body-part-app';
 
   beforeEach(async () => {
     // 清理数据库

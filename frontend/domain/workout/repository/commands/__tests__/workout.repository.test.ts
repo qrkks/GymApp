@@ -1,24 +1,21 @@
 /**
  * Workout Repository Commands 单元测试
  */
-import { getTestDb } from '@/tests/setup/test-db';
+import { createTestDb, cleanupTestDb } from '@/tests/setup/test-db';
 import * as workoutCommands from '../workout.repository';
 import * as workoutQueries from '../../queries/workout.repository';
 import * as userCommands from '@domain/user/repository/commands/user.repository';
 import * as bodyPartCommands from '@domain/body-part/repository/commands/body-part.repository';
 import { workouts, users, bodyParts, workoutBodyParts } from '@/lib/db/schema';
 
-// Mock the database module
-jest.mock('@/lib/db', () => {
-  const { getTestDb } = require('@/tests/setup/test-db');
-  return {
-    db: getTestDb(),
-  };
-});
+// Mock the database module - 使用独立的schema进行测试隔离
+jest.mock('@/lib/db', () => ({
+  db: createTestDb(__filename),
+}));
 
 describe('Workout Repository - Commands', () => {
-  const testDb = getTestDb();
-  const testUserId = 'test-user-1';
+  const testDb = createTestDb(__filename);
+  const testUserId = 'test-user-workout-commands';
 
   beforeEach(async () => {
     // 清理数据库
@@ -31,7 +28,7 @@ describe('Workout Repository - Commands', () => {
     await userCommands.insertUser({
       id: testUserId,
       email: 'test@example.com',
-      username: 'testuser',
+      username: 'testuser-workout-commands',
     });
   });
 
@@ -125,6 +122,11 @@ describe('Workout Repository - Commands', () => {
       const result = await workoutQueries.findWorkouts(testUserId);
       expect(result).toHaveLength(0);
     });
+  });
+
+  // 清理测试数据库schema
+  afterAll(async () => {
+    await cleanupTestDb(__filename);
   });
 });
 

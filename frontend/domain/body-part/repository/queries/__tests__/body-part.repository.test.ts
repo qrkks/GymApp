@@ -1,23 +1,20 @@
 /**
  * BodyPart Repository Queries 单元测试
  */
-import { getTestDb } from '@/tests/setup/test-db';
+import { createTestDb, cleanupTestDb, resetTestDb } from '@/tests/setup/test-db';
 import * as bodyPartQueries from '../body-part.repository';
 import * as bodyPartCommands from '../../commands/body-part.repository';
 import * as userCommands from '@domain/user/repository/commands/user.repository';
 import { bodyParts, users } from '@/lib/db/schema';
 
 // Mock the database module
-jest.mock('@/lib/db', () => {
-  const { getTestDb } = require('@/tests/setup/test-db');
-  return {
-    db: getTestDb(),
-  };
-});
+jest.mock('@/lib/db', () => ({
+  db: createTestDb(__filename),
+}));
 
 describe('BodyPart Repository - Queries', () => {
-  const db = getTestDb();
-  const testUserId = 'test-user-1';
+  const db = createTestDb(__filename);
+  const testUserId = 'test-user-body-part-queries';
 
   beforeEach(async () => {
     // 清理数据库
@@ -129,6 +126,11 @@ describe('BodyPart Repository - Queries', () => {
       const result = await bodyPartQueries.findBodyPartByName(testUserId, 'Chest');
       expect(result).toBeNull();
     });
+  });
+
+  // 清理测试数据库
+  afterAll(async () => {
+    await cleanupTestDb(__filename);
   });
 });
 

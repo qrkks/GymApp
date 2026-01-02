@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-push:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -15,6 +15,7 @@ jobs:
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+
     - name: Build Docker image
       uses: docker/build-push-action@v5
       with:
@@ -32,395 +33,165 @@ jobs:
     - name: Package deploy files
       run: |
         echo "📦 Packaging deploy files..."
-        tar -czf deploy-files.tar -C frontend deploy
+        # 打包 docker-compose.yml 和 .env.example
+        tar -czf deploy-files.tar \
+          -C frontend \
+          docker-compose.yml \
+          .env.example
 
-    - name: Install sshpass for direct transfer
+    - name: Install sshpass
       run: |
         echo "🔧 Installing sshpass for password-based SSH..."
         sudo apt-get update
         sudo apt-get install -y sshpass
 
-    - name: Transfer image and deploy files to server (direct, password)
+    - name: Transfer files to server
       run: |
-        echo "📤 Transferring image and deploy files directly to server using password..."
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -o StrictHostKeyChecking=no gymapp-image.tar deploy-files.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/
+        echo "📤 Transferring files to server..."
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp \
+          -o StrictHostKeyChecking=no \
+          gymapp-image.tar \
+          deploy-files.tar \
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/
 
-    - name: Remote load and deploy on server (direct, password)
+    - name: Deploy on server
       run: |
-        echo "🚀 Executing remote load and deploy using password..."
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+        echo "🚀 Deploying on server..."
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh \
+          -o StrictHostKeyChecking=no \
+          ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
           set -e
-          echo "📦 Loading docker image..."
+
+          DEPLOY_DIR="/home/${{ secrets.SERVER_USER }}/gymapp"
+          FRONTEND_DIR="$DEPLOY_DIR/frontend"
+
+          echo "📦 Loading Docker image..."
           docker load < ~/gymapp-image.tar
           rm -f ~/gymapp-image.tar || true
 
-          DEPLOY_DIR="/home/${{ secrets.SERVER_USER }}/gymapp"
-          mkdir -p "$DEPLOY_DIR/frontend"
-          echo "📥 Extracting deploy files to $DEPLOY_DIR/frontend..."
-          tar -xzf ~/deploy-files.tar -C "$DEPLOY_DIR/frontend"
+          echo "📁 Setting up deployment directory..."
+          mkdir -p "$FRONTEND_DIR"
+
+          echo "📥 Extracting deploy files..."
+          tar -xzf ~/deploy-files.tar -C "$FRONTEND_DIR"
           rm -f ~/deploy-files.tar || true
 
-          echo "📋 Starting docker compose..."
-          cd "$DEPLOY_DIR/frontend/deploy"
-          export AUTH_SECRET="${{ secrets.AUTH_SECRET }}"
-          export NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}"
-          export DOMAIN_NAME="${{ secrets.DOMAIN_NAME }}"
-          export POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}"
-          docker compose up -d
-        EOF
+          cd "$FRONTEND_DIR"
 
-  deploy:
-    if: false
-    needs: build-and-push
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    # deploy job is disabled (direct transfer handled in build job)
-
-    - name: Setup SSH
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y sshpass
-        mkdir -p ~/.ssh
-        ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
-
-    - name: Transfer Docker image to server
-      run: |
-        echo "📤 Transferring Docker image to server..."
-        scp -o StrictHostKeyChecking=no gymapp-image.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/
-
-    - name: Transfer deploy files to server
-      run: |
-        echo "📤 Transferring deploy files to server..."
-        scp -o StrictHostKeyChecking=no deploy-files.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/
-
-    - name: Setup SSH
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y sshpass
-        mkdir -p ~/.ssh
-        ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
-
-    - name: Configure server for China
-      run: |
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << EOF
-          echo "🇨🇳 配置服务器为国内环境..."
-
-          # Configure Docker daemon for China mirrors
-          echo "🐳 配置Docker镜像加速..."
-          sudo mkdir -p /etc/docker
-          sudo tee /etc/docker/daemon.json > /dev/null <<'EOL'
-          {
-            "registry-mirrors": [
-              "https://registry.docker-cn.com",
-              "https://docker.mirrors.ustc.edu.cn",
-              "https://hub-mirror.c.163.com",
-              "https://mirror.baidubce.com",
-              "https://dockerproxy.com"
-            ],
-            "dns": ["8.8.8.8", "114.114.114.114"]
-          }
-          EOL
-
-          # Restart Docker daemon
-          echo "🔄 重启Docker服务..."
-          sudo systemctl restart docker 2>/dev/null || true
-          sudo service docker restart 2>/dev/null || true
-
-          # Configure Git for China
-          echo "📥 配置Git使用国内镜像..."
-          git config --global url."https://github.com.cnpmjs.org/".insteadOf "https://github.com/"
-
-          # Test Docker daemon status (avoid pulling external images on domestic servers)
-          echo "🧪 测试Docker守护进程状态..."
-          if docker info > /dev/null 2>&1; then
-            echo "✅ Docker守护进程运行正常"
-          else
-            echo "⚠️ Docker守护进程未运行或无法访问 - 请检查Docker服务"
+          # ============================================
+          # .env 文件处理（首次部署）
+          # ============================================
+          if [ ! -f .env ]; then
+            echo ""
+            echo "⚠️  .env 文件不存在，正在创建模板..."
+            
+            if [ -f .env.example ]; then
+              cp .env.example .env
+              chmod 600 .env
+              echo "✅ 已从 .env.example 创建 .env 文件"
+              echo ""
+              echo "❌ 部署失败：.env 文件包含模板占位符"
+              echo ""
+              echo "📋 请按以下步骤操作："
+              echo "   1. SSH 到服务器: ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}"
+              echo "   2. 进入目录: cd $FRONTEND_DIR"
+              echo "   3. 编辑 .env 文件: nano .env"
+              echo "   4. 填入真实值（替换所有 'your-xxx-here' 占位符）"
+              echo "   5. 保存后重新运行部署或手动启动: docker compose up -d"
+              echo ""
+              echo "📝 必需的环境变量："
+              echo "   - AUTH_SECRET: NextAuth 认证密钥"
+              echo "   - POSTGRES_PASSWORD: PostgreSQL 数据库密码"
+              echo "   - NEXTAUTH_URL: 应用 URL (如: https://yourdomain.com)"
+              echo "   - DOMAIN_NAME: 域名 (如: yourdomain.com)"
+              echo ""
+              exit 1
+            else
+              echo "❌ 错误：.env.example 文件不存在"
+              exit 1
+            fi
           fi
 
-          echo "✅ 服务器配置完成"
-        EOF
-
-    - name: Deploy to server
-      run: |
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << EOF
-          # Load the pre-built Docker image
-          echo "📦 Loading Docker image from transferred tar file..."
-          if [ -f "~/gymapp-image.tar" ]; then
-            docker load < ~/gymapp-image.tar
-            echo "✅ Docker image loaded successfully"
-            rm ~/gymapp-image.tar
-          else
-            echo "❌ Docker image tar file not found"
+          # 验证 .env 文件是否包含占位符
+          if grep -q "your-.*-here\|请替换" .env 2>/dev/null; then
+            echo ""
+            echo "❌ 部署失败：.env 文件包含模板占位符"
+            echo ""
+            echo "📋 请按以下步骤操作："
+            echo "   1. SSH 到服务器: ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}"
+            echo "   2. 进入目录: cd $FRONTEND_DIR"
+            echo "   3. 编辑 .env 文件: nano .env"
+            echo "   4. 填入真实值（替换所有 'your-xxx-here' 占位符）"
+            echo "   5. 保存后重新运行部署或手动启动: docker compose up -d"
+            echo ""
             exit 1
           fi
 
-          # Define deployment directory (use SERVER_USER variable for username)
-          DEPLOY_DIR="/home/${{ secrets.SERVER_USER }}/gymapp"
+          # 确保 .env 文件权限正确
+          chmod 600 .env
 
-          echo "📁 Deployment directory: $DEPLOY_DIR"
+          echo "✅ .env 文件验证通过"
 
-          # Create directory if it doesn't exist
-          if [ ! -d "$DEPLOY_DIR" ]; then
-            echo "📁 Creating deployment directory..."
-            mkdir -p "$DEPLOY_DIR" || exit 1
-          fi
-
-          cd "$DEPLOY_DIR"
-
-          # Extract deploy files (provided by CI) into frontend/
-          echo "📥 Extracting deploy files into $DEPLOY_DIR/frontend..."
-          if [ -f "~/deploy-files.tar" ]; then
-            mkdir -p frontend
-            tar -xzf ~/deploy-files.tar -C frontend
-            echo "✅ Deploy files extracted to $DEPLOY_DIR/frontend/deploy"
-            rm ~/deploy-files.tar
-          else
-            echo "⚠️ deploy-files.tar not found on server; ensure CI uploaded the artifact"
-          fi
-
-          # Set environment variables directly
-          export AUTH_SECRET="${{ secrets.AUTH_SECRET }}"
-          export NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}"
-          export DOMAIN_NAME="${{ secrets.DOMAIN_NAME }}"
-          export POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}"
-
-          echo "✅ Environment variables set:"
-          echo "🔐 AUTH_SECRET: [HIDDEN - ${#AUTH_SECRET} chars]"
-          echo "🌐 NEXTAUTH_URL: $NEXTAUTH_URL"
-          echo "🏠 DOMAIN_NAME: $DOMAIN_NAME"
-          echo "🗄️  POSTGRES_PASSWORD: [HIDDEN]"
-
-          # Stop existing containers
+          # ============================================
+          # 部署服务
+          # ============================================
           echo ""
-          echo "🛑 Stopping existing containers..."
-          cd frontend/deploy
-          docker compose down || true
-          cd "$DEPLOY_DIR"
-
-          # Deploy with environment variables
-          echo ""
-          echo "🐳 Starting Docker containers..."
-          cd frontend/deploy
-
-          # Export variables for docker compose
-          export AUTH_SECRET NEXTAUTH_URL DOMAIN_NAME POSTGRES_PASSWORD
-
-          echo "🔧 Docker Compose environment:"
-          echo "AUTH_SECRET: $AUTH_SECRET"
-          echo "NEXTAUTH_URL: $NEXTAUTH_URL"
-          echo "DOMAIN_NAME: $DOMAIN_NAME"
-
-          # Verify the loaded image is available
-          echo "🔍 Verifying Docker image..."
-          if docker images | grep -q gymapp-frontend; then
-            echo "✅ Docker image is available locally"
-          else
-            echo "❌ Docker image not found, exiting..."
+          echo "🐳 启动 Docker Compose 服务..."
+          
+          # 验证 Docker 镜像是否存在
+          if ! docker images | grep -q gymapp-frontend; then
+            echo "❌ Docker 镜像未找到"
             exit 1
           fi
 
-          # Run containers (without --build since we have the image)
-          echo "🐳 Starting containers with pre-built image..."
+          # 使用 docker compose 启动服务
+          # .env 文件会自动加载（通过 env_file 配置）
           docker compose up -d
 
           echo ""
-          echo "⏳ Waiting for application to start..."
-          sleep 10
+          echo "⏳ 等待服务启动..."
+          sleep 15
 
           echo ""
-          echo "📊 Container status:"
+          echo "📊 容器状态:"
           docker compose ps
 
+          # ============================================
+          # 健康检查
+          # ============================================
           echo ""
-          echo "🔍 Checking container health:"
+          echo "🏥 健康检查..."
+          
           if docker ps | grep -q gymapp-frontend; then
-            echo "✅ Container is running"
-
+            echo "✅ 容器正在运行"
+            
+            # 检查容器内部健康检查
             echo ""
-            echo "📋 Container environment variables:"
-            docker exec gymapp-frontend env | grep -E "(AUTH_SECRET|NEXTAUTH_URL|DOMAIN_NAME|NODE_ENV|POSTGRES_PASSWORD)" | sed 's/POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=[HIDDEN]/' | sed 's/AUTH_SECRET=.*/AUTH_SECRET=[HIDDEN]/' || echo "❌ Could not read env vars"
+            echo "🔍 检查应用健康状态..."
+            HEALTH_STATUS=$(docker exec gymapp-frontend curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health 2>/dev/null || echo "000")
+            
+            if [ "$HEALTH_STATUS" = "200" ]; then
+              echo "✅ 应用健康检查通过 (HTTP $HEALTH_STATUS)"
+            else
+              echo "⚠️  应用健康检查失败 (HTTP $HEALTH_STATUS)"
+              echo "📝 查看应用日志:"
+              docker compose logs gymapp --tail 20
+            fi
 
+            # 显示环境变量摘要（隐藏敏感信息）
             echo ""
-            echo "🏥 Testing internal health check:"
-            docker exec gymapp-frontend curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health || echo "❌ Internal health check failed"
-
-            echo ""
-            echo "📝 Recent application logs:"
-            docker logs gymapp-frontend --tail 10 2>&1 | head -20
-
-            echo ""
-            echo "🔍 Checking if Next.js is listening on port 3000:"
-            docker exec gymapp-frontend netstat -tlnp | grep :3000 || echo "❌ Port 3000 not listening"
-          else
-            echo "❌ Container is not running"
-            echo "📝 Docker logs:"
-            docker logs gymapp-frontend 2>&1 | tail -20 || echo "No logs available"
-          fi
-        EOF
-
-    - name: Health check
-      run: |
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << EOF
-          echo "🔍 Starting comprehensive health check..."
-          echo "=========================================="
-
-          # Wait for application to fully start
-          echo "⏳ Waiting additional time for app startup..."
-          sleep 20
-
-          # 1. Check container status
-          echo ""
-          echo "📊 === CONTAINER STATUS ==="
-          docker ps --filter name=gymapp-frontend --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-
-          # 2. Check Docker networks
-          echo ""
-          echo "🌐 === DOCKER NETWORKS ==="
-          docker network ls | grep traefik || echo "traefik_net not found"
-
-          # 3. Test DNS resolution
-          echo ""
-          echo "🌍 === DNS RESOLUTION ==="
-          nslookup ${{ secrets.DOMAIN_NAME }} || echo "DNS resolution failed"
-          ping -c 2 ${{ secrets.DOMAIN_NAME }} || echo "Ping failed"
-
-          # 4. Test external connectivity
-          echo ""
-          echo "🔗 === EXTERNAL CONNECTIVITY TEST ==="
-          echo "Testing HTTPS connection to ${{ secrets.DOMAIN_NAME }}:443"
-          timeout 10 openssl s_client -connect ${{ secrets.DOMAIN_NAME }}:443 -servername ${{ secrets.DOMAIN_NAME }} </dev/null 2>/dev/null | openssl x509 -noout -dates 2>/dev/null || echo "SSL certificate check failed"
-
-          # 5. Test Traefik
-          echo ""
-          echo "🔄 === TRAEFIK STATUS ==="
-          docker ps --filter name=traefik --format "table {{.Names}}\t{{.Status}}" || echo "Traefik container not found"
-
-          if docker ps | grep -q traefik; then
-            echo "Traefik logs:"
-            docker logs traefik --tail 5 2>&1 || echo "Could not read Traefik logs"
-          fi
-
-          # 6. Detailed container diagnostics
-          echo ""
-          echo "🔍 === CONTAINER DIAGNOSTICS ==="
-          if docker ps | grep -q gymapp-frontend; then
-            echo "✅ Container is running"
-
-            # Check resource usage
-            echo ""
-            echo "📈 Container resource usage:"
-            docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}" gymapp-frontend
-
-            # Check listening ports
-            echo ""
-            echo "🔌 Container listening ports:"
-            docker exec gymapp-frontend netstat -tlnp 2>/dev/null | grep LISTEN || echo "No listening ports found"
-
-            # Check processes
-            echo ""
-            echo "⚙️  Container processes:"
-            docker exec gymapp-frontend ps aux | head -10
-
-            # Check Next.js build
-            echo ""
-            echo "🏗️  Checking Next.js build:"
-            docker exec gymapp-frontend ls -la /app/.next 2>/dev/null || echo ".next directory not found"
-
-            # Check database
-            echo ""
-            echo "🗄️  Database check:"
-            docker exec gymapp-frontend ls -la /app/db/ 2>/dev/null || echo "Database directory not accessible"
+            echo "🔧 环境变量摘要:"
+            docker exec gymapp-frontend env | grep -E "(NODE_ENV|NEXTAUTH_URL|DOMAIN_NAME)" | \
+              sed 's/NEXTAUTH_URL=.*/NEXTAUTH_URL=[SET]/' | \
+              sed 's/DOMAIN_NAME=.*/DOMAIN_NAME=[SET]/' || true
 
           else
-            echo "❌ Container is NOT running"
-            echo "📝 Full container logs:"
-            docker logs gymapp-frontend 2>&1 | tail -50 || echo "No container logs available"
+            echo "❌ 容器未运行"
+            echo "📝 查看日志:"
+            docker compose logs
             exit 1
           fi
 
-          # 7. Application logs
           echo ""
-          echo "📝 === APPLICATION LOGS (last 30 lines) ==="
-          docker logs gymapp-frontend --tail 30 2>&1
-
-          # 8. Internal health check
-          echo ""
-          echo "🏥 === INTERNAL HEALTH CHECK ==="
-          echo "Testing http://localhost:3000/api/health"
-          INTERNAL_STATUS=$(docker exec gymapp-frontend curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health 2>/dev/null || echo "000")
-          if [ "$INTERNAL_STATUS" = "200" ]; then
-            echo "✅ Internal health check PASSED (HTTP $INTERNAL_STATUS)"
-          else
-            echo "❌ Internal health check FAILED (HTTP $INTERNAL_STATUS)"
-            docker exec gymapp-frontend curl -v http://localhost:3000/api/health 2>&1 || echo "Curl command failed"
-          fi
-
-          # 9. External health check
-          echo ""
-          echo "🌐 === EXTERNAL HEALTH CHECK ==="
-          echo "Testing https://${{ secrets.DOMAIN_NAME }}/api/health"
-          EXTERNAL_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -k https://${{ secrets.DOMAIN_NAME }}/api/health 2>/dev/null || echo "000")
-          if [ "$EXTERNAL_STATUS" = "200" ]; then
-            echo "✅ External health check PASSED (HTTP $EXTERNAL_STATUS)"
-          else
-            echo "❌ External health check FAILED (HTTP $EXTERNAL_STATUS)"
-            echo "Full curl output:"
-            curl -v -k --max-time 10 https://${{ secrets.DOMAIN_NAME }}/api/health 2>&1 || echo "Curl command failed"
-          fi
-
-          # 10. Environment variables summary
-          echo ""
-          echo "🔧 === ENVIRONMENT VARIABLES SUMMARY ==="
-          docker exec gymapp-frontend env | grep -E "(AUTH_SECRET|NEXTAUTH_URL|DOMAIN_NAME|NODE_ENV|POSTGRES_PASSWORD)" | \
-            sed 's/AUTH_SECRET=.*/AUTH_SECRET=[HIDDEN]/' | \
-            sed 's/\(NEXTAUTH_URL=\)\(.*\)/\1[URL_SET]/' | \
-            sed 's/\(DOMAIN_NAME=\)\(.*\)/\1[DOMAIN_SET]/' || echo "Could not read environment variables"
-
-          # Troubleshooting guide
-          echo ""
-          echo "🔧 === TROUBLESHOOTING GUIDE ==="
-          if [ "$INTERNAL_STATUS" != "200" ]; then
-            echo "❌ INTERNAL HEALTH CHECK FAILED (HTTP $INTERNAL_STATUS)"
-            echo "   Possible causes:"
-            echo "   1. AUTH_SECRET not set correctly"
-            echo "   2. Database not initialized"
-            echo "   3. Next.js application failed to start"
-            echo "   4. Port 3000 not bound correctly"
-            echo "   → Check application logs above for 'Missing AUTH_SECRET' errors"
-          fi
-
-          if [ "$EXTERNAL_STATUS" != "200" ]; then
-            echo "❌ EXTERNAL HEALTH CHECK FAILED (HTTP $EXTERNAL_STATUS)"
-            echo "   Possible causes:"
-            echo "   1. Traefik reverse proxy not configured"
-            echo "   2. SSL certificate issues"
-            echo "   3. DNS not pointing to server"
-            echo "   4. Firewall blocking HTTPS traffic"
-            echo "   → Check if ${{ secrets.DOMAIN_NAME }} resolves correctly"
-          fi
-
-          # Final verdict
-          echo ""
-          echo "🎯 === FINAL VERDICT ==="
-          if [ "$INTERNAL_STATUS" = "200" ] && [ "$EXTERNAL_STATUS" = "200" ]; then
-            echo "✅ DEPLOYMENT SUCCESSFUL - All checks passed!"
-            echo "🎉 Your application is now live at https://${{ secrets.DOMAIN_NAME }}"
-            exit 0
-          else
-            echo "❌ DEPLOYMENT FAILED"
-            echo ""
-            echo "📞 SUPPORT INFORMATION:"
-            echo "   - Check GitHub Actions logs for complete diagnostic output"
-            echo "   - Common fixes:"
-            echo "     1. Verify AUTH_SECRET in GitHub Secrets is a valid base64 string"
-            echo "     2. Ensure NEXTAUTH_URL matches your domain"
-            echo "     3. Check that DOMAIN_NAME has correct DNS records"
-            echo "     4. Verify Traefik is running and configured correctly"
-            exit 1
-          fi
+          echo "✅ 部署完成！"
         EOF

@@ -1,21 +1,18 @@
 /**
  * User Repository Queries 单元测试
  */
-import { getTestDb } from '@/tests/setup/test-db';
+import { createTestDb, cleanupTestDb } from '@/tests/setup/test-db';
 import * as userQueries from '../user.repository';
 import * as userCommands from '../../commands/user.repository';
 import { users } from '@/lib/db/schema';
 
-// Mock the database module
-jest.mock('@/lib/db', () => {
-  const { getTestDb } = require('@/tests/setup/test-db');
-  return {
-    db: getTestDb(),
-  };
-});
+// Mock the database module - 使用独立的schema进行测试隔离
+jest.mock('@/lib/db', () => ({
+  db: createTestDb(__filename),
+}));
 
 describe('User Repository - Queries', () => {
-  const db = getTestDb();
+  const db = createTestDb(__filename);
 
   beforeEach(async () => {
     // 清理数据库
@@ -30,15 +27,15 @@ describe('User Repository - Queries', () => {
 
     it('should return user when found', async () => {
       const created = await userCommands.insertUser({
-        id: 'test-user-1',
+        id: 'test-user-user-queries',
         email: 'test@example.com',
-        username: 'Test User',
+        username: 'testuser-user-queries',
       });
       
-      const result = await userQueries.findUserById('test-user-1');
+      const result = await userQueries.findUserById('test-user-user-queries');
       
       expect(result).not.toBeNull();
-      expect(result?.id).toBe('test-user-1');
+      expect(result?.id).toBe('test-user-user-queries');
       expect(result?.email).toBe('test@example.com');
     });
   });
@@ -51,9 +48,9 @@ describe('User Repository - Queries', () => {
 
     it('should return user when found by email', async () => {
       await userCommands.insertUser({
-        id: 'test-user-1',
+        id: 'test-user-user-queries',
         email: 'test@example.com',
-        username: 'Test User',
+        username: 'testuser-user-queries',
       });
       
       const result = await userQueries.findUserByEmail('test@example.com');
@@ -61,6 +58,11 @@ describe('User Repository - Queries', () => {
       expect(result).not.toBeNull();
       expect(result?.email).toBe('test@example.com');
     });
+  });
+
+  // 清理测试数据库schema
+  afterAll(async () => {
+    await cleanupTestDb(__filename);
   });
 });
 

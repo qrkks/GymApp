@@ -1,21 +1,18 @@
 /**
  * User Repository Commands 单元测试
  */
-import { getTestDb } from '@/tests/setup/test-db';
+import { createTestDb, cleanupTestDb } from '@/tests/setup/test-db';
 import * as userCommands from '../user.repository';
 import * as userQueries from '../../queries/user.repository';
 import { users } from '@/lib/db/schema';
 
-// Mock the database module
-jest.mock('@/lib/db', () => {
-  const { getTestDb } = require('@/tests/setup/test-db');
-  return {
-    db: getTestDb(),
-  };
-});
+// Mock the database module - 使用独立的schema进行测试隔离
+jest.mock('@/lib/db', () => ({
+  db: createTestDb(__filename),
+}));
 
 describe('User Repository - Commands', () => {
-  const db = getTestDb();
+  const db = createTestDb(__filename);
 
   beforeEach(async () => {
     // 清理数据库
@@ -25,13 +22,13 @@ describe('User Repository - Commands', () => {
   describe('insertUser', () => {
     it('should create a new user', async () => {
       const result = await userCommands.insertUser({
-        id: 'test-user-1',
+        id: 'test-user-user-commands',
         email: 'test@example.com',
         username: 'Test User',
       });
       
       expect(result).toBeDefined();
-      expect(result.id).toBe('test-user-1');
+      expect(result.id).toBe('test-user-user-commands');
       expect(result.email).toBe('test@example.com');
       expect(result.username).toBe('Test User');
     });
@@ -51,12 +48,12 @@ describe('User Repository - Commands', () => {
   describe('updateUser', () => {
     it('should update user', async () => {
       const created = await userCommands.insertUser({
-        id: 'test-user-1',
+        id: 'test-user-user-commands',
         email: 'test@example.com',
         username: 'Test User',
       });
       
-      const updated = await userCommands.updateUser('test-user-1', {
+      const updated = await userCommands.updateUser('test-user-user-commands', {
         username: 'Updated Name',
       });
       
@@ -76,16 +73,16 @@ describe('User Repository - Commands', () => {
   describe('deleteUser', () => {
     it('should delete user', async () => {
       const created = await userCommands.insertUser({
-        id: 'test-user-1',
+        id: 'test-user-user-commands',
         email: 'test@example.com',
         username: 'Test User',
       });
       
-      const deleted = await userCommands.deleteUser('test-user-1');
+      const deleted = await userCommands.deleteUser('test-user-user-commands');
       
       expect(deleted).toBe(true);
       
-      const found = await userQueries.findUserById('test-user-1');
+      const found = await userQueries.findUserById('test-user-user-commands');
       expect(found).toBeNull();
     });
 
@@ -93,6 +90,11 @@ describe('User Repository - Commands', () => {
       const result = await userCommands.deleteUser('non-existent');
       expect(result).toBe(false);
     });
+  });
+
+  // 清理测试数据库schema
+  afterAll(async () => {
+    await cleanupTestDb(__filename);
   });
 });
 

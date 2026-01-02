@@ -1,7 +1,7 @@
 /**
  * User Application Service 单元测试
  */
-import { getTestDb } from '@/tests/setup/test-db';
+import { createTestDb, cleanupTestDb } from '@/tests/setup/test-db';
 import {
   getUserById,
   getUserByEmail,
@@ -11,16 +11,13 @@ import {
 } from '../user.use-case';
 import { users } from '@/lib/db/schema';
 
-// Mock the database module
-jest.mock('@/lib/db', () => {
-  const { getTestDb } = require('@/tests/setup/test-db');
-  return {
-    db: getTestDb(),
-  };
-});
+// Mock the database module - 使用独立的schema进行测试隔离
+jest.mock('@/lib/db', () => ({
+  db: createTestDb(__filename),
+}));
 
 describe('User Application Service', () => {
-  const db = getTestDb();
+  const db = createTestDb(__filename);
 
   beforeEach(async () => {
     // 清理数据库
@@ -30,16 +27,16 @@ describe('User Application Service', () => {
   describe('getUserById', () => {
     it('should return success with user when found', async () => {
       await db.insert(users).values({
-        id: 'test-user-1',
+        id: 'test-user-user-app',
         email: 'test@example.com',
-        username: 'Test User',
+        username: 'testuser-user-app',
       });
       
-      const result = await getUserById('test-user-1');
+      const result = await getUserById('test-user-user-app');
       
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.id).toBe('test-user-1');
+        expect(result.data.id).toBe('test-user-user-app');
       }
     });
 
@@ -56,9 +53,9 @@ describe('User Application Service', () => {
   describe('getUserByEmail', () => {
     it('should return success with user when found', async () => {
       await db.insert(users).values({
-        id: 'test-user-1',
+        id: 'test-user-user-app',
         email: 'test@example.com',
-        username: 'Test User',
+        username: 'testuser-user-app',
       });
       
       const result = await getUserByEmail('test@example.com');
@@ -82,9 +79,9 @@ describe('User Application Service', () => {
   describe('createUser', () => {
     it('should create user successfully', async () => {
       const result = await createUser({
-        id: 'test-user-1',
+        id: 'test-user-user-app',
         email: 'test@example.com',
-        username: 'Test User',
+        username: 'testuser-user-app',
         password: 'password123',
       });
       
@@ -96,9 +93,9 @@ describe('User Application Service', () => {
 
     it('should return failure when email is invalid', async () => {
       const result = await createUser({
-        id: 'test-user-1',
+        id: 'test-user-user-app',
         email: 'invalid-email',
-        username: 'Test User',
+        username: 'testuser-user-app',
         password: 'password123',
       });
       
@@ -116,9 +113,9 @@ describe('User Application Service', () => {
       });
       
       const result = await createUser({
-        id: 'test-user-1',
+        id: 'test-user-user-app',
         email: 'test@example.com',
-        username: 'Test User',
+        username: 'testuser-user-app',
         password: 'password123',
       });
       
@@ -130,15 +127,15 @@ describe('User Application Service', () => {
 
     it('should return failure when id already exists', async () => {
       await db.insert(users).values({
-        id: 'test-user-1',
+        id: 'test-user-user-app',
         email: 'existing@example.com',
         username: 'Existing User',
       });
       
       const result = await createUser({
-        id: 'test-user-1',
+        id: 'test-user-user-app',
         email: 'test@example.com',
-        username: 'Test User',
+        username: 'testuser-user-app',
         password: 'password123',
       });
       
@@ -152,9 +149,9 @@ describe('User Application Service', () => {
   describe('updateUser', () => {
     it('should update user successfully', async () => {
       await db.insert(users).values({
-        id: 'test-user-1',
+        id: 'test-user-user-app',
         email: 'test@example.com',
-        username: 'Test User',
+        username: 'testuser-user-app',
       });
       
       const result = await updateUser('test-user-1', {
@@ -180,9 +177,9 @@ describe('User Application Service', () => {
 
     it('should return failure when new email conflicts', async () => {
       await db.insert(users).values({
-        id: 'test-user-1',
+        id: 'test-user-user-app',
         email: 'test@example.com',
-        username: 'Test User',
+        username: 'testuser-user-app',
       });
       await db.insert(users).values({
         id: 'test-user-2',
@@ -204,12 +201,12 @@ describe('User Application Service', () => {
   describe('deleteUser', () => {
     it('should delete user successfully', async () => {
       await db.insert(users).values({
-        id: 'test-user-1',
+        id: 'test-user-user-app',
         email: 'test@example.com',
-        username: 'Test User',
+        username: 'testuser-user-app',
       });
       
-      const result = await deleteUser('test-user-1');
+      const result = await deleteUser('test-user-user-app');
       
       expect(result.success).toBe(true);
     });
@@ -222,6 +219,11 @@ describe('User Application Service', () => {
         expect(result.error.code).toBe('USER_NOT_FOUND');
       }
     });
+  });
+
+  // 清理测试数据库schema
+  afterAll(async () => {
+    await cleanupTestDb(__filename);
   });
 });
 
