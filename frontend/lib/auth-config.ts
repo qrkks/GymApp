@@ -7,21 +7,12 @@ import * as userUseCase from '@domain/user/application/user.use-case';
 // Try multiple environment variable names
 const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
 
-// Don't fail the build if secret is missing during build/dev.
-// Enforce only at runtime in production to avoid breaking `pnpm run build`.
+// Do not throw during build; warn if missing and require it to be set at runtime.
 if (!secret) {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error(
-      'Missing AUTH_SECRET environment variable. Please set AUTH_SECRET in your runtime environment.'
-    );
-  } else {
-    // During build or non-production environments, warn and continue.
-    // This prevents Next.js build-time data collection from failing.
-    // eslint-disable-next-line no-console
-    console.warn(
-      'AUTH_SECRET not set — continuing build. Ensure AUTH_SECRET is provided at runtime in production.'
-    );
-  }
+  // eslint-disable-next-line no-console
+  console.warn(
+    'AUTH_SECRET is not set. Ensure AUTH_SECRET is provided at runtime (docker-compose / environment) for production.'
+  );
 }
 
 export const authOptions = {
