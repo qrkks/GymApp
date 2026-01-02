@@ -38,11 +38,11 @@ COPY . .
 # 6. 构建应用
 RUN pnpm run build
 
-# 7. 切换到非root用户
-USER nextjs
+# 7. 创建数据库目录（在切换用户之前）
+RUN mkdir -p db && chown nextjs:nodejs db
 
-# 8. 创建数据库目录
-RUN mkdir -p db
+# 8. 切换到非root用户
+USER nextjs
 
 # 9. 清理构建缓存（减小镜像大小）
 RUN rm -rf /tmp/* && \
