@@ -239,7 +239,7 @@ jobs:
           
           # 显示清理前的镜像信息
           echo "📊 清理前的镜像:"
-          docker images gymapp-frontend --format "table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}\t{{.CreatedAt}}" || true
+          docker images gymapp-frontend --format "table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}\t{{.CreatedAt}}" 2>/dev/null || true
           
           # 清理悬空镜像（dangling images）- 这些是旧版本的镜像，标签已被新镜像替换
           DANGLING_IMAGES=$(docker images -f "dangling=true" -q 2>/dev/null || true)
@@ -268,19 +268,19 @@ jobs:
             echo "✅ 没有旧版本的镜像需要清理"
           fi
           
-          # 清理未使用的构建缓存（可选，节省空间）
-          echo "🧹 清理未使用的构建缓存..."
-          docker builder prune -f --filter "until=24h" || true
+          # 清理未使用的构建缓存（节省空间）
+          echo "🧹 清理未使用的构建缓存（24小时前）..."
+          docker builder prune -f --filter "until=24h" 2>/dev/null || true
           
-          # 显示清理后的镜像信息
+          # 显示最终的镜像信息
           echo ""
-          echo "📊 清理后的镜像:"
-          docker images gymapp-frontend --format "table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}\t{{.CreatedAt}}" || true
+          echo "📊 最终的镜像列表:"
+          docker images gymapp-frontend --format "table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}\t{{.CreatedAt}}" 2>/dev/null || true
           
-          # 显示磁盘使用情况
+          # 显示最终的磁盘使用情况
           echo ""
-          echo "💾 Docker 磁盘使用情况:"
-          docker system df
+          echo "💾 最终 Docker 磁盘使用情况:"
+          docker system df 2>/dev/null || true
 
           echo ""
           echo "✅ 部署完成！"
