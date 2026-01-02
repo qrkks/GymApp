@@ -65,6 +65,23 @@ jobs:
           DEPLOY_DIR="/home/${{ secrets.SERVER_USER }}/gymapp"
           FRONTEND_DIR="$DEPLOY_DIR/frontend"
 
+          # ============================================
+          # 停止旧容器（为加载新镜像做准备）
+          # ============================================
+          echo "🛑 停止旧容器（如果存在）..."
+          mkdir -p "$FRONTEND_DIR"
+          if [ -f "$FRONTEND_DIR/docker-compose.yml" ]; then
+            cd "$FRONTEND_DIR"
+            docker compose down 2>/dev/null || true
+            echo "✅ 旧容器已停止"
+          else
+            echo "ℹ️  首次部署，没有旧容器需要停止"
+          fi
+
+          # ============================================
+          # 加载新镜像
+          # ============================================
+          echo ""
           echo "📦 Loading Docker image..."
           docker load < ~/gymapp-image.tar
           rm -f ~/gymapp-image.tar || true
@@ -214,6 +231,57 @@ jobs:
             docker compose logs
             exit 1
           fi
+
+          # ============================================
+          # 清理旧镜像和未使用的资源
+          # ============================================
+          echo ""
+          echo "🧹 清理旧镜像和未使用的资源..."
+          
+          # 显示清理前的镜像信息
+          echo "📊 清理前的镜像:"
+          docker images gymapp-frontend --format "table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}\t{{.CreatedAt}}" || true
+          
+          # 清理悬空镜像（dangling images）- 这些是旧版本的镜像，标签已被新镜像替换
+          DANGLING_IMAGES=$(docker images -f "dangling=true" -q)
+          if [ -n "$DANGLING_IMAGES" ]; then
+            echo "🗑️  发现悬空镜像，正在清理..."
+            docker rmi $DANGLING_IMAGES 2>/dev/null || echo "   部分悬空镜像可能仍在使用中，跳过"
+          else
+            echo "✅ 没有悬空镜像需要清理"
+          fi
+          
+          # 清理旧的 gymapp-frontend 镜像（保留最新的 2 个版本）
+          # 获取所有 gymapp-frontend 镜像，按创建时间排序，删除最旧的
+          OLD_IMAGES=$(docker images gymapp-frontend --format "{{.ID}}" | tail -n +3)
+          if [ -n "$OLD_IMAGES" ]; then
+            echo "🗑️  发现旧版本的 gymapp-frontend 镜像，正在清理..."
+            for IMAGE_ID in $OLD_IMAGES; do
+              # 检查镜像是否正在被容器使用
+              if ! docker ps -a --format "{{.Image}}" | grep -q "$IMAGE_ID"; then
+                echo "   删除旧镜像: $IMAGE_ID"
+                docker rmi "$IMAGE_ID" 2>/dev/null || echo "   无法删除镜像 $IMAGE_ID（可能仍在使用中）"
+              else
+                echo "   跳过正在使用的镜像: $IMAGE_ID"
+              fi
+            done
+          else
+            echo "✅ 没有旧版本的镜像需要清理"
+          fi
+          
+          # 清理未使用的构建缓存（可选，节省空间）
+          echo "🧹 清理未使用的构建缓存..."
+          docker builder prune -f --filter "until=24h" || true
+          
+          # 显示清理后的镜像信息
+          echo ""
+          echo "📊 清理后的镜像:"
+          docker images gymapp-frontend --format "table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}\t{{.CreatedAt}}" || true
+          
+          # 显示磁盘使用情况
+          echo ""
+          echo "💾 Docker 磁盘使用情况:"
+          docker system df
 
           echo ""
           echo "✅ 部署完成！"
