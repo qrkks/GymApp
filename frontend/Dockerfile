@@ -28,6 +28,8 @@ COPY jsconfig.json ./
 
 # 复制源码（构建时不需要环境变量，Next.js 会在运行时读取）
 COPY . .
+# 确保 public 目录存在（Next.js 需要，即使为空）
+RUN mkdir -p public || true
 
 # 设置构建时的虚拟环境变量（避免构建时检查失败）
 # 这些值不会影响构建结果，只是避免报错
@@ -77,6 +79,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # standalone 目录结构：包含 server.js、package.json、node_modules 等
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# 复制 public 目录（构建阶段已确保存在）
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # 复制运行时需要的配置和脚本（standalone 模式不包含这些）
