@@ -145,25 +145,25 @@ jobs:
             # 进入应用目录并启动服务
             cd /home/${{ secrets.SERVER_USER }}/app
             echo "🐳 停止旧服务..."
-            docker-compose -f docker-compose.deploy.yml down || true
+            docker compose -f docker-compose.deploy.yml down || true
 
             echo "🚀 启动新服务..."
-            docker-compose -f docker-compose.deploy.yml up -d
+            docker compose -f docker-compose.deploy.yml up -d
 
             # 等待服务启动
             echo "⏳ 等待服务启动..."
             sleep 15
 
             # 检查服务状态
-            if docker-compose -f docker-compose.deploy.yml ps | grep -q "Up"; then
+            if docker compose -f docker-compose.deploy.yml ps | grep -q "Up"; then
               echo "✅ Frontend service started successfully!"
               echo "📊 服务状态："
-              docker-compose -f docker-compose.deploy.yml ps
+              docker compose -f docker-compose.deploy.yml ps
               echo "📝 最近的日志："
-              docker-compose -f docker-compose.deploy.yml logs --tail=10 gymapp
+              docker compose -f docker-compose.deploy.yml logs --tail=10 gymapp
             else
               echo "❌ Frontend service failed to start. Checking logs..."
-              docker-compose -f docker-compose.deploy.yml logs gymapp
+              docker compose -f docker-compose.deploy.yml logs gymapp
               exit 1
             fi
 
