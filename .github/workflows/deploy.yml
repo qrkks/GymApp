@@ -118,11 +118,8 @@ jobs:
             exit 1
           fi
 
-          # Define deployment directory
-          DEPLOY_DIR="${{ secrets.PROJECT_PATH }}"
-          if [ -z "$DEPLOY_DIR" ]; then
-            DEPLOY_DIR="/home/${{ secrets.SERVER_USER }}/gymapp"
-          fi
+          # Define deployment directory (use SERVER_USER variable for username)
+          DEPLOY_DIR="/home/${{ secrets.SERVER_USER }}/gymapp"
 
           echo "📁 Deployment directory: $DEPLOY_DIR"
 
