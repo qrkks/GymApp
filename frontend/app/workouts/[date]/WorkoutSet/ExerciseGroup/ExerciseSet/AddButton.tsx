@@ -42,16 +42,12 @@ function AddButton({date, set, part, mutateWorkoutSet}: AddButtonProps) {
     console.log('日期:', date);
     console.log('动作名称:', set.exercise.name);
     
-    // 将字符串转换为数字，空值或无效值转换为 NaN
-    const weight = formData.weight ? parseFloat(formData.weight) : NaN;
-    const reps = formData.reps ? parseFloat(formData.reps) : NaN;
-
-    console.log('转换后的值 - weight:', weight, '类型:', typeof weight);
-    console.log('转换后的值 - reps:', reps, '类型:', typeof reps);
-
     // 构建请求体，只有当 weight 和 reps 都是有效数字且大于 0 时才包含 sets
     const weight = Number(formData.weight) || 0;
     const reps = Number(formData.reps) || 0;
+
+    console.log('转换后的值 - weight:', weight, '类型:', typeof weight);
+    console.log('转换后的值 - reps:', reps, '类型:', typeof reps);
 
     const requestBody: {
       workoutDate: string;
