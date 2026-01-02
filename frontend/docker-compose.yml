@@ -27,9 +27,12 @@ services:
       - .env
     environment:
       # 从 .env 文件加载的变量会自动可用，这里只保留需要构建的变量
+      # DATABASE_URL 使用环境变量替换，确保 POSTGRES_PASSWORD 从 .env 文件读取
       - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/gymapp
       - NODE_ENV=production
       - AUTH_TRUST_HOST=true
+      # DOMAIN_NAME 需要在 .env 文件中定义，用于 Traefik 标签
+      - DOMAIN_NAME=${DOMAIN_NAME}
     depends_on:
       postgres:
         condition: service_healthy
@@ -45,6 +48,7 @@ services:
       - traefik_net
     labels:
       - "traefik.enable=true"
+      # 标签中的变量替换：${DOMAIN_NAME} 会从环境变量中读取（通过 env_file 和 environment）
       - "traefik.http.routers.gymapp.rule=Host(`${DOMAIN_NAME}`)"
       - "traefik.http.routers.gymapp.entrypoints=websecure"
       - "traefik.http.routers.gymapp.tls=true"
