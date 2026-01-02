@@ -9,13 +9,12 @@
 SERVER_IP        # 服务器IP地址 (例如: 39.107.126.13)
 SERVER_USER      # 服务器用户名 (例如: root 或 ubuntu)
 SERVER_PASSWORD  # 服务器SSH密码
-PROJECT_PATH     # 项目在服务器上的绝对路径 (可选, 默认自动查找)
 ```
 
 ### 应用配置
 ```
 AUTH_SECRET      # NextAuth认证密钥 (生成命令: openssl rand -base64 32)
-DATABASE_PATH    # 数据库文件路径 (例如: /app/db/production.sqlite3)
+DATABASE_PATH    # 数据库文件路径 (例如: /app/db/db.production.sqlite3)
 NEXTAUTH_URL     # 生产环境URL (例如: https://yourdomain.com)
 DOMAIN_NAME      # 域名 (例如: yourdomain.com)
 ```
@@ -60,13 +59,7 @@ DOMAIN_NAME=39.107.126.13
 3. 点击 **New repository secret**
 4. 逐个添加上述所有 secrets
 
-#### 关于 PROJECT_PATH
-
-- **如果不设置**: 默认使用 `/home/{SERVER_USER}/gymapp`
-- **如果设置**: 使用你指定的绝对路径
-- **推荐**: 设置为 `/home/{你的用户名}/gymapp` 或其他你想要的路径
-
-部署时会自动创建目录并克隆代码，无需手动准备。
+部署目录将自动设置为 `/home/{SERVER_USER}/gymapp`，部署时会自动创建目录，无需手动准备。
 
 ## 验证配置
 
@@ -155,10 +148,10 @@ docker build \
 | `SERVER_PASSWORD` | 是 | SSH密码 | `********` |
 | `PROJECT_PATH` | 否 | 部署目录路径 | `/home/ubuntu/gymapp` |
 | `AUTH_SECRET` | 是 | NextAuth密钥 | `base64字符串` |
-| `DATABASE_PATH` | 是 | 数据库路径 | `/app/db/prod.sqlite3` |
+| `DATABASE_PATH` | 是 | 数据库路径 | `/app/db/db.production.sqlite3` |
 | `NEXTAUTH_URL` | 是 | 应用URL | `https://app.com` |
 | `DOMAIN_NAME` | 是 | 域名 | `app.com` |
 
 ---
 
-**最后更新：** 2026年1月2日
+**最后更新：** 2026年1月2日 (CI/CD配置更新)
