@@ -1,175 +1,74 @@
-name: Build and Deploy to Server
+name: Deploy to Production
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      # 确保前端目录存在，并删除旧 tar
-      - name: Ensure Target Directories Exist on Server
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          script: |
-            mkdir -p /home/${{ secrets.SERVER_USER }}/app/frontend
-            rm -f /home/${{ secrets.SERVER_USER }}/app/frontend/gymapp-frontend.tar
+    - name: Setup SSH
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y sshpass
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
 
-      # ===== 前端：构建镜像 =====
-      - name: Verify Frontend Dockerfile exists
-        working-directory: ./frontend
-        run: |
-          if [ ! -f Dockerfile ]; then
-            echo "Error: Frontend Dockerfile not found!"
+    - name: Create .env file on server
+      run: |
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << EOF
+          cd /opt/gymapp
+          cat > .env << EOL
+        # Production environment variables
+        AUTH_SECRET=${{ secrets.AUTH_SECRET }}
+        NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}
+        DOMAIN_NAME=${{ secrets.DOMAIN_NAME }}
+        DATABASE_PATH=/app/db/db.production.sqlite3
+        EOL
+        EOF
+
+    - name: Deploy to server
+      run: |
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << EOF
+          cd /opt/gymapp
+
+          # Stop existing containers
+          cd frontend/deploy
+          docker compose down || true
+
+          # Pull latest code (if using git)
+          cd /opt/gymapp
+          git pull origin main || true
+
+          # Build and deploy
+          cd frontend/deploy
+          docker compose pull || true
+          docker compose up -d --build
+
+          # Wait for services to start
+          sleep 30
+
+          # Check status
+          docker compose ps
+        EOF
+
+    - name: Health check
+      run: |
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << EOF
+          # Wait a bit more for the application to fully start
+          sleep 30
+
+          # Test health endpoint
+          if curl -f -k https://${{ secrets.DOMAIN_NAME }}/api/health; then
+            echo "✅ Health check passed"
+          else
+            echo "❌ Health check failed"
             exit 1
           fi
-
-      - name: Build Frontend Docker image
-        working-directory: ./frontend
-        run: |
-          docker build \
-            --build-arg AUTH_SECRET=${{ secrets.AUTH_SECRET }} \
-            --build-arg DATABASE_PATH=${{ secrets.DATABASE_PATH }} \
-            --build-arg NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }} \
-            -t gymapp-frontend:latest .
-
-      - name: Save Frontend Docker image as tar
-        working-directory: ./frontend
-        run: docker save -o gymapp-frontend.tar gymapp-frontend:latest
-
-      - name: Change ownership and permissions of Frontend files
-        working-directory: ./frontend
-        run: |
-          sudo chown $USER:$USER gymapp-frontend.tar
-          sudo chmod 644 gymapp-frontend.tar
-
-      - name: Move Frontend files to root directory
-        run: |
-          mv ./frontend/gymapp-frontend.tar .
-
-      # ===== 传 tar 到服务器 =====
-      - name: Transfer Frontend tar file to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          source: "gymapp-frontend.tar"
-          target: "/home/${{ secrets.SERVER_USER }}/app/frontend/"
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          debug: true
-
-      # ===== 准备部署文件 =====
-      - name: Prepare Deploy Files
-        run: |
-          # 复制部署配置文件到部署目录
-          mkdir -p deploy
-          cp frontend/deploy/docker-compose.yml deploy/
-
-      # ===== 传输部署文件到服务器 =====
-      - name: Transfer Deploy Files
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          source: "deploy/"
-          target: "/home/${{ secrets.SERVER_USER }}/app/"
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-
-      # ===== 在服务器上部署前端（使用 Docker Compose） =====
-      - name: Deploy Frontend on Server
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          script: |
-            # 检查必需文件
-            if [ ! -f /home/${{ secrets.SERVER_USER }}/app/frontend/gymapp-frontend.tar ]; then
-              echo "Error: gymapp-frontend.tar not found!"
-              exit 1
-            fi
-
-            if [ ! -f /home/${{ secrets.SERVER_USER }}/app/deploy/docker-compose.yml ]; then
-              echo "Error: deploy/docker-compose.yml not found!"
-              exit 1
-            fi
-
-            # 加载镜像
-            echo "🔧 加载 Docker 镜像..."
-            echo "📊 镜像文件大小: $(du -h /home/${{ secrets.SERVER_USER }}/app/frontend/gymapp-frontend.tar | cut -f1)"
-            time docker load -i /home/${{ secrets.SERVER_USER }}/app/frontend/gymapp-frontend.tar
-
-            # 进入部署目录并启动服务
-            cd /home/${{ secrets.SERVER_USER }}/app/deploy
-            echo "🐳 停止旧服务..."
-            docker compose down || true
-
-            echo "🚀 启动新服务..."
-            docker compose up -d
-
-            # 等待服务启动
-            echo "⏳ 等待服务启动..."
-            sleep 15
-
-            # 检查服务状态
-            if docker compose ps | grep -q "Up"; then
-              echo "✅ Frontend service started successfully!"
-              echo "📊 服务状态："
-              docker compose ps
-              echo "📝 最近的日志："
-              docker compose logs --tail=10 gymapp
-            else
-              echo "❌ Frontend service failed to start. Checking logs..."
-              docker compose logs gymapp
-              exit 1
-            fi
-
-      # ===== 备份数据库 =====
-      - name: Backup Database on Server
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          script: |
-            # 创建备份目录
-            mkdir -p /home/${{ secrets.SERVER_USER }}/backups
-
-            # 备份数据库（如果存在）
-            if [ -f /home/${{ secrets.SERVER_USER }}/app/frontend/db/db.production.sqlite3 ]; then
-              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-              BACKUP_FILE="/home/${{ secrets.SERVER_USER }}/backups/backup_${TIMESTAMP}.sqlite3"
-              sqlite3 /home/${{ secrets.SERVER_USER }}/app/frontend/db/db.production.sqlite3 "VACUUM INTO '$BACKUP_FILE'"
-              echo "Database backup created: $BACKUP_FILE"
-
-              # 保留最近5个备份
-              ls -t /home/${{ secrets.SERVER_USER }}/backups/backup_*.sqlite3 2>/dev/null | tail -n +6 | xargs -r rm -f
-              echo "Old backups cleaned up"
-            else
-              echo "No database file found, skipping backup"
-            fi
-
-      # ===== 清理临时文件和 Docker 资源 =====
-      - name: Cleanup Files and Docker Resources on Server
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          script: |
-            # 清理无用 Docker 资源
-            docker system prune -f
-
-      # ===== 清理本地临时文件 =====
-      - name: Cleanup Local Temp Files
-        run: |
-          rm -rf deploy/
+        EOF
