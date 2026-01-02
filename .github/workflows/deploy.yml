@@ -29,22 +29,10 @@ jobs:
         echo "💾 Saving Docker image to tar file..."
         docker save gymapp-frontend:latest > gymapp-image.tar
 
-    - name: Upload image artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: gymapp-image
-        path: gymapp-image.tar
-
     - name: Package deploy files
       run: |
         echo "📦 Packaging deploy files..."
         tar -czf deploy-files.tar -C frontend deploy
-
-    - name: Upload deploy artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: deploy-files
-        path: deploy-files.tar
 
     - name: Install sshpass for direct transfer
       run: |
@@ -90,15 +78,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Download Docker image
-      uses: actions/download-artifact@v4
-      with:
-        name: gymapp-image
- 
-    - name: Download deploy files
-      uses: actions/download-artifact@v4
-      with:
-        name: deploy-files
+    # deploy job is disabled (direct transfer handled in build job)
 
     - name: Setup SSH
       run: |
