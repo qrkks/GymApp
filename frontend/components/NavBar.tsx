@@ -123,7 +123,17 @@ export default function NavBar() {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={async () => {
-                  await signOut({ redirect: true, callbackUrl: '/auth/signin' });
+                  try {
+                    console.log('正在退出登录...');
+                    await signOut({
+                      redirect: true,
+                      callbackUrl: '/auth/signin'
+                    });
+                  } catch (error) {
+                    console.error('退出登录失败:', error);
+                    // 如果signOut失败，强制重定向到登录页面
+                    window.location.href = '/auth/signin';
+                  }
                 }}
               >
                 退出登录

@@ -37,7 +37,7 @@ fi
 echo "🔄 运行数据库迁移..."
 if pnpm run db:migrate; then
     echo "✅ 数据库迁移完成"
-else
+    else
     echo "⚠️  迁移失败，尝试生成新迁移..."
     if pnpm run db:generate && pnpm run db:migrate; then
         echo "✅ 数据库迁移完成"

@@ -84,9 +84,9 @@ case $ACTION in
 
     "backup")
         echo "💾 备份 PostgreSQL 数据库..."
-        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+            TIMESTAMP=$(date +%Y%m%d_%H%M%S)
         BACKUP_FILE="backups/backup_${TIMESTAMP}.sql"
-        mkdir -p backups
+            mkdir -p backups
 
         # 使用 pg_dump 备份数据库
         if docker compose -f $COMPOSE_FILE -p $PROJECT_NAME exec -T postgres pg_dump \
