@@ -46,23 +46,21 @@ jobs:
         name: deploy-files
         path: deploy-files.tar
 
-    - name: Setup SSH key for direct transfer
+    - name: Install sshpass for direct transfer
       run: |
-        echo "🔐 Setting up SSH key for direct server transfer..."
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+        echo "🔧 Installing sshpass for password-based SSH..."
+        sudo apt-get update
+        sudo apt-get install -y sshpass
 
-    - name: Transfer image and deploy files to server (direct)
+    - name: Transfer image and deploy files to server (direct, password)
       run: |
-        echo "📤 Transferring image and deploy files directly to server..."
-        scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no gymapp-image.tar deploy-files.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/
+        echo "📤 Transferring image and deploy files directly to server using password..."
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -o StrictHostKeyChecking=no gymapp-image.tar deploy-files.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/
 
-    - name: Remote load and deploy on server (direct)
+    - name: Remote load and deploy on server (direct, password)
       run: |
-        echo "🚀 Executing remote load and deploy..."
-        ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+        echo "🚀 Executing remote load and deploy using password..."
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
           set -e
           echo "📦 Loading docker image..."
           docker load < ~/gymapp-image.tar
