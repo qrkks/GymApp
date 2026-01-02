@@ -90,7 +90,15 @@ COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
 
 # 复制 package.json 和 pnpm-lock.yaml（用于安装 drizzle-kit）
 COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/pnpm-lock.yaml* ./pnpm-lock.yaml* || true
+# 复制 pnpm-lock.yaml（如果存在）- 使用 BuildKit mount 处理可选文件
+USER root
+RUN --mount=from=builder,source=/app,target=/tmp/builder \
+    sh -c 'if [ -f /tmp/builder/pnpm-lock.yaml ]; then \
+      cp /tmp/builder/pnpm-lock.yaml ./pnpm-lock.yaml; \
+    elif ls /tmp/builder/pnpm-lock.yaml.* 1>/dev/null 2>&1; then \
+      cp /tmp/builder/pnpm-lock.yaml.* ./; \
+    fi' && \
+    chown -R nextjs:nodejs ./pnpm-lock.yaml* 2>/dev/null || true
 
 # 确保 drizzle-kit 在运行时可用（standalone 模式可能不包含命令行工具）
 # 如果 standalone 的 node_modules 中没有 drizzle-kit，则安装它

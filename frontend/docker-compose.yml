@@ -1,8 +1,8 @@
 version: '3.8'
 services:
   postgres:
-    image: postgres:15-alpine
-    container_name: gymapp-postgres-prod
+    image: registry-vpc.cn-beijing.aliyuncs.com/ciye/postgres:18-alpine
+    container_name: gymapp-postgres
     environment:
       POSTGRES_DB: gymapp
       POSTGRES_USER: postgres
