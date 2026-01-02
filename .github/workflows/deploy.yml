@@ -22,14 +22,25 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build and push Docker image
+    - name: Build Docker image
       uses: docker/build-push-action@v5
       with:
         context: ./frontend
-        push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/gymapp-frontend:latest
+        load: true
+        tags: gymapp-frontend:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
+
+    - name: Save Docker image as tar
+      run: |
+        echo "💾 Saving Docker image to tar file..."
+        docker save gymapp-frontend:latest > gymapp-image.tar
+
+    - name: Upload image artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: gymapp-image
+        path: gymapp-image.tar
 
   deploy:
     needs: build-and-push
@@ -38,6 +49,23 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Download Docker image
+      uses: actions/download-artifact@v4
+      with:
+        name: gymapp-image
+
+    - name: Setup SSH
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y sshpass
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+    - name: Transfer Docker image to server
+      run: |
+        echo "📤 Transferring Docker image to server..."
+        scp -o StrictHostKeyChecking=no gymapp-image.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/
 
     - name: Setup SSH
       run: |
@@ -86,6 +114,17 @@ jobs:
     - name: Deploy to server
       run: |
         sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << EOF
+          # Load the pre-built Docker image
+          echo "📦 Loading Docker image from transferred tar file..."
+          if [ -f "~/gymapp-image.tar" ]; then
+            docker load < ~/gymapp-image.tar
+            echo "✅ Docker image loaded successfully"
+            rm ~/gymapp-image.tar
+          else
+            echo "❌ Docker image tar file not found"
+            exit 1
+          fi
+
           # Define deployment directory
           DEPLOY_DIR="${{ secrets.PROJECT_PATH }}"
           if [ -z "$DEPLOY_DIR" ]; then
@@ -144,14 +183,17 @@ jobs:
           echo "NEXTAUTH_URL: $NEXTAUTH_URL"
           echo "DOMAIN_NAME: $DOMAIN_NAME"
 
-          # Pull the pre-built image from Docker Hub
-          echo "📥 Pulling pre-built image from Docker Hub..."
-          docker pull ${{ secrets.DOCKER_USERNAME }}/gymapp-frontend:latest || echo "⚠️ Pull failed, will build locally..."
-
-          # Tag the image for docker-compose
-          docker tag ${{ secrets.DOCKER_USERNAME }}/gymapp-frontend:latest gymapp-frontend:latest || echo "⚠️ Tagging failed, continuing..."
+          # Verify the loaded image is available
+          echo "🔍 Verifying Docker image..."
+          if docker images | grep -q gymapp-frontend; then
+            echo "✅ Docker image is available locally"
+          else
+            echo "❌ Docker image not found, exiting..."
+            exit 1
+          fi
 
           # Run containers (without --build since we have the image)
+          echo "🐳 Starting containers with pre-built image..."
           docker compose up -d
 
           echo ""
