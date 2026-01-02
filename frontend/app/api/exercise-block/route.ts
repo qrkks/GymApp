@@ -1,3 +1,6 @@
+// 强制动态渲染，因为使用了认证和headers
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-helpers';
 import * as workoutUseCase from '@domain/workout/application/workout.use-case';

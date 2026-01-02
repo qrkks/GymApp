@@ -3,6 +3,9 @@
  * 仅处理 HTTP 请求/响应，调用 Application Service
  */
 import { NextRequest, NextResponse } from 'next/server';
+
+// 强制动态渲染，因为使用了认证和headers
+export const dynamic = 'force-dynamic';
 import { requireAuth } from '@/lib/auth-helpers';
 import {
   getWorkoutByDate,

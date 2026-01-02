@@ -1,3 +1,6 @@
+// 强制动态渲染，因为使用了认证和headers
+export const dynamic = 'force-dynamic';
+
 /**
  * 更新用户资料 API Route
  */
