@@ -14,7 +14,7 @@ export default {
     database: process.env.POSTGRES_DB || 'gymapp',
     user: process.env.POSTGRES_USER || 'postgres',
     password: process.env.POSTGRES_PASSWORD || 'postgres',
-    ssl: process.env.NODE_ENV === 'production' && process.env.POSTGRES_HOST !== 'localhost' ? 'require' : false,
+    ssl: false, // 不强制使用SSL，所有环境都可以连接
   },
 } satisfies Config;
 
