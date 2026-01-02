@@ -16,14 +16,23 @@ if [ ! -f "$DATABASE_PATH" ]; then
 else
     echo "✅ 数据库文件已存在"
 
-    # 检查数据库是否有表（简单的完整性检查）
-    TABLE_COUNT=$(sqlite3 "$DATABASE_PATH" "SELECT COUNT(*) FROM sqlite_master WHERE type='table';" 2>/dev/null || echo "0")
-    if [ "$TABLE_COUNT" = "0" ]; then
+    # 检查数据库是否有表（使用 Node.js 检查，避免依赖 sqlite3 CLI）
+    if node -e "
+      try {
+        const Database = require('better-sqlite3');
+        const db = new Database('$DATABASE_PATH');
+        const result = db.prepare(\"SELECT COUNT(*) as count FROM sqlite_master WHERE type='table'\").get();
+        db.close();
+        process.exit(result.count > 0 ? 0 : 1);
+      } catch (error) {
+        process.exit(1);
+      }
+    " 2>/dev/null; then
+        echo "✅ 数据库表已存在"
+    else
         echo "⚠️  数据库文件存在但没有表，开始初始化..."
         pnpm run db:init
         echo "✅ 数据库表初始化完成"
-    else
-        echo "✅ 数据库表已存在 ($TABLE_COUNT 个表)"
     fi
 fi
 

@@ -69,8 +69,8 @@ pnpm dev
 
 1. **配置环境变量**
    ```bash
-   cp env.example.txt .env
-   # 编辑 .env 文件，设置必需的环境变量
+   cp .env.example .env.local
+   # 编辑 .env.local 文件，设置必需的环境变量
    ```
 
 2. **启动应用**
