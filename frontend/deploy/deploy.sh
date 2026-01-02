@@ -16,7 +16,12 @@ echo "📋 操作: $ACTION"
 # Load environment variables from .env file if it exists
 if [ -f "../.env" ]; then
   echo "📄 加载环境变量..."
-  export $(grep -v '^#' ../.env | xargs)
+  set -a  # automatically export all variables
+  source ../.env
+  set +a
+  echo "✅ 环境变量已加载"
+else
+  echo "⚠️  未找到 .env 文件"
 fi
 
 # Validate required environment variables

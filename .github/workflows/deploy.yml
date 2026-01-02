@@ -46,29 +46,228 @@ jobs:
           cd /opt/gymapp
           git pull origin main || true
 
-          # Build and deploy
+          # Load environment variables and deploy
           cd frontend/deploy
-          docker compose pull || true
+          echo "🔍 Checking .env file..."
+          if [ -f "../.env" ]; then
+            echo "📄 .env file found, content preview:"
+            cat ../.env | head -10
+            echo ""
+
+            echo "📄 Loading environment variables..."
+            set -a
+            source ../.env
+            set +a
+
+            echo "✅ Environment variables loaded"
+            echo "🔐 AUTH_SECRET length: $(if [ -n "$AUTH_SECRET" ]; then echo ${#AUTH_SECRET}; else echo 'NOT SET'; fi)"
+            echo "🌐 NEXTAUTH_URL: ${NEXTAUTH_URL:-'NOT SET'}"
+            echo "🏠 DOMAIN_NAME: ${DOMAIN_NAME:-'NOT SET'}"
+            echo "🗄️  DATABASE_PATH: ${DATABASE_PATH:-'NOT SET'}"
+          else
+            echo "❌ .env file not found in $(pwd)/../.env"
+            ls -la ../
+            exit 1
+          fi
+
+          echo ""
+          echo "🐳 Starting Docker containers..."
+          docker compose pull || echo "⚠️ Pull failed, continuing with build..."
           docker compose up -d --build
 
-          # Wait for services to start
-          sleep 30
+          echo ""
+          echo "⏳ Waiting for application to start..."
+          sleep 10
 
-          # Check status
+          echo ""
+          echo "📊 Container status:"
           docker compose ps
+
+          echo ""
+          echo "🔍 Checking container health:"
+          if docker ps | grep -q gymapp-frontend; then
+            echo "✅ Container is running"
+
+            echo ""
+            echo "📋 Container environment variables:"
+            docker exec gymapp-frontend env | grep -E "(AUTH_SECRET|NEXTAUTH_URL|DOMAIN_NAME|NODE_ENV|DATABASE_PATH)" | sed 's/AUTH_SECRET=.*/AUTH_SECRET=[HIDDEN]/' || echo "❌ Could not read env vars"
+
+            echo ""
+            echo "🏥 Testing internal health check:"
+            docker exec gymapp-frontend curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health || echo "❌ Internal health check failed"
+
+            echo ""
+            echo "📝 Recent application logs:"
+            docker logs gymapp-frontend --tail 10 2>&1 | head -20
+
+            echo ""
+            echo "🔍 Checking if Next.js is listening on port 3000:"
+            docker exec gymapp-frontend netstat -tlnp | grep :3000 || echo "❌ Port 3000 not listening"
+          else
+            echo "❌ Container is not running"
+            echo "📝 Docker logs:"
+            docker logs gymapp-frontend 2>&1 | tail -20 || echo "No logs available"
+          fi
         EOF
 
     - name: Health check
       run: |
         sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << EOF
-          # Wait a bit more for the application to fully start
-          sleep 30
+          echo "🔍 Starting comprehensive health check..."
+          echo "=========================================="
 
-          # Test health endpoint
-          if curl -f -k https://${{ secrets.DOMAIN_NAME }}/api/health; then
-            echo "✅ Health check passed"
+          # Wait for application to fully start
+          echo "⏳ Waiting additional time for app startup..."
+          sleep 20
+
+          # 1. Check container status
+          echo ""
+          echo "📊 === CONTAINER STATUS ==="
+          docker ps --filter name=gymapp-frontend --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+          # 2. Check Docker networks
+          echo ""
+          echo "🌐 === DOCKER NETWORKS ==="
+          docker network ls | grep traefik || echo "traefik_net not found"
+
+          # 3. Test DNS resolution
+          echo ""
+          echo "🌍 === DNS RESOLUTION ==="
+          nslookup ${{ secrets.DOMAIN_NAME }} || echo "DNS resolution failed"
+          ping -c 2 ${{ secrets.DOMAIN_NAME }} || echo "Ping failed"
+
+          # 4. Test external connectivity
+          echo ""
+          echo "🔗 === EXTERNAL CONNECTIVITY TEST ==="
+          echo "Testing HTTPS connection to ${{ secrets.DOMAIN_NAME }}:443"
+          timeout 10 openssl s_client -connect ${{ secrets.DOMAIN_NAME }}:443 -servername ${{ secrets.DOMAIN_NAME }} </dev/null 2>/dev/null | openssl x509 -noout -dates 2>/dev/null || echo "SSL certificate check failed"
+
+          # 5. Test Traefik
+          echo ""
+          echo "🔄 === TRAEFIK STATUS ==="
+          docker ps --filter name=traefik --format "table {{.Names}}\t{{.Status}}" || echo "Traefik container not found"
+
+          if docker ps | grep -q traefik; then
+            echo "Traefik logs:"
+            docker logs traefik --tail 5 2>&1 || echo "Could not read Traefik logs"
+          fi
+
+          # 6. Detailed container diagnostics
+          echo ""
+          echo "🔍 === CONTAINER DIAGNOSTICS ==="
+          if docker ps | grep -q gymapp-frontend; then
+            echo "✅ Container is running"
+
+            # Check resource usage
+            echo ""
+            echo "📈 Container resource usage:"
+            docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}" gymapp-frontend
+
+            # Check listening ports
+            echo ""
+            echo "🔌 Container listening ports:"
+            docker exec gymapp-frontend netstat -tlnp 2>/dev/null | grep LISTEN || echo "No listening ports found"
+
+            # Check processes
+            echo ""
+            echo "⚙️  Container processes:"
+            docker exec gymapp-frontend ps aux | head -10
+
+            # Check Next.js build
+            echo ""
+            echo "🏗️  Checking Next.js build:"
+            docker exec gymapp-frontend ls -la /app/.next 2>/dev/null || echo ".next directory not found"
+
+            # Check database
+            echo ""
+            echo "🗄️  Database check:"
+            docker exec gymapp-frontend ls -la /app/db/ 2>/dev/null || echo "Database directory not accessible"
+
           else
-            echo "❌ Health check failed"
+            echo "❌ Container is NOT running"
+            echo "📝 Full container logs:"
+            docker logs gymapp-frontend 2>&1 | tail -50 || echo "No container logs available"
+            exit 1
+          fi
+
+          # 7. Application logs
+          echo ""
+          echo "📝 === APPLICATION LOGS (last 30 lines) ==="
+          docker logs gymapp-frontend --tail 30 2>&1
+
+          # 8. Internal health check
+          echo ""
+          echo "🏥 === INTERNAL HEALTH CHECK ==="
+          echo "Testing http://localhost:3000/api/health"
+          INTERNAL_STATUS=$(docker exec gymapp-frontend curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health 2>/dev/null || echo "000")
+          if [ "$INTERNAL_STATUS" = "200" ]; then
+            echo "✅ Internal health check PASSED (HTTP $INTERNAL_STATUS)"
+          else
+            echo "❌ Internal health check FAILED (HTTP $INTERNAL_STATUS)"
+            docker exec gymapp-frontend curl -v http://localhost:3000/api/health 2>&1 || echo "Curl command failed"
+          fi
+
+          # 9. External health check
+          echo ""
+          echo "🌐 === EXTERNAL HEALTH CHECK ==="
+          echo "Testing https://${{ secrets.DOMAIN_NAME }}/api/health"
+          EXTERNAL_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -k https://${{ secrets.DOMAIN_NAME }}/api/health 2>/dev/null || echo "000")
+          if [ "$EXTERNAL_STATUS" = "200" ]; then
+            echo "✅ External health check PASSED (HTTP $EXTERNAL_STATUS)"
+          else
+            echo "❌ External health check FAILED (HTTP $EXTERNAL_STATUS)"
+            echo "Full curl output:"
+            curl -v -k --max-time 10 https://${{ secrets.DOMAIN_NAME }}/api/health 2>&1 || echo "Curl command failed"
+          fi
+
+          # 10. Environment variables summary
+          echo ""
+          echo "🔧 === ENVIRONMENT VARIABLES SUMMARY ==="
+          docker exec gymapp-frontend env | grep -E "(AUTH_SECRET|NEXTAUTH_URL|DOMAIN_NAME|NODE_ENV|DATABASE_PATH)" | \
+            sed 's/AUTH_SECRET=.*/AUTH_SECRET=[HIDDEN]/' | \
+            sed 's/\(NEXTAUTH_URL=\)\(.*\)/\1[URL_SET]/' | \
+            sed 's/\(DOMAIN_NAME=\)\(.*\)/\1[DOMAIN_SET]/' || echo "Could not read environment variables"
+
+          # Troubleshooting guide
+          echo ""
+          echo "🔧 === TROUBLESHOOTING GUIDE ==="
+          if [ "$INTERNAL_STATUS" != "200" ]; then
+            echo "❌ INTERNAL HEALTH CHECK FAILED (HTTP $INTERNAL_STATUS)"
+            echo "   Possible causes:"
+            echo "   1. AUTH_SECRET not set correctly"
+            echo "   2. Database not initialized"
+            echo "   3. Next.js application failed to start"
+            echo "   4. Port 3000 not bound correctly"
+            echo "   → Check application logs above for 'Missing AUTH_SECRET' errors"
+          fi
+
+          if [ "$EXTERNAL_STATUS" != "200" ]; then
+            echo "❌ EXTERNAL HEALTH CHECK FAILED (HTTP $EXTERNAL_STATUS)"
+            echo "   Possible causes:"
+            echo "   1. Traefik reverse proxy not configured"
+            echo "   2. SSL certificate issues"
+            echo "   3. DNS not pointing to server"
+            echo "   4. Firewall blocking HTTPS traffic"
+            echo "   → Check if ${{ secrets.DOMAIN_NAME }} resolves correctly"
+          fi
+
+          # Final verdict
+          echo ""
+          echo "🎯 === FINAL VERDICT ==="
+          if [ "$INTERNAL_STATUS" = "200" ] && [ "$EXTERNAL_STATUS" = "200" ]; then
+            echo "✅ DEPLOYMENT SUCCESSFUL - All checks passed!"
+            echo "🎉 Your application is now live at https://${{ secrets.DOMAIN_NAME }}"
+            exit 0
+          else
+            echo "❌ DEPLOYMENT FAILED"
+            echo ""
+            echo "📞 SUPPORT INFORMATION:"
+            echo "   - Check GitHub Actions logs for complete diagnostic output"
+            echo "   - Common fixes:"
+            echo "     1. Verify AUTH_SECRET in GitHub Secrets is a valid base64 string"
+            echo "     2. Ensure NEXTAUTH_URL matches your domain"
+            echo "     3. Check that DOMAIN_NAME has correct DNS records"
+            echo "     4. Verify Traefik is running and configured correctly"
             exit 1
           fi
         EOF
