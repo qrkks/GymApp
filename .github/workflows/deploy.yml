@@ -29,22 +29,69 @@ jobs:
         echo "💾 Saving Docker image to tar file..."
         docker save gymapp-frontend:latest > gymapp-image.tar
 
-    - name: Upload image artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: gymapp-image
-        path: gymapp-image.tar
-
     - name: Package deploy files
       run: |
         echo "📦 Packaging deploy files..."
         tar -czf deploy-files.tar -C frontend deploy
 
-    - name: Upload deploy artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: deploy-files
-        path: deploy-files.tar
+    - name: Setup SSH (for direct transfer)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y sshpass
+        mkdir -p ~/.ssh
+        ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+    - name: Transfer image and deploy files to server
+      run: |
+        echo "📤 Transferring image and deploy files to server..."
+        scp -o StrictHostKeyChecking=no gymapp-image.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/
+        scp -o StrictHostKeyChecking=no deploy-files.tar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:~/
+
+    - name: Remote deploy on server
+      run: |
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+          set -e
+          echo "📦 Loading Docker image from transferred tar file..."
+          if [ -f "$HOME/gymapp-image.tar" ]; then
+            docker load < "$HOME/gymapp-image.tar"
+            echo "✅ Docker image loaded successfully"
+            rm "$HOME/gymapp-image.tar" || true
+          else
+            echo "❌ Docker image tar file not found"
+            exit 1
+          fi
+
+          DEPLOY_DIR="/home/${{ secrets.SERVER_USER }}/gymapp"
+          echo "📁 Deployment directory: $DEPLOY_DIR"
+          mkdir -p "$DEPLOY_DIR"
+
+          echo "📥 Extracting deploy files into $DEPLOY_DIR/frontend..."
+          if [ -f "$HOME/deploy-files.tar" ]; then
+            mkdir -p "$DEPLOY_DIR/frontend"
+            tar -xzf "$HOME/deploy-files.tar" -C "$DEPLOY_DIR/frontend"
+            echo "✅ Deploy files extracted to $DEPLOY_DIR/frontend/deploy"
+            rm "$HOME/deploy-files.tar" || true
+          else
+            echo "⚠️ deploy-files.tar not found on server; ensure CI transferred the files"
+          fi
+
+          echo "🛑 Stopping existing containers..."
+          cd "$DEPLOY_DIR/frontend/deploy"
+          docker compose down || true
+
+          echo "🐳 Starting containers with preloaded image..."
+          export AUTH_SECRET="${{ secrets.AUTH_SECRET }}"
+          export NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}"
+          export DOMAIN_NAME="${{ secrets.DOMAIN_NAME }}"
+          export DATABASE_PATH="/app/db/db.production.sqlite3"
+          docker compose up -d
+
+          echo "⏳ Waiting for application to start..."
+          sleep 10
+
+          echo "📊 Container status:"
+          docker compose ps
+        EOF
 
   deploy:
     needs: build-and-push
