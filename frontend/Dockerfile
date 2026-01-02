@@ -38,8 +38,11 @@ COPY . .
 # 构建应用
 RUN pnpm run build
 
-# 创建数据库目录并设置权限
-RUN mkdir -p db && chown nextjs:nodejs db
+# 创建数据库目录（在切换用户前）
+RUN mkdir -p db
+
+# 设置正确的权限，确保nextjs用户可以访问所有文件
+RUN chown -R nextjs:nodejs /app
 
 # 切换到非root用户
 USER nextjs

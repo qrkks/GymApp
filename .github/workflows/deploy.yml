@@ -67,53 +67,18 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           debug: true
 
-      # ===== 创建部署配置 =====
-      - name: Create Docker Compose Config
+      # ===== 准备部署文件 =====
+      - name: Prepare Deploy Files
         run: |
-          # 创建部署用的 docker-compose.yml
-          cat > docker-compose.deploy.yml << EOF
-          version: '3.8'
-          services:
-            gymapp:
-              image: gymapp-frontend:latest
-              container_name: gymapp-frontend
-              ports:
-                - "3000:3000"
-              environment:
-                - AUTH_SECRET=${{ secrets.AUTH_SECRET }}
-                - DATABASE_PATH=/app/db/db.production.sqlite3
-                - NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}
-                - NODE_ENV=production
-                - AUTH_TRUST_HOST=true
-              volumes:
-                - ./db:/app/db:rw
-              user: "node"
-              restart: unless-stopped
-              healthcheck:
-                test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
-                interval: 30s
-                timeout: 10s
-                retries: 3
-                start_period: 40s
-              networks:
-                - traefik_net
-              labels:
-                - "traefik.enable=true"
-                - "traefik.http.routers.gymapp.rule=Host(\`${{ secrets.DOMAIN_NAME }}\`)"
-                - "traefik.http.routers.gymapp.entrypoints=websecure"
-                - "traefik.http.routers.gymapp.tls=true"
-                - "traefik.http.services.gymapp.loadbalancer.server.port=3000"
+          # 复制部署配置文件到部署目录
+          mkdir -p deploy
+          cp frontend/deploy/docker-compose.yml deploy/
 
-          networks:
-            traefik_net:
-              external: true
-          EOF
-
-      # ===== 传输配置文件到服务器 =====
-      - name: Transfer Docker Compose Config
+      # ===== 传输部署文件到服务器 =====
+      - name: Transfer Deploy Files
         uses: appleboy/scp-action@v0.1.7
         with:
-          source: "docker-compose.deploy.yml"
+          source: "deploy/"
           target: "/home/${{ secrets.SERVER_USER }}/app/"
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
@@ -133,37 +98,38 @@ jobs:
               exit 1
             fi
 
-            if [ ! -f /home/${{ secrets.SERVER_USER }}/app/docker-compose.deploy.yml ]; then
-              echo "Error: docker-compose.deploy.yml not found!"
+            if [ ! -f /home/${{ secrets.SERVER_USER }}/app/deploy/docker-compose.yml ]; then
+              echo "Error: deploy/docker-compose.yml not found!"
               exit 1
             fi
 
             # 加载镜像
             echo "🔧 加载 Docker 镜像..."
-            docker load -i /home/${{ secrets.SERVER_USER }}/app/frontend/gymapp-frontend.tar
+            echo "📊 镜像文件大小: $(du -h /home/${{ secrets.SERVER_USER }}/app/frontend/gymapp-frontend.tar | cut -f1)"
+            time docker load -i /home/${{ secrets.SERVER_USER }}/app/frontend/gymapp-frontend.tar
 
-            # 进入应用目录并启动服务
-            cd /home/${{ secrets.SERVER_USER }}/app
+            # 进入部署目录并启动服务
+            cd /home/${{ secrets.SERVER_USER }}/app/deploy
             echo "🐳 停止旧服务..."
-            docker compose -f docker-compose.deploy.yml down || true
+            docker compose down || true
 
             echo "🚀 启动新服务..."
-            docker compose -f docker-compose.deploy.yml up -d
+            docker compose up -d
 
             # 等待服务启动
             echo "⏳ 等待服务启动..."
             sleep 15
 
             # 检查服务状态
-            if docker compose -f docker-compose.deploy.yml ps | grep -q "Up"; then
+            if docker compose ps | grep -q "Up"; then
               echo "✅ Frontend service started successfully!"
               echo "📊 服务状态："
-              docker compose -f docker-compose.deploy.yml ps
+              docker compose ps
               echo "📝 最近的日志："
-              docker compose -f docker-compose.deploy.yml logs --tail=10 gymapp
+              docker compose logs --tail=10 gymapp
             else
               echo "❌ Frontend service failed to start. Checking logs..."
-              docker compose -f docker-compose.deploy.yml logs gymapp
+              docker compose logs gymapp
               exit 1
             fi
 
@@ -200,13 +166,10 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            # 清理临时配置文件
-            rm -f /home/${{ secrets.SERVER_USER }}/app/docker-compose.deploy.yml
-
             # 清理无用 Docker 资源
             docker system prune -f
 
       # ===== 清理本地临时文件 =====
       - name: Cleanup Local Temp Files
         run: |
-          rm -f docker-compose.deploy.yml
+          rm -rf deploy/

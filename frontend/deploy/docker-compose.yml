@@ -1,0 +1,35 @@
+version: '3.8'
+services:
+  gymapp:
+    image: gymapp-frontend:latest
+    container_name: gymapp-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - AUTH_SECRET=${AUTH_SECRET}
+      - DATABASE_PATH=/app/db/db.production.sqlite3
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NODE_ENV=production
+      - AUTH_TRUST_HOST=true
+    volumes:
+      - ./db:/app/db:rw
+    user: "node"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - traefik_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gymapp.rule=Host(`${DOMAIN_NAME}`)"
+      - "traefik.http.routers.gymapp.entrypoints=websecure"
+      - "traefik.http.routers.gymapp.tls=true"
+      - "traefik.http.services.gymapp.loadbalancer.server.port=3000"
+
+networks:
+  traefik_net:
+    external: true
