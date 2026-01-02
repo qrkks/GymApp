@@ -1,17 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['better-sqlite3'],
-  },
-
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.externals = config.externals || [];
-      config.externals.push('better-sqlite3');
-    }
-    return config;
-  },
-
+  // PostgreSQL迁移后移除了better-sqlite3配置
+  // 如需添加新的配置，请在此处添加
 };
 
 

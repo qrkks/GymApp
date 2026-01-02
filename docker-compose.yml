@@ -2,10 +2,10 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:18-alpine
     container_name: gymapp-postgres
     environment:
-      POSTGRES_DB: gymapp_prod
+      POSTGRES_DB: gymapp
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
     volumes:
@@ -29,7 +29,7 @@ services:
       - "3000:3000"
     environment:
       - AUTH_SECRET=${AUTH_SECRET}
-      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-changeme}@postgres:5432/gymapp_prod
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-changeme}@postgres:5432/gymapp
       - NEXTAUTH_URL=${NEXTAUTH_URL}
       - NODE_ENV=production
       - AUTH_TRUST_HOST=true

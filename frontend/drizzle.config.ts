@@ -13,7 +13,7 @@ export default {
     port: parseInt(process.env.POSTGRES_PORT || '5432'),
     database: process.env.POSTGRES_DB || 'gymapp',
     user: process.env.POSTGRES_USER || 'postgres',
-    password: process.env.POSTGRES_PASSWORD!,
+    password: process.env.POSTGRES_PASSWORD || 'postgres',
     ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
   },
 } satisfies Config;

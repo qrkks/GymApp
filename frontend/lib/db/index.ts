@@ -22,7 +22,7 @@ function getDatabase(): Pool {
         port: parseInt(process.env.POSTGRES_PORT || '5432'),
         database: process.env.POSTGRES_DB || 'gymapp',
         user: process.env.POSTGRES_USER || 'postgres',
-        password: process.env.POSTGRES_PASSWORD,
+        password: process.env.POSTGRES_PASSWORD || 'postgres',
         max: process.env.NODE_ENV === 'production' ? 10 : 5, // Max connections
         idleTimeoutMillis: 20000, // Close idle connections after 20s
         connectionTimeoutMillis: 10000, // Connection timeout 10s
