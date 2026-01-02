@@ -15,7 +15,7 @@ function RemoveExerciseButton({exercise, mutate}: RemoveExerciseButtonProps) {
   const [showDialog, setShowDialog] = useState(false);
 
   function handleConfirm() {
-    fetch(`${apiUrl}/exercise/${exercise.id}/delete`, {
+    fetch(`${apiUrl}/exercise/${exercise.id}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -23,9 +23,35 @@ function RemoveExerciseButton({exercise, mutate}: RemoveExerciseButtonProps) {
       credentials: "include",
     })
       .then(async (res) => {
+        // 检查响应内容类型
+        const contentType = res.headers.get("content-type");
         if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error || `HTTP error! Status: ${res.status}`);
+          let errorMessage = `HTTP error! Status: ${res.status}`;
+          // 只有当响应是 JSON 时才尝试解析
+          if (contentType && contentType.includes("application/json")) {
+            try {
+              const data = await res.json();
+              errorMessage = data.error || data.message || errorMessage;
+            } catch (e) {
+              // 如果 JSON 解析失败，使用默认错误消息
+              errorMessage = `服务器错误 (${res.status})`;
+            }
+          }
+          throw new Error(errorMessage);
+        }
+        // 204 No Content 响应没有 body
+        if (res.status === 204) {
+          showToast.success("删除成功", `已删除动作 ${exercise.name}`);
+          mutate();
+          return;
+        }
+        // 其他成功响应尝试解析 JSON
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            await res.json();
+          } catch (e) {
+            // JSON 解析失败不影响成功状态
+          }
         }
         showToast.success("删除成功", `已删除动作 ${exercise.name}`);
         mutate();

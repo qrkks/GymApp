@@ -1,7 +1,8 @@
 /**
  * BodyPart Application Service 单元测试
  */
-import { getTestDb } from '@/tests/setup/test-db';
+import { createTestDb, cleanupTestDb } from '@/tests/setup/test-db';
+import { generateTestUserIdentifiers } from '@/tests/setup/test-helpers';
 import {
   getBodyPartList,
   createBodyPart,
@@ -13,17 +14,14 @@ import * as bodyPartCommands from '../../repository/commands/body-part.repositor
 import * as userCommands from '@domain/user/repository/commands/user.repository';
 import { bodyParts, users } from '@/lib/db/schema';
 
-// Mock the database module
-jest.mock('@/lib/db', () => {
-  const { getTestDb } = require('@/tests/setup/test-db');
-  return {
-    db: getTestDb(),
-  };
-});
+// Mock the database module - 使用独立的schema进行测试隔离
+jest.mock('@/lib/db', () => ({
+  db: createTestDb(__filename),
+}));
 
 describe('BodyPart Application Service', () => {
-  const db = getTestDb();
-  const testUserId = 'test-user-body-part-app';
+  const db = createTestDb(__filename);
+  const { userId: testUserId, email: testUserEmail, username: testUsername } = generateTestUserIdentifiers(__filename);
 
   beforeEach(async () => {
     // 清理数据库
@@ -32,8 +30,8 @@ describe('BodyPart Application Service', () => {
     // 创建测试用户（body_parts 需要外键引用 users）
     await userCommands.insertUser({
       id: testUserId,
-      email: 'test@example.com',
-      username: 'Test User',
+      email: testUserEmail,
+      username: testUsername,
     });
   });
 
@@ -154,6 +152,10 @@ describe('BodyPart Application Service', () => {
       
       expect(result.success).toBe(true);
     });
+  });
+
+  afterAll(async () => {
+    await cleanupTestDb(__filename);
   });
 });
 

@@ -2,6 +2,7 @@
  * BodyPart Repository Commands 单元测试
  */
 import { createTestDb, cleanupTestDb } from '@/tests/setup/test-db';
+import { generateTestUserIdentifiers } from '@/tests/setup/test-helpers';
 import * as bodyPartCommands from '../body-part.repository';
 import * as bodyPartQueries from '../../queries/body-part.repository';
 import * as userCommands from '@domain/user/repository/commands/user.repository';
@@ -14,7 +15,7 @@ jest.mock('@/lib/db', () => ({
 
 describe('BodyPart Repository - Commands', () => {
   const db = createTestDb(__filename);
-  const testUserId = 'test-user-body-part-commands';
+  const { userId: testUserId, email: testUserEmail, username: testUsername } = generateTestUserIdentifiers(__filename);
 
   beforeEach(async () => {
     // 清理数据库
@@ -23,8 +24,8 @@ describe('BodyPart Repository - Commands', () => {
     // 创建测试用户（body_parts 需要外键引用 users）
     await userCommands.insertUser({
       id: testUserId,
-      email: 'test@example.com',
-      username: 'Test User',
+      email: testUserEmail,
+      username: testUsername,
     });
   });
 
@@ -68,13 +69,13 @@ describe('BodyPart Repository - Commands', () => {
     });
 
     it('should return null when body part belongs to different user', async () => {
-      const otherUserId = 'test-user-2';
+      const { userId: otherUserId, email: otherUserEmail, username: otherUsername } = generateTestUserIdentifiers(__filename, 'other');
       
       // 创建另一个用户
       await userCommands.insertUser({
         id: otherUserId,
-        email: 'other@example.com',
-        username: 'Other User',
+        email: otherUserEmail,
+        username: otherUsername,
       });
       
       const created = await bodyPartCommands.insertBodyPart(otherUserId, 'Chest');
@@ -105,13 +106,13 @@ describe('BodyPart Repository - Commands', () => {
     });
 
     it('should return false when body part belongs to different user', async () => {
-      const otherUserId = 'test-user-2';
+      const { userId: otherUserId, email: otherUserEmail, username: otherUsername } = generateTestUserIdentifiers(__filename, 'other');
       
       // 创建另一个用户
       await userCommands.insertUser({
         id: otherUserId,
-        email: 'other@example.com',
-        username: 'Other User',
+        email: otherUserEmail,
+        username: otherUsername,
       });
       
       const created = await bodyPartCommands.insertBodyPart(otherUserId, 'Chest');
@@ -133,13 +134,13 @@ describe('BodyPart Repository - Commands', () => {
     });
 
     it('should only delete body parts for the specified user', async () => {
-      const otherUserId = 'test-user-2';
+      const { userId: otherUserId, email: otherUserEmail, username: otherUsername } = generateTestUserIdentifiers(__filename, 'other');
       
       // 创建另一个用户
       await userCommands.insertUser({
         id: otherUserId,
-        email: 'other@example.com',
-        username: 'Other User',
+        email: otherUserEmail,
+        username: otherUsername,
       });
       
       await bodyPartCommands.insertBodyPart(testUserId, 'Chest');

@@ -15,7 +15,7 @@ import {
 import { toHttpResponse } from '@domain/shared/error-types';
 
 const bodyPartNamesSchema = z.object({
-  body_part_names: z.array(z.string()),
+  bodyPartNames: z.array(z.string()),
 });
 
 /**
@@ -33,9 +33,13 @@ export async function POST(
 
     const date = params.date;
     const body = await request.json();
-    const data = bodyPartNamesSchema.parse(body);
+    // Support both camelCase and snake_case for backward compatibility
+    const normalizedBody = {
+      bodyPartNames: body.bodyPartNames || body.body_part_names,
+    };
+    const data = bodyPartNamesSchema.parse(normalizedBody);
 
-    const result = await addBodyPartsToWorkout(user.id, date, data.body_part_names);
+    const result = await addBodyPartsToWorkout(user.id, date, data.bodyPartNames);
     const response = toHttpResponse(result);
 
     return NextResponse.json(response.body, { status: response.status });
@@ -71,9 +75,13 @@ export async function DELETE(
 
     const date = params.date;
     const body = await request.json();
-    const data = bodyPartNamesSchema.parse(body);
+    // Support both camelCase and snake_case for backward compatibility
+    const normalizedBody = {
+      bodyPartNames: body.bodyPartNames || body.body_part_names,
+    };
+    const data = bodyPartNamesSchema.parse(normalizedBody);
 
-    const result = await removeBodyPartsFromWorkout(user.id, date, data.body_part_names);
+    const result = await removeBodyPartsFromWorkout(user.id, date, data.bodyPartNames);
     const response = toHttpResponse(result);
 
     return NextResponse.json(response.body, { status: response.status });

@@ -59,9 +59,10 @@ export function getTestDb(testPath?: string): ReturnType<typeof drizzle> {
       database: process.env.POSTGRES_TEST_DB || 'gymapp',
       user: process.env.POSTGRES_USER || 'postgres',
       password: process.env.POSTGRES_PASSWORD || 'postgres',
-      max: 2, // 每个测试文件使用较小的连接池
-      idleTimeoutMillis: 5000,
-      connectionTimeoutMillis: 3000,
+      max: 5, // 增加连接池大小以避免连接耗尽
+      idleTimeoutMillis: 10000,
+      connectionTimeoutMillis: 5000,
+      allowExitOnIdle: true, // 允许在空闲时退出
     };
 
     const pool = new Pool(testConfig);
@@ -73,8 +74,9 @@ export function getTestDb(testPath?: string): ReturnType<typeof drizzle> {
         // 创建schema（如果不存在）
         await client.query(`CREATE SCHEMA IF NOT EXISTS ${schemaName}`);
 
-        // 设置search_path到我们的schema
-        await client.query(`SET search_path TO ${schemaName}, public`);
+        // 设置search_path只到我们的测试schema，不包含public，确保完全隔离
+        // 这样可以确保测试数据不会影响默认schema（public）中的用户
+        await client.query(`SET search_path TO ${schemaName}`);
 
         // console.log(`✅ Created and switched to schema: ${schemaName}`);
       } catch (error) {

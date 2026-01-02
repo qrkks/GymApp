@@ -25,7 +25,7 @@ function RemoveSetButton({item, mutateWorkoutSet}: RemoveSetButtonProps) {
           const data = await res.json();
           throw new Error(data.error || `HTTP error! Status: ${res.status}`);
         }
-        showToast.success("删除成功", `已删除第 ${item.set_number} 组`);
+        showToast.success("删除成功", `已删除第 ${item.setNumber} 组`);
         mutateWorkoutSet();
       })
       .catch((error) => {
@@ -43,7 +43,7 @@ function RemoveSetButton({item, mutateWorkoutSet}: RemoveSetButtonProps) {
         open={showDialog}
         onOpenChange={setShowDialog}
         title="确认删除"
-        description={`确定要删除第 ${item.set_number} 组吗？`}
+        description={`确定要删除第 ${item.setNumber} 组吗？`}
         confirmText="删除"
         cancelText="取消"
         variant="destructive"

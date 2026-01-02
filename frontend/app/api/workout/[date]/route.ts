@@ -13,6 +13,19 @@ import {
 } from '@domain/workout/application/workout.use-case';
 import { toHttpResponse } from '@domain/shared/error-types';
 
+// Helper function to transform body_parts to bodyParts
+function transformWorkout(workout: any): any {
+  if (!workout) return workout;
+  if (workout.body_parts && Array.isArray(workout.body_parts)) {
+    return {
+      ...workout,
+      bodyParts: workout.body_parts,
+      body_parts: undefined, // Remove the snake_case version
+    };
+  }
+  return workout;
+}
+
 /**
  * GET /api/workout/[date] - Get workout by date
  */
@@ -30,7 +43,9 @@ export async function GET(
     const result = await getWorkoutByDate(user.id, date);
     const response = toHttpResponse(result);
 
-    return NextResponse.json(response.body, { status: response.status });
+    // Transform body_parts to bodyParts
+    const transformedBody = response.body ? transformWorkout(response.body) : response.body;
+    return NextResponse.json(transformedBody, { status: response.status });
   } catch (error: any) {
     if (error.message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

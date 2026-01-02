@@ -11,7 +11,7 @@ function RemoveSetButton({item, mutateWorkoutSet}: RemoveSetButtonProps) {
   const { apiUrl } = config;
   function handleClick() {
     const isConfirmed = window.confirm(
-      `确定要删除第 ${item.set_number} 组吗？`
+      `确定要删除第 ${item.setNumber} 组吗？`
     );
     if (!isConfirmed) return;
 

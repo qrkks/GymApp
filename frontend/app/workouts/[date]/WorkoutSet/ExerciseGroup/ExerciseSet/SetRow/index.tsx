@@ -15,7 +15,7 @@ function SetRow({item, mutateWorkoutSet, set}: SetRowProps) {
     <>
       <TableRow>
         <TableCell className="font-medium text-center">
-          {item.set_number}
+          {item.setNumber}
         </TableCell>
         <TableCell className="font-medium text-center">
           {" "}

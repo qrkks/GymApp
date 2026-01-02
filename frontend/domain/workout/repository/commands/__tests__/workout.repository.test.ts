@@ -2,6 +2,7 @@
  * Workout Repository Commands 单元测试
  */
 import { createTestDb, cleanupTestDb } from '@/tests/setup/test-db';
+import { generateTestUserIdentifiers } from '@/tests/setup/test-helpers';
 import * as workoutCommands from '../workout.repository';
 import * as workoutQueries from '../../queries/workout.repository';
 import * as userCommands from '@domain/user/repository/commands/user.repository';
@@ -15,7 +16,7 @@ jest.mock('@/lib/db', () => ({
 
 describe('Workout Repository - Commands', () => {
   const testDb = createTestDb(__filename);
-  const testUserId = 'test-user-workout-commands';
+  const { userId: testUserId, email: testUserEmail, username: testUsername } = generateTestUserIdentifiers(__filename);
 
   beforeEach(async () => {
     // 清理数据库
@@ -27,8 +28,8 @@ describe('Workout Repository - Commands', () => {
     // 创建测试用户
     await userCommands.insertUser({
       id: testUserId,
-      email: 'test@example.com',
-      username: 'testuser-workout-commands',
+      email: testUserEmail,
+      username: testUsername,
     });
   });
 

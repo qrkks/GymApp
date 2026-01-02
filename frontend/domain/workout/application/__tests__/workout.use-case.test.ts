@@ -2,6 +2,7 @@
  * Workout Application Service 单元测试
  */
 import { createTestDb, cleanupTestDb } from '@/tests/setup/test-db';
+import { generateTestUserIdentifiers } from '@/tests/setup/test-helpers';
 import {
   getWorkoutList,
   getWorkoutByDate,
@@ -24,7 +25,7 @@ jest.mock('@/lib/db', () => ({
 
 describe('Workout Application Service', () => {
   const testDb = createTestDb(__filename);
-  const testUserId = 'test-user-workout-app';
+  const { userId: testUserId, email: testUserEmail, username: testUsername } = generateTestUserIdentifiers(__filename);
 
   beforeEach(async () => {
     // 清理数据库
@@ -36,8 +37,8 @@ describe('Workout Application Service', () => {
     // 创建测试用户
     await userCommands.insertUser({
       id: testUserId,
-      email: 'test@example.com',
-      username: 'testuser-workout-app',
+      email: testUserEmail,
+      username: testUsername,
     });
   });
 

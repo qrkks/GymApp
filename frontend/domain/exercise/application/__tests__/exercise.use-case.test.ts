@@ -1,7 +1,8 @@
 /**
  * Exercise Application Service 单元测试
  */
-import { getTestDb } from '@/tests/setup/test-db';
+import { createTestDb, cleanupTestDb } from '@/tests/setup/test-db';
+import { generateTestUserIdentifiers } from '@/tests/setup/test-helpers';
 import {
   getExerciseList,
   getExercisesByBodyPartName,
@@ -15,17 +16,14 @@ import * as userCommands from '@domain/user/repository/commands/user.repository'
 import * as bodyPartCommands from '@domain/body-part/repository/commands/body-part.repository';
 import { exercises, users, bodyParts } from '@/lib/db/schema';
 
-// Mock the database module
-jest.mock('@/lib/db', () => {
-  const { getTestDb } = require('@/tests/setup/test-db');
-  return {
-    db: getTestDb(),
-  };
-});
+// Mock the database module - 使用独立的schema进行测试隔离
+jest.mock('@/lib/db', () => ({
+  db: createTestDb(__filename),
+}));
 
 describe('Exercise Application Service', () => {
-  const testDb = getTestDb();
-  const testUserId = 'test-user-exercise-app';
+  const testDb = createTestDb(__filename);
+  const { userId: testUserId, email: testUserEmail, username: testUsername } = generateTestUserIdentifiers(__filename);
 
   beforeEach(async () => {
     // 清理数据库
@@ -36,8 +34,8 @@ describe('Exercise Application Service', () => {
     // 创建测试用户
     await userCommands.insertUser({
       id: testUserId,
-      email: 'test@example.com',
-      username: 'testuser-exercise-app',
+      email: testUserEmail,
+      username: testUsername,
     });
   });
 
@@ -223,6 +221,10 @@ describe('Exercise Application Service', () => {
       
       expect(result.success).toBe(true);
     });
+  });
+
+  afterAll(async () => {
+    await cleanupTestDb(__filename);
   });
 });
 

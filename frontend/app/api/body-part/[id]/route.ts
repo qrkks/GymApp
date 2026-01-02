@@ -86,15 +86,35 @@ export async function DELETE(
     }
 
     const result = await deleteBodyPart(id, user.id);
+    
+    if (!result.success) {
+      console.error('删除身体部位失败:', {
+        id,
+        userId: user.id,
+        errorCode: result.error.code,
+        errorMessage: result.error.message,
+        errorDetails: result.error.details,
+      });
+    }
+    
     const response = toHttpResponse(result);
-
     return NextResponse.json(response.body, { status: response.status });
   } catch (error: any) {
+    console.error('删除身体部位时发生异常:', {
+      error: error.message,
+      stack: error.stack,
+      id: params.id,
+    });
+    
     if (error.message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        message: error.message || 'Unknown error',
+      },
       { status: 500 }
     );
   }

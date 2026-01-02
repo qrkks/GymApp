@@ -23,15 +23,15 @@ export default function ExerciseBlockEditPopover({exerciseBlock, part, date, mut
     setIsPopoverOpen(false);
     e.preventDefault();
     const form = e.currentTarget;
-    const exercise_name = (form[0] as HTMLInputElement).value;
-    console.log(exercise_name);
+    const exerciseName = (form[0] as HTMLInputElement).value;
+    console.log(exerciseName);
     fetch(`${apiUrl}/exercise/${exerciseBlock.exercise.id}/patch`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({exercise_name: exercise_name}),
+      body: JSON.stringify({exerciseName: exerciseName}),
     })
       .then((res) => {
         if (!res.ok) {

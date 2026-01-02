@@ -49,12 +49,25 @@ export async function deleteBodyPart(
   id: number,
   userId: string
 ): Promise<boolean> {
-  const [result] = await db
-    .delete(bodyParts)
-    .where(and(eq(bodyParts.id, id), eq(bodyParts.userId, userId)))
-    .returning();
+  try {
+    const [result] = await db
+      .delete(bodyParts)
+      .where(and(eq(bodyParts.id, id), eq(bodyParts.userId, userId)))
+      .returning();
 
-  return !!result;
+    return !!result;
+  } catch (error: any) {
+    console.error('删除身体部位时数据库错误:', {
+      id,
+      userId,
+      error: error.message,
+      code: error.code,
+      detail: error.detail,
+      constraint: error.constraint,
+      stack: error.stack,
+    });
+    throw error;
+  }
 }
 
 /**

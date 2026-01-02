@@ -2,6 +2,7 @@
  * User Repository Commands 单元测试
  */
 import { createTestDb, cleanupTestDb } from '@/tests/setup/test-db';
+import { generateTestUserIdentifiers } from '@/tests/setup/test-helpers';
 import * as userCommands from '../user.repository';
 import * as userQueries from '../../queries/user.repository';
 import { users } from '@/lib/db/schema';
@@ -21,23 +22,25 @@ describe('User Repository - Commands', () => {
 
   describe('insertUser', () => {
     it('should create a new user', async () => {
+      const { userId, email, username } = generateTestUserIdentifiers(__filename);
       const result = await userCommands.insertUser({
-        id: 'test-user-user-commands',
-        email: 'test@example.com',
-        username: 'Test User',
+        id: userId,
+        email,
+        username,
       });
       
       expect(result).toBeDefined();
-      expect(result.id).toBe('test-user-user-commands');
-      expect(result.email).toBe('test@example.com');
-      expect(result.username).toBe('Test User');
+      expect(result.id).toBe(userId);
+      expect(result.email).toBe(email);
+      expect(result.username).toBe(username);
     });
 
     it('should create user with optional fields', async () => {
+      const { userId, email, username } = generateTestUserIdentifiers(__filename, 'optional');
       const result = await userCommands.insertUser({
-        id: 'test-user-2',
-        email: 'test2@example.com',
-        username: 'Test User 2',
+        id: userId,
+        email,
+        username,
         image: 'https://example.com/avatar.jpg',
       });
       
@@ -47,19 +50,20 @@ describe('User Repository - Commands', () => {
 
   describe('updateUser', () => {
     it('should update user', async () => {
+      const { userId, email, username } = generateTestUserIdentifiers(__filename);
       const created = await userCommands.insertUser({
-        id: 'test-user-user-commands',
-        email: 'test@example.com',
-        username: 'Test User',
+        id: userId,
+        email,
+        username,
       });
       
-      const updated = await userCommands.updateUser('test-user-user-commands', {
+      const updated = await userCommands.updateUser(userId, {
         username: 'Updated Name',
       });
       
       expect(updated).not.toBeNull();
       expect(updated?.username).toBe('Updated Name');
-      expect(updated?.email).toBe('test@example.com');
+      expect(updated?.email).toBe(email);
     });
 
     it('should return null when user does not exist', async () => {
@@ -72,17 +76,18 @@ describe('User Repository - Commands', () => {
 
   describe('deleteUser', () => {
     it('should delete user', async () => {
+      const { userId, email, username } = generateTestUserIdentifiers(__filename);
       const created = await userCommands.insertUser({
-        id: 'test-user-user-commands',
-        email: 'test@example.com',
-        username: 'Test User',
+        id: userId,
+        email,
+        username,
       });
       
-      const deleted = await userCommands.deleteUser('test-user-user-commands');
+      const deleted = await userCommands.deleteUser(userId);
       
       expect(deleted).toBe(true);
       
-      const found = await userQueries.findUserById('test-user-user-commands');
+      const found = await userQueries.findUserById(userId);
       expect(found).toBeNull();
     });
 

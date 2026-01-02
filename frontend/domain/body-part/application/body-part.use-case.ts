@@ -189,11 +189,38 @@ export async function deleteBodyPart(
     }
 
     return success(undefined);
-  } catch (error) {
+  } catch (error: any) {
+    console.error('删除身体部位用例错误:', {
+      id,
+      userId,
+      error: error.message,
+      code: error.code,
+      detail: error.detail,
+      constraint: error.constraint,
+      stack: error.stack,
+    });
+    
+    // 检查是否是外键约束错误
+    if (error.code === '23503' || error.constraint) {
+      return failure(
+        'INTERNAL_ERROR',
+        'Cannot delete body part: it is still being used in workouts or exercises',
+        { 
+          code: error.code,
+          constraint: error.constraint,
+          detail: error.detail,
+        }
+      );
+    }
+    
     return failure(
       'INTERNAL_ERROR',
       'Failed to delete body part',
-      error
+      {
+        message: error.message,
+        code: error.code,
+        detail: error.detail,
+      }
     );
   }
 }

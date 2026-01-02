@@ -15,7 +15,7 @@ import {
 import { toHttpResponse } from '@domain/shared/error-types';
 
 const patchSchema = z.object({
-  exercise_name: z.string().min(1),
+  exerciseName: z.string().min(1),
 });
 
 /**
@@ -32,10 +32,14 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const data = patchSchema.parse(body);
+    // Support both camelCase and snake_case for backward compatibility
+    const normalizedBody = {
+      exerciseName: body.exerciseName || body.exercise_name,
+    };
+    const data = patchSchema.parse(normalizedBody);
     const id = parseInt(params.id);
 
-    const result = await updateExerciseName(id, user.id, data.exercise_name);
+    const result = await updateExerciseName(id, user.id, data.exerciseName);
     const response = toHttpResponse(result);
 
     return NextResponse.json(response.body, { status: response.status });
@@ -70,7 +74,26 @@ export async function DELETE(
     }
 
     const id = parseInt(params.id);
+    
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: 'Invalid exercise ID' },
+        { status: 400 }
+      );
+    }
+
     const result = await deleteExercise(id, user.id);
+    
+    if (!result.success) {
+      console.error('删除训练动作失败:', {
+        id,
+        userId: user.id,
+        errorCode: result.error.code,
+        errorMessage: result.error.message,
+        errorDetails: result.error.details,
+      });
+    }
+    
     const response = toHttpResponse(result);
 
     if (response.status === 204) {
@@ -78,11 +101,21 @@ export async function DELETE(
     }
     return NextResponse.json(response.body, { status: response.status });
   } catch (error: any) {
+    console.error('删除训练动作时发生异常:', {
+      error: error.message,
+      stack: error.stack,
+      id: params.id,
+    });
+    
     if (error.message === 'Unauthorized') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        message: error.message || 'Unknown error',
+      },
       { status: 500 }
     );
   }

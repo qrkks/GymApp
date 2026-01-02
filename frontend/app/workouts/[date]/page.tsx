@@ -15,7 +15,7 @@ import { showToast } from "@/lib/toast";
 import type { BodyPart, MutateFunction } from "@/app/types/workout.types";
 
 interface WorkoutData {
-  body_parts?: BodyPart[];
+  bodyParts?: BodyPart[];
   date?: string;
   id?: number;
 }
@@ -194,7 +194,7 @@ function WorkoutById({params}: WorkoutByIdProps) {
       {isWorkoutCreated && (
         <>
           <StartBodyPart date={params.date} mutateWorkout={handleMutateWorkout} />
-          {workoutData?.body_parts?.map((part) => (
+          {workoutData?.bodyParts?.map((part) => (
             <BodyPartSection
               key={part.id}
               part={part}

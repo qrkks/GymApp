@@ -21,9 +21,10 @@ export default function SetEditPopover({item, mutateWorkoutSet}: SetEditPopoverP
     setIsPopoverOpen(false);
 
     const formData = new FormData(e.currentTarget);
-    const formDataObj = Object.fromEntries(formData);
+    const weight = Number(formData.get('weight')) || 0;
+    const reps = Number(formData.get('reps')) || 0;
 
-    console.log(formDataObj);
+    const body = { weight, reps };
 
     fetch(`${apiUrl}/set/${item.id}`, {
       method: "PUT",
@@ -31,7 +32,7 @@ export default function SetEditPopover({item, mutateWorkoutSet}: SetEditPopoverP
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify(formDataObj),
+      body: JSON.stringify(body),
     })
       .then((res) => {
         if (!res.ok) {
@@ -62,25 +63,28 @@ export default function SetEditPopover({item, mutateWorkoutSet}: SetEditPopoverP
             <p className="text-sm text-muted-foreground"></p>
           </div>
           <div className="grid gap-2">
-            {Object.entries(item).map(
-              ([key, value]) =>
-                key !== "id" &&
-                key !== "set_number" && (
-                  <div
-                    key={key}
-                    className="grid items-center grid-cols-3 gap-4"
-                  >
-                    <Label htmlFor={key}>{key}</Label>
-                    <Input
-                      name={key}
-                      defaultValue={String(value)}
-                      className="h-8 col-span-2"
-                      type="number"
-                      min="0"
-                    />
-                  </div>
-                )
-            )}
+            <div className="grid items-center grid-cols-3 gap-4">
+              <Label htmlFor="weight">Weight</Label>
+              <Input
+                name="weight"
+                id="weight"
+                defaultValue={String(item.weight)}
+                className="h-8 col-span-2"
+                type="number"
+                min="0"
+              />
+            </div>
+            <div className="grid items-center grid-cols-3 gap-4">
+              <Label htmlFor="reps">Reps</Label>
+              <Input
+                name="reps"
+                id="reps"
+                defaultValue={String(item.reps)}
+                className="h-8 col-span-2"
+                type="number"
+                min="0"
+              />
+            </div>
           </div>
           <div className="flex justify-end gap-2">
             <Button

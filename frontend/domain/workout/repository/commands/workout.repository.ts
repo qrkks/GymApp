@@ -79,8 +79,15 @@ export async function addBodyPartsToWorkout(
         workoutId,
         bodyPartId,
       });
-    } catch (e) {
-      // Ignore duplicate key errors
+    } catch (e: any) {
+      // 只忽略主键约束错误（重复键）
+      // PostgreSQL 错误代码: 23505 = unique_violation
+      if (e?.code === '23505' || e?.code === '23503') {
+        // Ignore duplicate key errors (primary key or unique constraint)
+        continue;
+      }
+      // 其他错误应该抛出
+      throw e;
     }
   }
 }

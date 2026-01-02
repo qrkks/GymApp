@@ -37,7 +37,7 @@ function LastWorkout({ selectedExercise, lastWorkoutData }: LastWorkoutProps) {
           <ul>
             {sets.map((set, index) => (
               <li key={index}>
-                组 {set.set_number} - 重量: {set.weight}, 次数: {set.reps}
+                组 {set.setNumber} - 重量: {set.weight}, 次数: {set.reps}
               </li>
             ))}
           </ul>

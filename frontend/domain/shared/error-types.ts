@@ -99,19 +99,63 @@ export function getStatusCode(errorCode: ErrorCode): number {
 }
 
 /**
+ * 安全地序列化 details，只保留可序列化的属性
+ */
+function serializeDetails(details: unknown): unknown {
+  if (details === null || details === undefined) {
+    return details;
+  }
+
+  // 如果是 Error 对象，只提取可序列化的属性
+  if (details instanceof Error) {
+    return {
+      message: details.message,
+      name: details.name,
+      code: (details as any).code,
+      constraint: (details as any).constraint,
+      detail: (details as any).detail,
+    };
+  }
+
+  // 如果是普通对象，尝试序列化
+  if (typeof details === 'object') {
+    try {
+      // 尝试 JSON 序列化来验证是否可序列化
+      JSON.stringify(details);
+      return details;
+    } catch {
+      // 如果不可序列化，返回一个安全的表示
+      return {
+        message: 'Error details could not be serialized',
+        type: typeof details,
+      };
+    }
+  }
+
+  // 基本类型可以直接返回
+  return details;
+}
+
+/**
  * 将 Result 转换为 HTTP 响应
  */
 export function toHttpResponse<T>(result: Result<T>) {
   if (result.success) {
     return {
       status: 200,
-      body: result.data,
+      body: result.data ?? null,
+      success: true,
     };
   }
 
   return {
     status: getStatusCode(result.error.code),
-    body: { error: result.error.message },
+    body: { 
+      error: result.error.message,
+      code: result.error.code,
+      details: serializeDetails(result.error.details),
+    },
+    success: false,
   };
 }
 

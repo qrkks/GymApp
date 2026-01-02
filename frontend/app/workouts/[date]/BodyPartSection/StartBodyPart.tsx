@@ -40,7 +40,7 @@ function StartBodyPart({date, mutateWorkout}: StartBodyPartProps) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({body_part_names: [selectedValue]}),
+      body: JSON.stringify({bodyPartNames: [selectedValue]}),
     })
       .then((response) => response.json())
       .then((data) => {

@@ -13,17 +13,17 @@ export interface Exercise {
   id: number;
   name: string;
   description?: string | null;
-  body_part?: BodyPart;
-  body_part_id?: number;
+  bodyPart?: BodyPart;
+  bodyPartId?: number;
 }
 
 // Set 类型
 export interface Set {
   id: number;
-  set_number: number;
+  setNumber: number;
   weight: number;
   reps: number;
-  exercise_block_id?: number;
+  exerciseBlockId?: number;
 }
 
 // ExerciseBlock (WorkoutSet) 类型

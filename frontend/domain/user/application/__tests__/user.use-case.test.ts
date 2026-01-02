@@ -154,7 +154,7 @@ describe('User Application Service', () => {
         username: 'testuser-user-app',
       });
       
-      const result = await updateUser('test-user-1', {
+      const result = await updateUser('test-user-user-app', {
         username: 'Updated Name',
       });
       
@@ -187,7 +187,7 @@ describe('User Application Service', () => {
         username: 'Other User',
       });
       
-      const result = await updateUser('test-user-1', {
+      const result = await updateUser('test-user-user-app', {
         email: 'other@example.com',
       });
       
