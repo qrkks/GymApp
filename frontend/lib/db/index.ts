@@ -13,7 +13,7 @@ function getDatabase(): Pool {
     if (process.env.DATABASE_URL) {
       poolInstance = new Pool({
         connectionString: process.env.DATABASE_URL,
-        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+        ssl: process.env.NODE_ENV === 'production' && process.env.POSTGRES_HOST !== 'localhost' ? { rejectUnauthorized: false } : false,
       });
     } else {
       // Development: Construct from individual environment variables
@@ -26,7 +26,7 @@ function getDatabase(): Pool {
         max: process.env.NODE_ENV === 'production' ? 10 : 5, // Max connections
         idleTimeoutMillis: 20000, // Close idle connections after 20s
         connectionTimeoutMillis: 10000, // Connection timeout 10s
-        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+        ssl: process.env.NODE_ENV === 'production' && process.env.POSTGRES_HOST !== 'localhost' ? { rejectUnauthorized: false } : false,
       };
 
       if (!config.password) {
