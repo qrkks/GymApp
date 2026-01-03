@@ -78,35 +78,78 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const token = await getToken({
+  // NextAuth v5 在生产环境使用 secure cookie 时，Cookie 名称可能带有 __Secure- 前缀
+  // 但 getToken 应该能自动检测，我们先尝试自动检测
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  // NextAuth v5 的 getToken 需要正确的配置
+  // 尝试多种方式读取 token，以兼容不同的浏览器和配置
+  let token = null;
+  
+  // 方式1: 让 getToken 自动检测（推荐方式）
+  token = await getToken({
     req: request,
     secret: secret,
-    // 在生产环境中，确保使用正确的 URL 和 Cookie 设置
-    secureCookie: process.env.NODE_ENV === 'production',
+    secureCookie: isProduction,
   });
+
+  // 方式2: 如果自动检测失败，明确指定 Cookie 名称
+  if (!token) {
+    token = await getToken({
+      req: request,
+      secret: secret,
+      secureCookie: isProduction,
+      cookieName: 'next-auth.session-token',
+    });
+  }
+
+  // 方式3: 如果还是失败，尝试不同的 secureCookie 设置（某些浏览器可能需要）
+  if (!token && isProduction) {
+    token = await getToken({
+      req: request,
+      secret: secret,
+      secureCookie: false, // 尝试不使用 secure
+      cookieName: 'next-auth.session-token',
+    });
+  }
 
   // 如果未登录（没有 token），重定向到登录页面
   if (!token) {
-    // 记录调试信息（生产环境也记录，但信息较少）
-    const cookieNames = request.cookies.getAll().map(c => c.name);
-    const hasAuthCookie = cookieNames.some(name => 
-      name.includes('next-auth') || name.includes('auth')
+    // 记录详细的调试信息
+    const allCookies = request.cookies.getAll();
+    const cookieNames = allCookies.map(c => c.name);
+    const authCookies = allCookies.filter(c => 
+      c.name.includes('next-auth') || c.name.includes('auth') || c.name.includes('session')
     );
+    const hasAuthCookie = authCookies.length > 0;
+    
+    // 输出所有 Cookie 的详细信息（用于诊断）
+    const cookieDetails = authCookies.map(c => ({
+      name: c.name,
+      value: c.value ? `${c.value.substring(0, 20)}...` : 'empty',
+      hasValue: !!c.value,
+    }));
     
     if (process.env.NODE_ENV === 'development') {
       console.log('[Middleware] 未找到 token，重定向到登录页', {
         pathname,
-        cookies: cookieNames,
+        allCookies: cookieNames,
+        authCookies: cookieDetails,
         hasAuthCookie,
+        isProduction,
         userAgent: request.headers.get('user-agent')?.substring(0, 50),
       });
     } else {
-      // 生产环境也记录关键信息，但更简洁
+      // 生产环境也记录详细信息以便诊断
       console.warn('[Middleware] 未找到 token', {
         pathname,
         hasAuthCookie,
+        authCookies: cookieDetails,
         cookieCount: cookieNames.length,
+        isProduction,
         isMobile: /Mobile|Android|iPhone|iPad/.test(request.headers.get('user-agent') || ''),
+        // 输出所有 Cookie 名称以便诊断
+        allCookieNames: cookieNames,
       });
     }
     
