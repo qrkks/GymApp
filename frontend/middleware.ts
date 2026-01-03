@@ -3,10 +3,15 @@
  * 实现路由级别的认证保护
  * 使用 Edge Runtime 兼容的方式检查认证状态
  * NextAuth v5: 使用 auth() 函数而不是 getToken()
+ * 注意：必须使用 Edge-compatible 的配置
  */
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { auth } from '@/lib/auth-config';
+import NextAuth from 'next-auth';
+import authConfig from '@/lib/auth.config';
+
+// 在 Edge Runtime 中初始化 NextAuth（只使用 Edge 兼容的配置）
+const { auth } = NextAuth(authConfig);
 
 /**
  * 需要登录才能访问的路径
