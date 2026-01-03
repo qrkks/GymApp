@@ -43,7 +43,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      # 增加启动等待时间：数据库迁移 + 应用启动可能需要 60-90 秒
+      start_period: 120s
     networks:
       - traefik_net
     labels:

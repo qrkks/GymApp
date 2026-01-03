@@ -112,7 +112,7 @@ RUN if [ ! -d "node_modules/drizzle-kit" ]; then \
 USER nextjs
 
 # 确保脚本可执行
-RUN chmod +x ./scripts/start.sh || true
+RUN chmod +x ./scripts/start.sh ./scripts/wait-for-health.sh || true
 
 # 切换到非 root 用户
 USER nextjs
@@ -120,7 +120,8 @@ USER nextjs
 EXPOSE 3000
 
 # 健康检查
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+# 增加启动等待时间：数据库迁移 + 应用启动可能需要 60-90 秒
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
   CMD curl -f http://localhost:3000/api/health || exit 1
 
 CMD ["./scripts/start.sh"]

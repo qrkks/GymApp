@@ -1,113 +1,51 @@
-# PostgreSQL 数据库管理
+# 部署脚本说明
 
-## 概述
+## start.sh
 
-项目已迁移至 PostgreSQL，使用 Drizzle ORM 进行数据库管理。数据库模式通过 TypeScript 定义，迁移通过 Drizzle Kit 管理。
+应用启动脚本，负责：
+1. 等待 PostgreSQL 连接
+2. 运行数据库迁移
+3. 启动 Next.js 应用服务器
 
-## 可用的数据库脚本
+## wait-for-health.sh
 
-### 模式生成
+健康检查等待脚本，用于 CI/CD 部署时等待应用完全启动。
 
-生成 SQL 迁移文件：
-
-```bash
-pnpm run db:generate
-```
-
-### 数据库迁移
-
-应用挂起的迁移到数据库：
+### 使用方法
 
 ```bash
-pnpm run db:migrate
+# 基本用法（使用默认参数）
+./scripts/wait-for-health.sh
+
+# 指定健康检查 URL
+./scripts/wait-for-health.sh http://localhost:3000/api/health
+
+# 指定所有参数
+./scripts/wait-for-health.sh http://localhost:3000/api/health 30 3
 ```
 
-### 直接推送模式
+### 参数说明
 
-直接将当前模式推送到数据库（开发环境）：
+- `$1`: 健康检查 URL（默认: `http://localhost:3000/api/health`）
+- `$2`: 最大尝试次数（默认: `30`）
+- `$3`: 每次尝试之间的等待时间（秒，默认: `3`）
+
+### 在 CI/CD 中使用
+
+在 GitHub Actions 或其他 CI/CD 脚本中，可以在启动容器后使用此脚本：
 
 ```bash
-pnpm run db:push
+# 启动容器
+docker compose up -d
+
+# 等待应用健康（最多等待 90 秒）
+./scripts/wait-for-health.sh http://localhost:3000/api/health 30 3
+
+# 或者从服务器外部检查（如果端口已映射）
+./scripts/wait-for-health.sh http://your-server-ip:3000/api/health 30 3
 ```
 
-### 生产数据导入
+### 退出码
 
-从归档脚本导入生产数据（一次性使用）：
-
-```bash
-pnpm run db:import-production
-```
-
-## 环境配置
-
-### 本地开发
-
-创建 `.env.local` 文件：
-
-```bash
-# PostgreSQL 连接配置
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_DB=gymapp_dev
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=your_password
-
-# 或使用 DATABASE_URL
-# DATABASE_URL=postgresql://user:password@localhost:5432/gymapp_dev
-```
-
-### Docker 部署
-
-使用 `docker-compose.yml` 自动启动 PostgreSQL：
-
-```bash
-docker-compose up -d
-```
-
-## 数据库表结构
-
-项目包含以下表：
-
-- `users` - 用户账户
-- `body_parts` - 身体部位
-- `exercises` - 运动项目
-- `workouts` - 训练记录
-- `workout_body_parts` - 训练-身体部位关联
-- `workout_sets` - 训练组
-- `sets` - 具体训练数据
-
-## 归档脚本
-
-`archive/` 目录包含一次性使用的脚本：
-
-- `import-production-db.ts` - 生产数据迁移脚本
-- `reset-all-passwords.ts` - 批量密码重置脚本
-
-## 注意事项
-
-1. **迁移优先**: 始终使用 `db:migrate` 而不是手动执行 SQL
-2. **备份重要**: 生产环境操作前务必备份数据
-3. **连接池**: PostgreSQL 使用连接池，注意并发连接数
-4. **事务**: 复杂操作使用 Drizzle 的事务支持
-
-## 故障排除
-
-### 连接问题
-
-```bash
-# 检查 PostgreSQL 状态
-pg_isready -h localhost -p 5432
-
-# 查看连接信息
-psql -h localhost -U postgres -d gymapp_dev -c "SELECT version();"
-```
-
-### 迁移失败
-
-```bash
-# 检查当前迁移状态
-pnpm run db:migrate --dry-run
-
-# 强制推送（仅开发环境）
-pnpm run db:push
-```
+- `0`: 健康检查成功
+- `1`: 健康检查失败（超时或应用未响应）
