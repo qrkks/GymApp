@@ -81,19 +81,35 @@ export async function middleware(request: NextRequest) {
   const token = await getToken({
     req: request,
     secret: secret,
-    // 在生产环境中，确保使用正确的 URL
+    // 在生产环境中，确保使用正确的 URL 和 Cookie 设置
     secureCookie: process.env.NODE_ENV === 'production',
   });
 
   // 如果未登录（没有 token），重定向到登录页面
   if (!token) {
-    // 在生产环境中记录调试信息（仅在开发环境详细日志）
+    // 记录调试信息（生产环境也记录，但信息较少）
+    const cookieNames = request.cookies.getAll().map(c => c.name);
+    const hasAuthCookie = cookieNames.some(name => 
+      name.includes('next-auth') || name.includes('auth')
+    );
+    
     if (process.env.NODE_ENV === 'development') {
       console.log('[Middleware] 未找到 token，重定向到登录页', {
         pathname,
-        cookies: request.cookies.getAll().map(c => c.name),
+        cookies: cookieNames,
+        hasAuthCookie,
+        userAgent: request.headers.get('user-agent')?.substring(0, 50),
+      });
+    } else {
+      // 生产环境也记录关键信息，但更简洁
+      console.warn('[Middleware] 未找到 token', {
+        pathname,
+        hasAuthCookie,
+        cookieCount: cookieNames.length,
+        isMobile: /Mobile|Android|iPhone|iPad/.test(request.headers.get('user-agent') || ''),
       });
     }
+    
     const signInUrl = new URL('/auth/signin', request.url);
     // 保存原始 URL，登录后可以跳转回来
     signInUrl.searchParams.set('callbackUrl', pathname);

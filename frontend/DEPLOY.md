@@ -189,6 +189,49 @@ docker logs traefik
 nslookup yourdomain.com
 ```
 
+### 移动设备登录后无法访问受保护路由
+
+**症状**：在手机上登录后，访问受保护的路由（如 `/workouts`）时被重定向回登录页，但电脑登录正常。
+
+**原因**：移动浏览器（特别是 iOS Safari）对 Cookie 的 `sameSite` 策略处理更严格。
+
+**解决方案**：
+
+1. **确保环境变量正确设置**：
+   ```bash
+   # 检查 NEXTAUTH_URL 是否正确设置
+   docker compose exec gymapp env | grep NEXTAUTH_URL
+   
+   # 应该显示完整的 HTTPS URL，例如：
+   # NEXTAUTH_URL=https://yourdomain.com
+   ```
+
+2. **确保使用 HTTPS**：
+   - 生产环境必须使用 HTTPS（通过 Traefik）
+   - Cookie 配置已自动设置为 `sameSite: 'none'` 和 `secure: true`（生产环境）
+
+3. **检查 Cookie 设置**：
+   - 应用已配置为在生产环境使用 `sameSite: 'none'` 配合 `secure: true`
+   - 这需要 HTTPS 支持，确保 Traefik 正确配置了 SSL 证书
+
+4. **查看日志**：
+   ```bash
+   # 查看应用日志，查找认证相关的警告
+   docker compose logs gymapp | grep -i "middleware\|auth\|token"
+   
+   # 查看是否有移动设备相关的日志
+   docker compose logs gymapp | grep -i "mobile\|未找到 token"
+   ```
+
+5. **清除浏览器缓存和 Cookie**：
+   - 在移动设备上清除网站的所有 Cookie 和缓存
+   - 重新登录测试
+
+**技术细节**：
+- 生产环境 Cookie 配置：`sameSite: 'none'`, `secure: true`
+- 开发环境 Cookie 配置：`sameSite: 'lax'`, `secure: false`
+- 此配置在 `frontend/lib/auth-config.ts` 中已自动处理
+
 ## 注意事项
 
 1. **权限**: 确保部署用户有 Docker 权限

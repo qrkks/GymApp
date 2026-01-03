@@ -96,22 +96,27 @@ export const authOptions = {
   },
   // 生产环境 Cookie 配置
   // 确保在 HTTPS 和反向代理环境下 Cookie 能正确设置和读取
+  // 针对移动浏览器的兼容性优化
   cookies: {
     sessionToken: {
       name: 'next-auth.session-token',
       options: {
         httpOnly: true,
-        sameSite: 'lax' as const,
+        // 生产环境：使用 'none' 配合 secure 以支持移动浏览器
+        // 开发环境：使用 'lax' 因为本地开发可能使用 HTTP
+        sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'lax' | 'none',
         path: '/',
         // 生产环境使用 Secure（HTTPS），开发环境不使用
         secure: process.env.NODE_ENV === 'production',
+        // 不设置 domain，让浏览器自动处理，确保 Cookie 在正确的域名下工作
+        // domain 留空，让 NextAuth 根据请求自动设置
       },
     },
     callbackUrl: {
       name: 'next-auth.callback-url',
       options: {
         httpOnly: true,
-        sameSite: 'lax' as const,
+        sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'lax' | 'none',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
       },
@@ -120,7 +125,7 @@ export const authOptions = {
       name: 'next-auth.csrf-token',
       options: {
         httpOnly: true,
-        sameSite: 'lax' as const,
+        sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'lax' | 'none',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
       },
