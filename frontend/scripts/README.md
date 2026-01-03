@@ -1,5 +1,49 @@
 # 部署脚本说明
 
+## deploy.sh
+
+**推荐使用**：完整的部署脚本，自动处理容器停止和启动。
+
+### 功能
+
+1. 停止并删除旧容器（`docker compose down`）
+2. 启动新容器（`docker compose up -d`）
+3. 等待应用健康检查通过
+4. 显示最终状态
+
+### 使用方法
+
+```bash
+# 基本用法（使用默认参数）
+./scripts/deploy.sh
+
+# 指定 compose 文件
+./scripts/deploy.sh docker-compose.yml
+
+# 指定所有参数
+./scripts/deploy.sh docker-compose.yml http://localhost:3000/api/health 30 3
+```
+
+### 参数说明
+
+- `$1`: Docker Compose 文件路径（默认: `docker-compose.yml`）
+- `$2`: 健康检查 URL（默认: `http://localhost:3000/api/health`）
+- `$3`: 最大尝试次数（默认: `30`）
+- `$4`: 每次尝试之间的等待时间（秒，默认: `3`）
+
+### 在 CI/CD 中使用
+
+```bash
+cd /path/to/deploy/frontend/deploy
+chmod +x ../scripts/deploy.sh
+../scripts/deploy.sh docker-compose.yml http://localhost:3000/api/health 30 3
+```
+
+### 退出码
+
+- `0`: 部署成功
+- `1`: 部署失败（容器启动失败或健康检查超时）
+
 ## start.sh
 
 应用启动脚本，负责：

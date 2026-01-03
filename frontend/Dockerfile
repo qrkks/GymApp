@@ -112,7 +112,7 @@ RUN if [ ! -d "node_modules/drizzle-kit" ]; then \
 USER nextjs
 
 # 确保脚本可执行
-RUN chmod +x ./scripts/start.sh ./scripts/wait-for-health.sh || true
+RUN chmod +x ./scripts/start.sh ./scripts/wait-for-health.sh ./scripts/deploy.sh || true
 
 # 切换到非 root 用户
 USER nextjs
