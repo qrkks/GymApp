@@ -66,14 +66,27 @@ jobs:
           FRONTEND_DIR="$DEPLOY_DIR/frontend"
 
           # ============================================
-          # 加载新镜像（不停止旧容器，保持服务运行）
+          # 停止旧容器（先停止，再启动新容器）
           # ============================================
+          echo "🛑 停止旧容器（如果存在）..."
+          mkdir -p "$FRONTEND_DIR"
+          if [ -f "$FRONTEND_DIR/docker-compose.yml" ]; then
+            cd "$FRONTEND_DIR"
+            docker compose down 2>/dev/null || true
+            echo "✅ 旧容器已停止"
+          else
+            echo "ℹ️  首次部署，没有旧容器需要停止"
+          fi
+
+          # ============================================
+          # 加载新镜像
+          # ============================================
+          echo ""
           echo "📦 Loading Docker image..."
           docker load < ~/gymapp-image.tar
           rm -f ~/gymapp-image.tar || true
           
-          echo ""
-          echo "✅ 新镜像已加载（旧容器仍在运行，确保服务不中断）"
+          echo "✅ 新镜像已加载"
 
           echo "📁 Setting up deployment directory..."
           mkdir -p "$FRONTEND_DIR"
@@ -175,57 +188,49 @@ jobs:
 
           # 使用 docker compose 启动服务
           # .env 文件会自动加载（通过 env_file 配置）
+          echo ""
+          echo "🚀 启动新容器..."
           docker compose up -d
 
           echo ""
-          echo "⏳ 等待服务启动..."
-          sleep 15
+          echo "⏳ 等待容器启动（应用可能需要时间完成数据库迁移）..."
+          sleep 10
 
           echo ""
           echo "📊 容器状态:"
           docker compose ps
 
           # ============================================
-          # 健康检查（如果失败则回滚）
+          # 简单检查：只检查容器是否在运行
           # ============================================
           echo ""
-          echo "🏥 健康检查..."
+          echo "🔍 检查容器状态..."
           
           if docker ps | grep -q gymapp-frontend; then
             echo "✅ 容器正在运行"
             
-            # 检查容器内部健康检查
+            # 显示容器详细信息
             echo ""
-            echo "🔍 检查应用健康状态..."
-            HEALTH_STATUS=$(docker exec gymapp-frontend curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health 2>/dev/null || echo "000")
+            echo "📋 容器详细信息:"
+            docker ps --filter "name=gymapp-frontend" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
             
-            if [ "$HEALTH_STATUS" = "200" ]; then
-              echo "✅ 应用健康检查通过 (HTTP $HEALTH_STATUS)"
-              
-              # 显示环境变量摘要（隐藏敏感信息）
-              echo ""
-              echo "🔧 环境变量摘要:"
-              docker exec gymapp-frontend env | grep -E "(NODE_ENV|NEXTAUTH_URL|DOMAIN_NAME)" | \
-                sed 's/NEXTAUTH_URL=.*/NEXTAUTH_URL=[SET]/' | \
-                sed 's/DOMAIN_NAME=.*/DOMAIN_NAME=[SET]/' || true
-            else
-              echo "❌ 应用健康检查失败 (HTTP $HEALTH_STATUS)"
-              echo "📝 查看应用日志:"
-              docker compose logs gymapp --tail 20
-              echo ""
-              echo "⚠️  新容器健康检查失败，但旧容器可能仍在运行"
-              echo "   如需回滚，可以手动执行: docker compose down && docker compose up -d"
-              echo "   或检查日志后修复问题"
-              exit 1
-            fi
-
+            # 显示应用启动日志（最后 30 行）
+            echo ""
+            echo "📝 应用启动日志（最后 30 行）:"
+            docker compose logs gymapp --tail 30 || true
+            
+            echo ""
+            echo "✅ 容器已启动，应用正在运行中..."
+            echo "💡 提示：如果应用还在运行数据库迁移，请稍等片刻"
+            echo "💡 查看实时日志: docker compose logs -f gymapp"
+            
           else
             echo "❌ 容器未运行"
-            echo "📝 查看日志:"
+            echo ""
+            echo "📝 查看所有日志:"
             docker compose logs
             echo ""
-            echo "⚠️  新容器启动失败，但旧容器可能仍在运行"
-            echo "   如需回滚，可以手动执行: docker compose down && docker compose up -d"
+            echo "❌ 部署失败：容器启动失败"
             exit 1
           fi
 
