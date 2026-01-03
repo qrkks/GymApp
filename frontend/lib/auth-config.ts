@@ -15,6 +15,16 @@ if (!secret) {
   );
 }
 
+// 在生产环境中验证关键配置
+if (process.env.NODE_ENV === 'production') {
+  if (!secret) {
+    console.error('[NextAuth] 生产环境错误：AUTH_SECRET 未设置！');
+  }
+  if (!process.env.NEXTAUTH_URL && !process.env.AUTH_TRUST_HOST) {
+    console.warn('[NextAuth] 生产环境警告：NEXTAUTH_URL 未设置，且 AUTH_TRUST_HOST 未启用。建议设置 NEXTAUTH_URL 或启用 AUTH_TRUST_HOST');
+  }
+}
+
 export const authOptions = {
   secret: secret,
   // NextAuth v5: 在生产环境中信任代理（Traefik/反向代理）
@@ -83,6 +93,38 @@ export const authOptions = {
   },
   pages: {
     signIn: '/auth/signin',
+  },
+  // 生产环境 Cookie 配置
+  // 确保在 HTTPS 和反向代理环境下 Cookie 能正确设置和读取
+  cookies: {
+    sessionToken: {
+      name: 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        // 生产环境使用 Secure（HTTPS），开发环境不使用
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+    callbackUrl: {
+      name: 'next-auth.callback-url',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+    csrfToken: {
+      name: 'next-auth.csrf-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
 };
 

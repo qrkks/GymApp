@@ -65,13 +65,35 @@ export async function middleware(request: NextRequest) {
 
   // 使用 getToken 检查 JWT token（Edge Runtime 兼容）
   // getToken 只检查 cookie 中的 token，不需要访问数据库
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  
+  if (!secret) {
+    console.error('[Middleware] AUTH_SECRET 未设置，无法验证 token');
+    // 在生产环境中，如果没有 secret，应该阻止访问
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json(
+        { error: '服务器配置错误：AUTH_SECRET 未设置' },
+        { status: 500 }
+      );
+    }
+  }
+
   const token = await getToken({
     req: request,
-    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+    secret: secret,
+    // 在生产环境中，确保使用正确的 URL
+    secureCookie: process.env.NODE_ENV === 'production',
   });
 
   // 如果未登录（没有 token），重定向到登录页面
   if (!token) {
+    // 在生产环境中记录调试信息（仅在开发环境详细日志）
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Middleware] 未找到 token，重定向到登录页', {
+        pathname,
+        cookies: request.cookies.getAll().map(c => c.name),
+      });
+    }
     const signInUrl = new URL('/auth/signin', request.url);
     // 保存原始 URL，登录后可以跳转回来
     signInUrl.searchParams.set('callbackUrl', pathname);
