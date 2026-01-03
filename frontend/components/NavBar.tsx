@@ -42,7 +42,7 @@ export default function NavBar() {
   const isAuthenticated = status === "authenticated";
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 flex items-center h-16 gap-4 px-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-6">
+    <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-16 gap-4 px-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-6">
       {/* Logo - 左边 */}
       <Link
         href="/"
@@ -52,43 +52,7 @@ export default function NavBar() {
         <span className="sr-only">Gym Logo</span>
       </Link>
 
-      {/* 移动端菜单按钮 */}
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="shrink-0 md:hidden"
-          >
-            <Menu className="w-5 h-5" />
-            <span className="sr-only">Toggle navigation menu</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left">
-          <nav className="grid gap-6 text-lg font-medium">
-            <Link
-              href="/"
-              className="flex gap-2 items-center text-lg font-semibold"
-              onClick={() => setIsOpen(false)}
-            >
-              <Dumbbell className="w-6 h-6" />
-              <span className="sr-only">Gym Logo</span>
-            </Link>
-            {navList.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="transition-colors text-muted-foreground hover:text-foreground"
-                onClick={() => setIsOpen(false)}
-              >
-                {item.name}
-              </Link>
-            ))}
-          </nav>
-        </SheetContent>
-      </Sheet>
-
-      {/* 导航菜单 - 中间居中 */}
+      {/* 导航菜单 - 中间居中（桌面端） */}
       <nav className="hidden flex-1 justify-center md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
         {navList.map((item) => (
           <Link
@@ -101,8 +65,45 @@ export default function NavBar() {
         ))}
       </nav>
 
-      {/* 用户菜单 - 右边 */}
+      {/* 右侧按钮组 - 移动端和桌面端 */}
       <div className="flex gap-2 items-center shrink-0 md:gap-2 lg:gap-4">
+        {/* 移动端菜单按钮 - 放在右侧 */}
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="shrink-0 md:hidden"
+            >
+              <Menu className="w-5 h-5" />
+              <span className="sr-only">Toggle navigation menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left">
+            <nav className="grid gap-6 text-lg font-medium">
+              <Link
+                href="/"
+                className="flex gap-2 items-center text-lg font-semibold"
+                onClick={() => setIsOpen(false)}
+              >
+                <Dumbbell className="w-6 h-6" />
+                <span className="sr-only">Gym Logo</span>
+              </Link>
+              {navList.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="transition-colors text-muted-foreground hover:text-foreground"
+                  onClick={() => setIsOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </nav>
+          </SheetContent>
+        </Sheet>
+
+        {/* 用户菜单 */}
         {isAuthenticated ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

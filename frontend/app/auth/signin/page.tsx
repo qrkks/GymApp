@@ -76,7 +76,7 @@ export default function SignIn() {
               value={identifier}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setIdentifier(e.target.value)}
               required
-              placeholder="用户名或 your@email.com"
+              placeholder="请输入用户名或邮箱"
               className="mt-1"
             />
           </div>
