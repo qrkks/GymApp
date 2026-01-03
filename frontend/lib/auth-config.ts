@@ -101,7 +101,7 @@ export const authOptions = {
       name: 'next-auth.session-token',
       options: {
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'lax' as const,
         path: '/',
         // 生产环境使用 Secure（HTTPS），开发环境不使用
         secure: process.env.NODE_ENV === 'production',
@@ -111,7 +111,7 @@ export const authOptions = {
       name: 'next-auth.callback-url',
       options: {
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'lax' as const,
         path: '/',
         secure: process.env.NODE_ENV === 'production',
       },
@@ -120,7 +120,7 @@ export const authOptions = {
       name: 'next-auth.csrf-token',
       options: {
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'lax' as const,
         path: '/',
         secure: process.env.NODE_ENV === 'production',
       },
