@@ -35,14 +35,7 @@ services:
         condition: service_healthy
     user: "node"
     restart: unless-stopped
-    # 简化健康检查：只检查容器是否在运行，不检查应用响应
-    # 让应用有足够时间启动（数据库迁移 + 服务器启动）
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 120s
+    # 移除健康检查，让容器自己启动，不检查
     networks:
       - traefik_net
     labels:

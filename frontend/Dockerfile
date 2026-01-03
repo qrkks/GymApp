@@ -119,8 +119,5 @@ USER nextjs
 
 EXPOSE 3000
 
-# 健康检查：给应用足够时间启动（数据库迁移 + 服务器启动）
-HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
-  CMD curl -f http://localhost:3000/api/health || exit 1
-
+# 移除健康检查，让容器自己启动
 CMD ["./scripts/start.sh"]
