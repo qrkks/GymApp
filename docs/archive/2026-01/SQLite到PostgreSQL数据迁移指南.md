@@ -1,5 +1,13 @@
 # SQLite 到 PostgreSQL 数据迁移指南
 
+> ⚠️ **已废弃**：本文档已被新的迁移指南替代。
+> 
+> **新文档**：请使用 `docs/数据迁移到服务器PostgreSQL.md`
+> 
+> **新脚本**：请使用 `frontend/scripts/migrate-sqlite-to-server-pg.ts`
+> 
+> 本文档保留作为历史参考。
+
 ## 📋 迁移概述
 
 本指南介绍如何将现有SQLite数据库数据安全迁移到PostgreSQL。

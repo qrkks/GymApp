@@ -81,8 +81,9 @@ export async function addBodyPartsToWorkout(
       });
     } catch (e: any) {
       // 只忽略主键约束错误（重复键）
-      // PostgreSQL 错误代码: 23505 = unique_violation
-      if (e?.code === '23505' || e?.code === '23503') {
+      // PostgreSQL 错误代码: 23505 = unique_violation (唯一约束违反)
+      // 不应该忽略 23503 (外键约束违反)，因为那是真正的错误
+      if (e?.code === '23505') {
         // Ignore duplicate key errors (primary key or unique constraint)
         continue;
       }

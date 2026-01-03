@@ -9,6 +9,7 @@ const createJestConfig = nextJest({
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-node',
+  maxWorkers: 4, // 限制并行测试数量，避免数据库连接数过多
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
     '^@domain/(.*)$': '<rootDir>/domain/$1',

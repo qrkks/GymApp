@@ -92,8 +92,29 @@
 
 ### 17. SQLite到PostgreSQL数据迁移指南.md
 - **创建时间：** 2026-01
-- **归档原因：** 数据库迁移已完成，项目已使用 PostgreSQL，文档保留作为历史参考
+- **归档原因：** 已被新的迁移指南替代（`docs/数据迁移到服务器PostgreSQL.md`），旧脚本已废弃
+- **状态：** ⚠️ 已废弃（请使用新文档和脚本）
+- **新文档：** `docs/数据迁移到服务器PostgreSQL.md`
+- **新脚本：** `frontend/scripts/migrate-sqlite-to-server-pg.ts`
+
+### 18. PostgreSQL迁移评估报告.md
+- **创建时间：** 2026-01-02
+- **归档时间：** 2026-01-03
+- **归档原因：** 迁移评估已完成，项目已成功迁移到 PostgreSQL
 - **状态：** ✅ 已完成（已迁移到 PostgreSQL）
+
+### 19. 简单部署方案.md
+- **创建时间：** 2026-01
+- **归档时间：** 2026-01-03
+- **归档原因：** 已被更简化的部署方案替代（`docs/最简单部署方案.md`）
+- **状态：** ⚠️ 已废弃（请使用新文档）
+
+### 20. migration-scripts/ (迁移脚本归档目录)
+- **归档时间：** 2026-01-03
+- **内容：**
+  - `migrate-sqlite-to-postgres.sh` - 旧的 bash 迁移脚本
+- **归档原因：** 已被新的 TypeScript 脚本替代（`frontend/scripts/migrate-sqlite-to-server-pg.ts`）
+- **状态：** ⚠️ 已废弃（请使用新脚本）
 
 ## 📝 说明
 
