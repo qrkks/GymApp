@@ -97,9 +97,10 @@ export const authOptions = {
   // 生产环境 Cookie 配置
   // 确保在 HTTPS 和反向代理环境下 Cookie 能正确设置和读取
   // 针对移动浏览器的兼容性优化
+  // NextAuth v5: Cookie 前缀从 'next-auth' 改为 'authjs'
   cookies: {
     sessionToken: {
-      name: 'next-auth.session-token',
+      name: 'authjs.session-token',
       options: {
         httpOnly: true,
         // 生产环境：使用 'none' 配合 secure 以支持移动浏览器
@@ -113,7 +114,7 @@ export const authOptions = {
       },
     },
     callbackUrl: {
-      name: 'next-auth.callback-url',
+      name: 'authjs.callback-url',
       options: {
         httpOnly: true,
         sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'lax' | 'none',
@@ -122,7 +123,7 @@ export const authOptions = {
       },
     },
     csrfToken: {
-      name: 'next-auth.csrf-token',
+      name: 'authjs.csrf-token',
       options: {
         httpOnly: true,
         sameSite: (process.env.NODE_ENV === 'production' ? 'none' : 'lax') as 'lax' | 'none',

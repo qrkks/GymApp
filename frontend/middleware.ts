@@ -2,10 +2,11 @@
  * Next.js Middleware
  * 实现路由级别的认证保护
  * 使用 Edge Runtime 兼容的方式检查认证状态
+ * NextAuth v5: 使用 auth() 函数而不是 getToken()
  */
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { auth } from '@/lib/auth-config';
 
 /**
  * 需要登录才能访问的路径
@@ -63,63 +64,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 使用 getToken 检查 JWT token（Edge Runtime 兼容）
-  // getToken 只检查 cookie 中的 token，不需要访问数据库
-  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  // NextAuth v5: 使用 auth() 函数检查认证状态
+  // auth() 会自动处理 Cookie 读取和 token 验证
+  const session = await auth();
   
-  if (!secret) {
-    console.error('[Middleware] AUTH_SECRET 未设置，无法验证 token');
-    // 在生产环境中，如果没有 secret，应该阻止访问
-    if (process.env.NODE_ENV === 'production') {
-      return NextResponse.json(
-        { error: '服务器配置错误：AUTH_SECRET 未设置' },
-        { status: 500 }
-      );
-    }
-  }
-
-  // NextAuth v5 在生产环境使用 secure cookie 时，Cookie 名称可能带有 __Secure- 前缀
-  // 但 getToken 应该能自动检测，我们先尝试自动检测
-  const isProduction = process.env.NODE_ENV === 'production';
-  
-  // NextAuth v5 的 getToken 需要正确的配置
-  // 尝试多种方式读取 token，以兼容不同的浏览器和配置
-  let token = null;
-  
-  // 方式1: 让 getToken 自动检测（推荐方式）
-  token = await getToken({
-    req: request,
-    secret: secret,
-    secureCookie: isProduction,
-  });
-
-  // 方式2: 如果自动检测失败，明确指定 Cookie 名称
-  if (!token) {
-    token = await getToken({
-      req: request,
-      secret: secret,
-      secureCookie: isProduction,
-      cookieName: 'next-auth.session-token',
-    });
-  }
-
-  // 方式3: 如果还是失败，尝试不同的 secureCookie 设置（某些浏览器可能需要）
-  if (!token && isProduction) {
-    token = await getToken({
-      req: request,
-      secret: secret,
-      secureCookie: false, // 尝试不使用 secure
-      cookieName: 'next-auth.session-token',
-    });
-  }
-
-  // 如果未登录（没有 token），重定向到登录页面
-  if (!token) {
+  // 如果未登录（没有 session），重定向到登录页面
+  if (!session) {
     // 记录详细的调试信息
     const allCookies = request.cookies.getAll();
     const cookieNames = allCookies.map(c => c.name);
+    // NextAuth v5: Cookie 前缀改为 'authjs'
     const authCookies = allCookies.filter(c => 
-      c.name.includes('next-auth') || c.name.includes('auth') || c.name.includes('session')
+      c.name.includes('authjs') || c.name.includes('auth') || c.name.includes('session')
     );
     const hasAuthCookie = authCookies.length > 0;
     
@@ -131,22 +87,20 @@ export async function middleware(request: NextRequest) {
     }));
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('[Middleware] 未找到 token，重定向到登录页', {
+      console.log('[Middleware] 未找到 session，重定向到登录页', {
         pathname,
         allCookies: cookieNames,
         authCookies: cookieDetails,
         hasAuthCookie,
-        isProduction,
         userAgent: request.headers.get('user-agent')?.substring(0, 50),
       });
     } else {
       // 生产环境也记录详细信息以便诊断
-      console.warn('[Middleware] 未找到 token', {
+      console.warn('[Middleware] 未找到 session', {
         pathname,
         hasAuthCookie,
         authCookies: cookieDetails,
         cookieCount: cookieNames.length,
-        isProduction,
         isMobile: /Mobile|Android|iPhone|iPad/.test(request.headers.get('user-agent') || ''),
         // 输出所有 Cookie 名称以便诊断
         allCookieNames: cookieNames,
@@ -159,7 +113,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(signInUrl);
   }
 
-  // 已登录（有 token），放行
+  // 已登录（有 session），放行
   return NextResponse.next();
 }
 
