@@ -421,44 +421,32 @@ export async function createExerciseBlock(
       created = true;
     }
 
-    // 使用实体验证组数据（如果提供）
-    if (setsData && setsData.length > 0) {
-      for (const setData of setsData) {
-        try {
-          // 临时创建实体以验证数据
-          SetEntity.fromPersistence({
-            id: 0, // 临时 ID
-            userId,
-            workoutSetId: existingExerciseBlock.id,
-            setNumber: 1, // 临时值
-            weight: setData.weight,
-            reps: setData.reps,
-          });
-        } catch (error: any) {
-          if (error.message?.includes('Weight') || error.message?.includes('weight')) {
-            return failure(
-              'VALIDATION_ERROR',
-              'Weight must be greater than 0'
-            );
-          }
-          if (error.message?.includes('Reps') || error.message?.includes('reps')) {
-            return failure(
-              'VALIDATION_ERROR',
-              'Reps must be greater than 0'
-            );
-          }
-          throw error;
-        }
-      }
-    }
-
-    // 添加组（如果提供）
+    // 添加组（如果提供）- 通过创建 Entity 自动验证
     let createdSets: Array<{ id: number; setNumber: number; weight: number; reps: number }> = [];
     if (setsData && setsData.length > 0) {
+      // 创建 Entity 验证数据（Entity 会自动验证，如果无效会抛出异常）
+      const validatedSets = setsData.map((setData, index) => {
+        // 临时创建实体以验证数据（setNumber 会在 repository 中重新计算）
+        return SetEntity.fromPersistence({
+          id: 0, // 临时 ID
+          userId,
+          workoutSetId: existingExerciseBlock.id,
+          setNumber: index + 1, // 临时值，repository 会重新计算
+          weight: setData.weight,
+          reps: setData.reps,
+        });
+      });
+
+      // 从已验证的 Entity 获取数据传给 repository
+      const validatedSetsData = validatedSets.map(entity => ({
+        weight: entity.weight,
+        reps: entity.reps,
+      }));
+
       const newSets = await workoutCommands.addSetsToExerciseBlock(
         userId,
         existingExerciseBlock.id,
-        setsData
+        validatedSetsData
       );
       createdSets = newSets.map(set => ({
         id: set.id,
@@ -734,35 +722,21 @@ export async function updateSet(
     // 使用实体封装业务逻辑
     const existing = SetEntity.fromPersistence(existingData);
     
-    // 使用实体验证新的 weight 和 reps（会抛出异常如果无效）
-    try {
-      // 临时创建实体以验证数据
-      SetEntity.fromPersistence({
-        id: existing.id,
-        userId: existing.userId,
-        workoutSetId: existing.exerciseBlockId,
-        setNumber: existing.setNumber,
-        weight: data.weight ?? existing.weight,
-        reps: data.reps ?? existing.reps,
-      });
-    } catch (error: any) {
-      if (error.message?.includes('Weight') || error.message?.includes('weight')) {
-        return failure(
-          'VALIDATION_ERROR',
-          'Weight must be greater than 0'
-        );
-      }
-      if (error.message?.includes('Reps') || error.message?.includes('reps')) {
-        return failure(
-          'VALIDATION_ERROR',
-          'Reps must be greater than 0'
-        );
-      }
-      throw error;
-    }
+    // 使用 Entity 的 update 方法创建新 Entity（自动验证）
+    // 如果验证失败，Entity 会抛出异常，外层 catch 会捕获
+    const updatedEntity = existing.update(
+      data.weight ?? existing.weight,
+      data.reps ?? existing.reps
+    );
+
+    // 从已验证的 Entity 获取数据传给 repository
+    const updateData = {
+      weight: updatedEntity.weight,
+      reps: updatedEntity.reps,
+    };
 
     // 更新组
-    const updatedData = await workoutCommands.updateSet(id, data);
+    const updatedData = await workoutCommands.updateSet(id, updateData);
     if (!updatedData) {
       return failure(
         'SET_NOT_FOUND',
@@ -770,7 +744,7 @@ export async function updateSet(
       );
     }
 
-    // 使用实体封装业务逻辑（可选，用于验证）
+    // 使用实体封装返回数据
     const updated = SetEntity.fromPersistence(updatedData);
 
     return success({

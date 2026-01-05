@@ -49,7 +49,8 @@ function AddButton({date, exerciseBlock, part, mutateWorkoutSet}: AddButtonProps
     console.log('转换后的值 - weight:', weight, '类型:', typeof weight);
     console.log('转换后的值 - reps:', reps, '类型:', typeof reps);
 
-    // 构建请求体，只有当 weight 和 reps 都是有效数字且大于 0 时才包含 sets
+    // 构建请求体：不在前端做业务校验（是否允许 0、最小 reps 等）
+    // 统一交给后端值对象/实体校验，前端只负责把用户输入传过去
     const requestBody: {
       workout_date: string;
       exercise_name: string;
@@ -59,13 +60,17 @@ function AddButton({date, exerciseBlock, part, mutateWorkoutSet}: AddButtonProps
       exercise_name: exerciseBlock.exercise.name,
     };
 
-    // 只有当 weight 和 reps 都是有效数字且大于 0 时才添加 sets
-    // SetEntity 验证要求 weight > 0 且 reps > 0
-    if (!isNaN(weight) && !isNaN(reps) && weight > 0 && reps > 0) {
-      requestBody.sets = [{ weight, reps }];
-      console.log('包含 sets 数组');
+    // 只要用户有输入，就把 sets 传给后端；后端决定是否接受
+    if (formData.weight !== "" || formData.reps !== "") {
+      requestBody.sets = [
+        {
+          weight: Number.isFinite(weight) ? weight : 0,
+          reps: Number.isFinite(reps) ? reps : 0,
+        },
+      ];
+      console.log('包含 sets 数组（已发送给后端校验）');
     } else {
-      console.log('不包含 sets 数组（值无效或 <= 0）');
+      console.log('未输入 weight/reps，不发送 sets');
     }
 
     const requestBodyString = JSON.stringify(requestBody);
@@ -121,7 +126,13 @@ function AddButton({date, exerciseBlock, part, mutateWorkoutSet}: AddButtonProps
           console.error('提取的错误消息:', errorMessage);
           throw new Error(errorMessage);
         }
-        showToast.success("添加成功", "已添加训练组");
+        // 后端成功返回不代表一定创建了 sets（可能只是确认 exercise block 存在）
+        const createdSetsCount = Array.isArray(data?.sets) ? data.sets.length : 0;
+        if (createdSetsCount > 0) {
+          showToast.success("添加成功", "已添加训练组");
+        } else {
+          showToast.error("添加失败", "未创建训练组，请检查 weight/reps 是否符合规则");
+        }
         mutateWorkoutSet();
       })
       .catch((error) => {

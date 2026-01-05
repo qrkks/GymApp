@@ -13,8 +13,14 @@ const positiveNumber = z.preprocess(
   z.number().positive('Value must be a positive number')
 );
 
+// >= 0 的非负数（允许 0）
+const nonNegativeNumber = z.preprocess(
+  (val) => (typeof val === 'string' && val.trim() !== '' ? Number(val) : val),
+  z.number().nonnegative('Value must be a non-negative number')
+);
+
 const setSchema = z.object({
-  weight: positiveNumber,
+  weight: nonNegativeNumber,
   reps: positiveNumber,
 });
 
@@ -54,6 +60,8 @@ export async function POST(request: NextRequest) {
   try {
     const user = await requireAuth();
     const body = await request.json();
+
+    console.log('📥 /api/exercise-block POST raw body:', body);
     
     // Support both camelCase and snake_case for backward compatibility
     const normalizedBody = {
@@ -62,7 +70,10 @@ export async function POST(request: NextRequest) {
       sets: body.sets,
     };
 
+    console.log('📥 /api/exercise-block POST normalized body:', normalizedBody);
+
     const data = exerciseBlockCreateSchema.parse(normalizedBody);
+    console.log('✅ /api/exercise-block POST validated body:', data);
 
     const result = await workoutUseCase.createExerciseBlock(
       user.id,

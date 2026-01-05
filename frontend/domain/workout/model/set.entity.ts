@@ -27,8 +27,8 @@ export class Set {
    * 业务规则：验证组数据
    */
   private validate(): void {
-    if (this.weight <= 0) {
-      throw new Error('Weight must be greater than 0');
+    if (this.weight < 0) {
+      throw new Error('Weight must be greater than or equal to 0');
     }
     if (this.reps <= 0) {
       throw new Error('Reps must be greater than 0');

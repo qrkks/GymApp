@@ -42,14 +42,15 @@ function AddButton({date, exerciseBlock, part, mutateWorkoutSet}: AddButtonProps
     console.log('日期:', date);
     console.log('动作名称:', exerciseBlock.exercise.name);
     
-    // 将字符串转换为数字，空值或无效值转换为 NaN
+    // 前端只做基础格式验证：检查是否是有效数字
+    // 业务规则验证（weight >= 0, reps > 0）由后端 Entity 负责
     const weight = formData.weight ? parseFloat(formData.weight) : NaN;
     const reps = formData.reps ? parseFloat(formData.reps) : NaN;
 
     console.log('转换后的值 - weight:', weight, '类型:', typeof weight);
     console.log('转换后的值 - reps:', reps, '类型:', typeof reps);
 
-    // 构建请求体，只有当 weight 和 reps 都是有效数字且大于 0 时才包含 sets
+    // 构建请求体
     const requestBody: {
       workout_date: string;
       exercise_name: string;
@@ -59,13 +60,13 @@ function AddButton({date, exerciseBlock, part, mutateWorkoutSet}: AddButtonProps
       exercise_name: exerciseBlock.exercise.name,
     };
 
-    // 只有当 weight 和 reps 都是有效数字且大于 0 时才添加 sets
-    // SetEntity 验证要求 weight > 0 且 reps > 0
-    if (!isNaN(weight) && !isNaN(reps) && weight > 0 && reps > 0) {
+    // 只有当 weight 和 reps 都是有效数字时才包含 sets
+    // 业务规则验证（weight >= 0, reps > 0）由后端 Entity 负责
+    if (!isNaN(weight) && !isNaN(reps)) {
       requestBody.sets = [{ weight, reps }];
       console.log('包含 sets 数组');
     } else {
-      console.log('不包含 sets 数组（值无效或 <= 0）');
+      console.log('不包含 sets 数组（值无效）');
     }
 
     const requestBodyString = JSON.stringify(requestBody);
