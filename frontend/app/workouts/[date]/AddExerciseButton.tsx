@@ -1,15 +1,19 @@
-import React, {useEffect, useRef} from "react";
-import {CirclePlus} from "lucide-react";
-import {create} from "zustand";
+import React, { useEffect, useRef } from "react";
+import { CirclePlus } from "lucide-react";
+import { create } from "zustand";
 import SheetContainer from "@/components/SheetContainer";
-import ExerciseSelectInput from "./ExerciseSelectInput";
+import ExerciseSelectInput from "./BodyPartSection/ExerciseSelectInput";
 import useSWR from "swr";
-import LastWorkout from "./LastWorkout";
+import LastWorkout from "./BodyPartSection/LastWorkout";
 import config from "@/utils/config";
-import {Button} from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { showToast } from "@/lib/toast";
-import type { BodyPart, Exercise, MutateFunction } from "@/app/types/workout.types";
-import type { LastWorkoutData } from "./LastWorkout";
+import type {
+  BodyPart,
+  Exercise,
+  MutateFunction,
+} from "@/app/types/workout.types";
+import type { LastWorkoutData } from "./BodyPartSection/LastWorkout";
 
 interface AddExerciseStore {
   previousWorkout: LastWorkoutData | null;
@@ -32,14 +36,25 @@ interface AddExerciseButtonProps {
   mutateWorkout: MutateFunction;
 }
 
-function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExerciseButtonProps) {
-  const {apiUrl} = config;
+function AddExerciseButton({
+  part,
+  date,
+  setAddedExercise,
+  mutateWorkout,
+}: AddExerciseButtonProps) {
+  const { apiUrl } = config;
   const submitCount = useRef(0);
-  
-  const currentSelectedExercise = useAddExerciseStore((state) => state.currentSelectedExercise);
+
+  const currentSelectedExercise = useAddExerciseStore(
+    (state) => state.currentSelectedExercise
+  );
   const previousWorkout = useAddExerciseStore((state) => state.previousWorkout);
-  const setPreviousWorkout = useAddExerciseStore((state) => state.setPreviousWorkout);
-  const setCurrentExercise = useAddExerciseStore((state) => state.setCurrentExercise);
+  const setPreviousWorkout = useAddExerciseStore(
+    (state) => state.setPreviousWorkout
+  );
+  const setCurrentExercise = useAddExerciseStore(
+    (state) => state.setCurrentExercise
+  );
 
   const fetcher = async (url: string) => {
     const response = await fetch(url, {
@@ -61,7 +76,10 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
     data: exercisesData,
     error: exercisesError,
     mutate: mutateExercises,
-  } = useSWR<Exercise[]>(`${apiUrl}/exercise?body_part_name=${part?.name || ""}`, fetcher);
+  } = useSWR<Exercise[]>(
+    `${apiUrl}/exercise?body_part_name=${part?.name || ""}`,
+    fetcher
+  );
 
   useEffect(() => {
     if (currentSelectedExercise) {
@@ -102,7 +120,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
   const handleSubmit = async () => {
     try {
       if (!currentSelectedExercise) return;
-      
+
       setAddedExercise(currentSelectedExercise);
 
       const response = await fetch(`${apiUrl}/exercise-block`, {
@@ -129,7 +147,10 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
       setCurrentExercise("");
     } catch (error) {
       console.error("Submission error:", error);
-      showToast.error("添加失败", error instanceof Error ? error.message : "请稍后重试");
+      showToast.error(
+        "添加失败",
+        error instanceof Error ? error.message : "请稍后重试"
+      );
     }
   };
 
@@ -155,7 +176,10 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
           .then((res) => res.json())
           .then((newExerciseData) => {
             mutateExercises(
-              (currentData) => [...(currentData || []), newExerciseData as Exercise],
+              (currentData) => [
+                ...(currentData || []),
+                newExerciseData as Exercise,
+              ],
               false
             );
             setCurrentExercise(newExercise);
@@ -176,10 +200,7 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
         title="Add Exercise"
         description="Add an exercise to your workout"
         triggerButton={
-          <Button
-            onClick={() => setCurrentExercise("")}
-            variant="secondary"
-          >
+          <Button onClick={() => setCurrentExercise("")} variant="secondary">
             <CirclePlus className="w-4 text-gray-400" />
             &nbsp;添加训练动作
           </Button>
@@ -187,10 +208,10 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
         submitButtonText="Confirm"
         onHandleSubmit={handleSubmit}
       >
-        <form className="flex flex-col items-center w-full gap-2 space-x-2">
+        <form className="flex flex-col gap-2 items-center space-x-2 w-full">
           <ExerciseSelectInput
             entries={exercisesData || []}
-            className="w-2/3"
+            className="w-full"
             placeholder="Select exercise"
             name="exercise"
             mutate={mutateExercises}
@@ -208,4 +229,3 @@ function AddExerciseButton({part, date, setAddedExercise, mutateWorkout}: AddExe
 }
 
 export default AddExerciseButton;
-

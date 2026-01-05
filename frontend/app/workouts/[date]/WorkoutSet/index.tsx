@@ -1,5 +1,5 @@
 import BodyPartRemoveButton from "./BodyPartRemoveButton";
-import AddExerciseButton from "./AddExerciseButton";
+import AddExerciseButton from "../AddExerciseButton";
 import ExerciseBlockList from "./ExerciseBlockList";
 import {useState, useRef} from "react";
 import type { BodyPart, MutateFunction } from "@/app/types/workout.types";

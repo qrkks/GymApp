@@ -39,9 +39,13 @@ export default function SheetContainer({
       <SheetContent side={side}>
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>
-          {description && <SheetDescription>{description}</SheetDescription>}
+          {description ? (
+            <SheetDescription>{description}</SheetDescription>
+          ) : (
+            <SheetDescription className="sr-only">无描述</SheetDescription>
+          )}
         </SheetHeader>
-        <div className="grid gap-4 py-4 ">
+        <div className="grid gap-4 py-4 w-full">
           {children}
         </div>
         <SheetFooter>

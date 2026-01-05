@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -43,31 +43,9 @@ export default function NavBar() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-16 gap-4 px-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-6">
-      {/* Logo - 左边 */}
-      <Link
-        href="/"
-        className="flex gap-2 items-center text-lg font-semibold shrink-0 md:text-base"
-      >
-        <Dumbbell />
-        <span className="sr-only">Gym Logo</span>
-      </Link>
-
-      {/* 导航菜单 - 中间居中（桌面端） */}
-      <nav className="hidden flex-1 justify-center md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
-        {navList.map((item) => (
-          <Link
-            key={item.name}
-            href={item.href}
-            className="transition-colors text-muted-foreground hover:text-foreground"
-          >
-            {item.name}
-          </Link>
-        ))}
-      </nav>
-
-      {/* 右侧按钮组 - 移动端和桌面端 */}
-      <div className="flex gap-2 items-center shrink-0 md:gap-2 lg:gap-4">
-        {/* 移动端菜单按钮 - 放在右侧 */}
+      {/* 左侧：移动端（汉堡菜单 + Logo），桌面端（Logo） */}
+      <div className="flex gap-2 items-center md:gap-0">
+        {/* 移动端菜单按钮 - 放在左侧 */}
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
             <Button
@@ -80,6 +58,10 @@ export default function NavBar() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left">
+            <SheetHeader>
+              <SheetTitle className="sr-only">导航菜单</SheetTitle>
+              <SheetDescription className="sr-only">选择要访问的页面</SheetDescription>
+            </SheetHeader>
             <nav className="grid gap-6 text-lg font-medium">
               <Link
                 href="/"
@@ -102,7 +84,32 @@ export default function NavBar() {
             </nav>
           </SheetContent>
         </Sheet>
+        {/* Logo */}
+        <Link
+          href="/"
+          className="flex gap-2 items-center text-lg font-semibold shrink-0 md:text-base"
+        >
+          <Dumbbell />
+          <span className="sr-only">Gym Logo</span>
+        </Link>
 
+      </div>
+
+      {/* 导航菜单 - 中间居中（桌面端） */}
+      <nav className="hidden flex-1 justify-center md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+        {navList.map((item) => (
+          <Link
+            key={item.name}
+            href={item.href}
+            className="transition-colors text-muted-foreground hover:text-foreground"
+          >
+            {item.name}
+          </Link>
+        ))}
+      </nav>
+
+      {/* 右侧：用户菜单 */}
+      <div className="flex gap-2 items-center shrink-0 md:gap-2 lg:gap-4">
         {/* 用户菜单 */}
         {isAuthenticated ? (
           <DropdownMenu>
