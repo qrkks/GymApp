@@ -17,14 +17,14 @@ import type { LastWorkoutData } from "./BodyPartSection/LastWorkout";
 
 interface AddExerciseStore {
   previousWorkout: LastWorkoutData | null;
-  currentSelectedExercise: string | null;
+  currentSelectedExercise: string;
   setPreviousWorkout: (workout: LastWorkoutData | null) => void;
-  setCurrentExercise: (exercise: string | null) => void;
+  setCurrentExercise: (exercise: string) => void;
 }
 
 export const useAddExerciseStore = create<AddExerciseStore>((set) => ({
   previousWorkout: null,
-  currentSelectedExercise: null,
+  currentSelectedExercise: "",
   setPreviousWorkout: (workout) => set({ previousWorkout: workout }),
   setCurrentExercise: (exercise) => set({ currentSelectedExercise: exercise }),
 }));
@@ -119,9 +119,8 @@ function AddExerciseButton({
 
   const handleSubmit = async () => {
     try {
-      if (!currentSelectedExercise) return;
-
-      setAddedExercise(currentSelectedExercise);
+      const normalizedExerciseName = currentSelectedExercise.trim();
+      if (!normalizedExerciseName) return;
 
       const response = await fetch(`${apiUrl}/exercise-block`, {
         method: "POST",
@@ -131,7 +130,7 @@ function AddExerciseButton({
         },
         body: JSON.stringify({
           workout_date: date,
-          exercise_name: currentSelectedExercise,
+          exercise_name: normalizedExerciseName,
         }),
       });
 
@@ -142,6 +141,7 @@ function AddExerciseButton({
       }
 
       showToast.success("添加成功", `已添加动作 ${currentSelectedExercise}`);
+      setAddedExercise(normalizedExerciseName);
       await mutateWorkout();
 
       setCurrentExercise("");
@@ -215,11 +215,11 @@ function AddExerciseButton({
             placeholder="Select exercise"
             name="exercise"
             mutate={mutateExercises}
-            selectedExercise={currentSelectedExercise || undefined}
+            selectedExercise={currentSelectedExercise}
             onSelectChange={handleSelectChange}
           />
           <LastWorkout
-            selectedExercise={currentSelectedExercise || ""}
+            selectedExercise={currentSelectedExercise}
             lastWorkoutData={previousWorkout}
           />
         </form>

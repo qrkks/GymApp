@@ -7,6 +7,7 @@ import * as workoutCommands from '../workout.repository';
 import * as workoutQueries from '../../queries/workout.repository';
 import * as userCommands from '@domain/user/repository/commands/user.repository';
 import * as bodyPartCommands from '@domain/body-part/repository/commands/body-part.repository';
+import * as exerciseCommands from '@domain/exercise/repository/commands/exercise.repository';
 import { workouts, users, bodyParts, workoutBodyParts } from '@/lib/db/schema';
 
 // Mock the database module - 使用独立的schema进行测试隔离
@@ -153,6 +154,31 @@ describe('Workout Repository - Commands', () => {
       
       const result = await workoutQueries.findWorkouts(testUserId);
       expect(result).toHaveLength(0);
+    });
+  });
+
+  describe('insertExerciseBlock', () => {
+    it('should return the existing exercise block when the same workout and exercise are inserted twice', async () => {
+      const { bodyPart, workout } = await createTestData();
+      const exercise = await exerciseCommands.insertExercise(testUserId, {
+        name: 'Squat',
+        bodyPartId: bodyPart.id,
+      });
+
+      const firstInsert = await workoutCommands.insertExerciseBlock(
+        testUserId,
+        workout.id,
+        exercise.id
+      );
+      const secondInsert = await workoutCommands.insertExerciseBlock(
+        testUserId,
+        workout.id,
+        exercise.id
+      );
+
+      expect(firstInsert).not.toBeNull();
+      expect(secondInsert).not.toBeNull();
+      expect(secondInsert?.id).toBe(firstInsert?.id);
     });
   });
 

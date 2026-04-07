@@ -29,7 +29,7 @@ export default function SelectInput({
   name,
 }: SelectInputProps) {
   return (
-    <Select value={selectedExercise} onValueChange={onSelectChange}>
+    <Select value={selectedExercise ?? ""} onValueChange={onSelectChange}>
       <SelectTrigger className={className}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>

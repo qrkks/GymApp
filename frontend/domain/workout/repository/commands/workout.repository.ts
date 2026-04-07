@@ -122,7 +122,7 @@ export async function insertExerciseBlock(
   userId: string,
   workoutId: number,
   exerciseId: number
-): Promise<ExerciseBlock> {
+) : Promise<ExerciseBlock | null> {
   const [result] = await db
     .insert(workoutSets)
     .values({
@@ -130,9 +130,24 @@ export async function insertExerciseBlock(
       workoutId,
       exerciseId,
     })
+    .onConflictDoNothing()
     .returning();
 
-  return result;
+  if (result) {
+    return result;
+  }
+
+  const [existingExerciseBlock] = await db
+    .select()
+    .from(workoutSets)
+    .where(and(
+      eq(workoutSets.userId, userId),
+      eq(workoutSets.workoutId, workoutId),
+      eq(workoutSets.exerciseId, exerciseId)
+    ))
+    .limit(1);
+
+  return existingExerciseBlock || null;
 }
 
 export async function addSetsToExerciseBlock(

@@ -418,6 +418,12 @@ export async function createExerciseBlock(
         workout.id,
         exercise.id
       );
+      if (!existingExerciseBlock) {
+        return failure(
+          'INTERNAL_ERROR',
+          'Failed to create exercise block'
+        );
+      }
       created = true;
     }
 
@@ -462,6 +468,13 @@ export async function createExerciseBlock(
       .from(bodyParts)
       .where(eq(bodyParts.id, exercise.bodyPartId))
       .limit(1);
+
+    if (!bodyPart) {
+      return failure(
+        'BODY_PART_NOT_FOUND',
+        'Body part not found'
+      );
+    }
 
     // 返回完整信息
     const result: ExerciseBlock & { created: boolean } = {
