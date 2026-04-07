@@ -85,7 +85,7 @@ function Workouts() {
         <span>{date.getDate()}</span>
         {hasWorkout ? (
           <span
-            className={`absolute bottom-1 h-1.5 w-1.5 rounded-full ${dotClassName}`}
+            className={`absolute bottom-0.5 h-1 w-1 rounded-full ${dotClassName}`}
             aria-hidden="true"
           />
         ) : null}
