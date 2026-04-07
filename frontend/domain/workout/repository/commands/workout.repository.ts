@@ -233,7 +233,9 @@ export async function insertExerciseBlock(
         workoutId,
         exerciseId,
       })
-      .onConflictDoNothing()
+      .onConflictDoNothing({
+        target: [workoutSets.workoutId, workoutSets.exerciseId],
+      })
       .returning();
   } catch (error) {
     if (!isDuplicateWorkoutSetPrimaryKeyError(error)) {
@@ -248,7 +250,9 @@ export async function insertExerciseBlock(
         workoutId,
         exerciseId,
       })
-      .onConflictDoNothing()
+      .onConflictDoNothing({
+        target: [workoutSets.workoutId, workoutSets.exerciseId],
+      })
       .returning();
   }
 
