@@ -101,13 +101,15 @@ function Workouts() {
     <div className="flex flex-col gap-4">
       <StartWorkout />
       <Calendar
-        mode="single"
-        selected={date}
-        onSelect={handleSelect}
         className="border rounded-md shadow"
         components={{
           DayContent: WorkoutDayContent,
         }}
+        {...({
+          mode: "single",
+          selected: date,
+          onSelect: handleSelect,
+        } as const)}
       />
       <Button onClick={handleClick}>
         {date ? `前往 ${date.toLocaleDateString()}` : "没有选择日期"}

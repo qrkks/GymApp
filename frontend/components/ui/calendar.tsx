@@ -1,12 +1,12 @@
 "use client";
 import * as React from "react"
 import { ChevronLeftIcon, ChevronRightIcon } from "@radix-ui/react-icons"
-import { DayPicker, type DayPickerProps } from "react-day-picker"
+import { DayPicker } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 
-export type CalendarProps = Omit<DayPickerProps, "classNames"> & {
+export type CalendarProps = Omit<React.ComponentProps<typeof DayPicker>, "classNames"> & {
   className?: string
   classNames?: Record<string, string>
   showOutsideDays?: boolean
