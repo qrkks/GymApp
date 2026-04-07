@@ -82,6 +82,10 @@ export async function POST(request: NextRequest) {
       data.sets
     );
 
+    if (!result.success) {
+      console.error('❌ /api/exercise-block POST use-case failure:', result.error);
+    }
+
     const response = toHttpResponse(result);
     return NextResponse.json(response.body, { status: response.status });
   } catch (error: any) {

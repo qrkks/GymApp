@@ -37,6 +37,16 @@ async function syncWorkoutIdSequence(): Promise<void> {
   `);
 }
 
+async function syncWorkoutSetIdSequence(): Promise<void> {
+  await db.execute(sql`
+    SELECT setval(
+      pg_get_serial_sequence('workout_sets', 'id'),
+      COALESCE((SELECT MAX(id) FROM workout_sets), 0) + 1,
+      false
+    )
+  `);
+}
+
 async function syncSetIdSequence(): Promise<void> {
   await db.execute(sql`
     SELECT setval(
@@ -66,6 +76,17 @@ function isDuplicateWorkoutPrimaryKeyError(error: unknown): boolean {
     'constraint' in error &&
     (error as { code?: string }).code === '23505' &&
     (error as { constraint?: string }).constraint === 'workouts_pkey'
+  );
+}
+
+function isDuplicateWorkoutSetPrimaryKeyError(error: unknown): boolean {
+  return (
+    !!error &&
+    typeof error === 'object' &&
+    'code' in error &&
+    'constraint' in error &&
+    (error as { code?: string }).code === '23505' &&
+    (error as { constraint?: string }).constraint === 'workout_sets_pkey'
   );
 }
 
@@ -202,15 +223,34 @@ export async function insertExerciseBlock(
   workoutId: number,
   exerciseId: number
 ) : Promise<ExerciseBlock | null> {
-  const [result] = await db
-    .insert(workoutSets)
-    .values({
-      userId,
-      workoutId,
-      exerciseId,
-    })
-    .onConflictDoNothing()
-    .returning();
+  let result: ExerciseBlock | undefined;
+
+  try {
+    [result] = await db
+      .insert(workoutSets)
+      .values({
+        userId,
+        workoutId,
+        exerciseId,
+      })
+      .onConflictDoNothing()
+      .returning();
+  } catch (error) {
+    if (!isDuplicateWorkoutSetPrimaryKeyError(error)) {
+      throw error;
+    }
+
+    await syncWorkoutSetIdSequence();
+    [result] = await db
+      .insert(workoutSets)
+      .values({
+        userId,
+        workoutId,
+        exerciseId,
+      })
+      .onConflictDoNothing()
+      .returning();
+  }
 
   if (result) {
     return result;
