@@ -147,7 +147,14 @@ export async function createOrGetWorkout(
       startTime: new Date(),
     });
     return success({ ...workout, created: true });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === '23505' && error?.constraint === 'workouts_user_id_date_unique') {
+      const existing = await workoutQueries.findWorkoutByDate(userId, date);
+      if (existing) {
+        return success({ ...existing, created: false });
+      }
+    }
+
     return failure(
       'INTERNAL_ERROR',
       'Failed to create or get workout',

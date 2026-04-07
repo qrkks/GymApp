@@ -1,17 +1,17 @@
 "use client";
 
-import StartBodyPart from "./BodyPartSection/StartBodyPart";
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
+import StartBodyPart from "./BodyPartSection/StartBodyPart";
 import BodyPartSection from "./BodyPartSection";
-import {Button} from "@/components/ui/button";
-import config from "@/utils/config";
 import DateHead from "./DateHead";
+import { Button } from "@/components/ui/button";
 import WorkoutSkeleton from "@/components/loading/WorkoutSkeleton";
 import RefreshIndicator from "@/components/loading/RefreshIndicator";
-import { useLoadingState } from "@/hooks/useLoadingState";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { useLoadingState } from "@/hooks/useLoadingState";
 import { showToast } from "@/lib/toast";
+import config from "@/utils/config";
 import type { BodyPart, MutateFunction } from "@/app/types/workout.types";
 
 interface WorkoutData {
@@ -26,11 +26,12 @@ interface WorkoutByIdProps {
   };
 }
 
-function WorkoutById({params}: WorkoutByIdProps) {
-  const { apiUrl} = config
+function WorkoutById({ params }: WorkoutByIdProps) {
+  const { apiUrl } = config;
   const [resData, setResData] = useState<WorkoutData>({});
   const [isWorkoutCreated, setIsWorkoutCreated] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isCreatingWorkout, setIsCreatingWorkout] = useState(false);
 
   const fetcher = async (url: string) => {
     try {
@@ -38,21 +39,26 @@ function WorkoutById({params}: WorkoutByIdProps) {
         method: "GET",
         credentials: "include",
       });
-      
+
       if (response.status === 404) {
         return null;
       }
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-      
+
       return response.json() as Promise<WorkoutData>;
     } catch (error) {
-      if (error instanceof Error && error.name === 'TypeError' && error.message === 'Failed to fetch') {
-        console.log('Connection error, will retry later');
+      if (
+        error instanceof Error &&
+        error.name === "TypeError" &&
+        error.message === "Failed to fetch"
+      ) {
+        console.log("Connection error, will retry later");
         return null;
       }
+
       throw error;
     }
   };
@@ -72,8 +78,10 @@ function WorkoutById({params}: WorkoutByIdProps) {
     errorRetryCount: 3,
     onErrorRetry: (error, key, config, revalidate, { retryCount }) => {
       if (retryCount >= 3) return;
-      if (error && typeof error === 'object' && 'status' in error && error.status === 404) return;
-      
+      if (error && typeof error === "object" && "status" in error && error.status === 404) {
+        return;
+      }
+
       setTimeout(() => revalidate({ retryCount }), 5000);
     },
   });
@@ -86,44 +94,51 @@ function WorkoutById({params}: WorkoutByIdProps) {
   );
 
   useEffect(() => {
-    if (workoutData !== undefined && workoutData !== null) {
-      setIsWorkoutCreated(true);
-    } else {
-      setIsWorkoutCreated(false);
-    }
+    setIsWorkoutCreated(workoutData !== undefined && workoutData !== null);
   }, [workoutData]);
 
   useEffect(() => {
     if (workoutError) {
-      console.error('Workout data fetch error:', workoutError);
+      console.error("Workout data fetch error:", workoutError);
     }
   }, [workoutError]);
 
   function handleCreateWorkout() {
-    if (params?.date && !isWorkoutCreated) {
-      fetch(`${apiUrl}/workout?createOrGet=true`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({date: params.date}),
-      })
-        .then(async (res) => {
-          const data = await res.json();
-          if (!res.ok) {
-            throw new Error(data.error || `HTTP error! Status: ${res.status}`);
-          }
-          showToast.success("创建成功", "已创建今日的训练记录");
-          setResData(data);
-          setIsWorkoutCreated(true);
-          mutateWorkout();
-        })
-        .catch((error) => {
-          console.error("Fetch error:", error);
-          showToast.error("创建失败", error.message || "请稍后重试");
-        });
+    if (!params?.date || isWorkoutCreated || isCreatingWorkout) {
+      return;
     }
+
+    setIsCreatingWorkout(true);
+
+    fetch(`${apiUrl}/workout?createOrGet=true`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ date: params.date }),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || `HTTP error! Status: ${res.status}`);
+        }
+
+        showToast.success("创建成功", "已创建今日的训练记录");
+        setResData(data);
+        setIsWorkoutCreated(true);
+        mutateWorkout();
+      })
+      .catch((error) => {
+        console.error("Fetch error:", error);
+        showToast.error(
+          "创建失败",
+          error instanceof Error ? error.message : "请稍后重试"
+        );
+      })
+      .finally(() => {
+        setIsCreatingWorkout(false);
+      });
   }
 
   function handleDeleteWorkout() {
@@ -141,31 +156,33 @@ function WorkoutById({params}: WorkoutByIdProps) {
           const data = await res.json();
           throw new Error(data.error || `HTTP error! Status: ${res.status}`);
         }
+
         showToast.success("删除成功", "已删除今日的训练记录");
         setIsWorkoutCreated(false);
         mutateWorkout();
       })
       .catch((error) => {
         console.error("Fetch error:", error);
-        showToast.error("删除失败", error.message || "请稍后重试");
+        showToast.error(
+          "删除失败",
+          error instanceof Error ? error.message : "请稍后重试"
+        );
       });
   }
 
   const handleMutateWorkout: MutateFunction = async () => {
     try {
       await mutateWorkout();
-      console.log('Data revalidation triggered');
+      console.log("Data revalidation triggered");
     } catch (error) {
-      console.error('Failed to update data:', error);
+      console.error("Failed to update data:", error);
     }
   };
 
-  // Show skeleton during initial load
   if (isInitialLoading) {
     return <WorkoutSkeleton />;
   }
 
-  // Show error state
   if (hasError && workoutError) {
     return (
       <div className="flex flex-col gap-4 justify-center items-center">
@@ -177,17 +194,19 @@ function WorkoutById({params}: WorkoutByIdProps) {
 
   return (
     <div className="flex flex-col gap-4 justify-center items-center">
-      {isRefreshing && (
-        <RefreshIndicator className="fixed top-20 right-4 z-50" />
-      )}
-      
+      {isRefreshing && <RefreshIndicator className="fixed top-20 right-4 z-50" />}
+
       <div className="flex gap-4 items-center">
-        <DateHead params={params}/>
+        <DateHead params={params} />
       </div>
 
       {!isWorkoutCreated && (
-        <Button onClick={handleCreateWorkout} className="btn btn-primary">
-          开始今日训练
+        <Button
+          onClick={handleCreateWorkout}
+          className="btn btn-primary"
+          disabled={isCreatingWorkout}
+        >
+          {isCreatingWorkout ? "创建中..." : "开始今日训练"}
         </Button>
       )}
 
@@ -224,4 +243,3 @@ function WorkoutById({params}: WorkoutByIdProps) {
 }
 
 export default WorkoutById;
-

@@ -27,6 +27,16 @@ export interface UpdateSetData {
   reps: number;
 }
 
+async function syncWorkoutIdSequence(): Promise<void> {
+  await db.execute(sql`
+    SELECT setval(
+      pg_get_serial_sequence('workouts', 'id'),
+      COALESCE((SELECT MAX(id) FROM workouts), 0) + 1,
+      false
+    )
+  `);
+}
+
 async function syncSetIdSequence(): Promise<void> {
   await db.execute(sql`
     SELECT setval(
@@ -45,6 +55,17 @@ function isDuplicateSetPrimaryKeyError(error: unknown): boolean {
     'constraint' in error &&
     (error as { code?: string }).code === '23505' &&
     (error as { constraint?: string }).constraint === 'sets_pkey'
+  );
+}
+
+function isDuplicateWorkoutPrimaryKeyError(error: unknown): boolean {
+  return (
+    !!error &&
+    typeof error === 'object' &&
+    'code' in error &&
+    'constraint' in error &&
+    (error as { code?: string }).code === '23505' &&
+    (error as { constraint?: string }).constraint === 'workouts_pkey'
   );
 }
 
@@ -73,14 +94,30 @@ export async function insertWorkout(
   userId: string,
   data: CreateWorkoutData
 ): Promise<Workout> {
-  const [result] = await db
-    .insert(workouts)
-    .values({
-      userId,
-      date: data.date,
-      startTime: data.startTime || new Date(),
-    })
-    .returning();
+  const values = {
+    userId,
+    date: data.date,
+    startTime: data.startTime || new Date(),
+  };
+
+  let result: Workout | undefined;
+
+  try {
+    [result] = await db
+      .insert(workouts)
+      .values(values)
+      .returning();
+  } catch (error) {
+    if (!isDuplicateWorkoutPrimaryKeyError(error)) {
+      throw error;
+    }
+
+    await syncWorkoutIdSequence();
+    [result] = await db
+      .insert(workouts)
+      .values(values)
+      .returning();
+  }
 
   return result;
 }
