@@ -4,7 +4,7 @@
  */
 import { db } from '@/lib/db';
 import { workouts, workoutBodyParts, workoutSets, sets } from '@/lib/db/schema';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 
 export type Workout = typeof workouts.$inferSelect;
 
@@ -25,6 +25,48 @@ export type Set = typeof sets.$inferSelect;
 export interface UpdateSetData {
   weight: number;
   reps: number;
+}
+
+async function syncSetIdSequence(): Promise<void> {
+  await db.execute(sql`
+    SELECT setval(
+      pg_get_serial_sequence('sets', 'id'),
+      COALESCE((SELECT MAX(id) FROM sets), 0) + 1,
+      false
+    )
+  `);
+}
+
+function isDuplicateSetPrimaryKeyError(error: unknown): boolean {
+  return (
+    !!error &&
+    typeof error === 'object' &&
+    'code' in error &&
+    'constraint' in error &&
+    (error as { code?: string }).code === '23505' &&
+    (error as { constraint?: string }).constraint === 'sets_pkey'
+  );
+}
+
+async function insertSetWithSequenceRecovery(values: {
+  userId: string;
+  workoutSetId: number;
+  setNumber: number;
+  weight: number;
+  reps: number;
+}): Promise<Set> {
+  try {
+    const [setResult] = await db.insert(sets).values(values).returning();
+    return setResult;
+  } catch (error) {
+    if (!isDuplicateSetPrimaryKeyError(error)) {
+      throw error;
+    }
+
+    await syncSetIdSequence();
+    const [retriedSetResult] = await db.insert(sets).values(values).returning();
+    return retriedSetResult;
+  }
 }
 
 export async function insertWorkout(
@@ -167,16 +209,13 @@ export async function addSetsToExerciseBlock(
   const newSets: Set[] = [];
   for (let i = 0; i < setsData.length; i++) {
     const setData = setsData[i];
-    const [setResult] = await db
-      .insert(sets)
-      .values({
+    const setResult = await insertSetWithSequenceRecovery({
         userId,
         workoutSetId,
         setNumber: maxSetNumber + i + 1,
         weight: setData.weight,
         reps: setData.reps,
-      })
-      .returning();
+      });
 
     newSets.push(setResult);
   }
@@ -216,16 +255,13 @@ export async function updateExerciseBlockSets(
       const nextSetNumber =
         maxSetResult.length > 0 ? maxSetResult[maxSetResult.length - 1].setNumber + 1 : 1;
 
-      const [newSet] = await db
-        .insert(sets)
-        .values({
+      const newSet = await insertSetWithSequenceRecovery({
           userId,
           workoutSetId,
           setNumber: nextSetNumber,
           weight: setData.weight,
           reps: setData.reps,
-        })
-        .returning();
+        });
 
       updatedSets.push(newSet);
     }
