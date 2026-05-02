@@ -9,6 +9,7 @@ export interface SetPersistence {
   setNumber: number;
   weight: number;
   reps: number;
+  note: string | null;
 }
 
 export class Set {
@@ -18,7 +19,8 @@ export class Set {
     public readonly exerciseBlockId: number,
     public readonly setNumber: number,
     public readonly weight: number,
-    public readonly reps: number
+    public readonly reps: number,
+    public readonly note: string | null = null
   ) {
     this.validate();
   }
@@ -48,7 +50,8 @@ export class Set {
       data.workoutSetId,
       data.setNumber,
       data.weight,
-      data.reps
+      data.reps,
+      data.note ?? null
     );
   }
 
@@ -63,6 +66,7 @@ export class Set {
       setNumber: this.setNumber,
       weight: this.weight,
       reps: this.reps,
+      note: this.note,
     };
   }
 
@@ -76,14 +80,15 @@ export class Set {
   /**
    * 业务规则：更新重量和次数
    */
-  update(weight: number, reps: number): Set {
+  update(weight: number, reps: number, note: string | null = this.note): Set {
     return new Set(
       this.id,
       this.userId,
       this.exerciseBlockId,
       this.setNumber,
       weight,
-      reps
+      reps,
+      note
     );
   }
 

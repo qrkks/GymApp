@@ -77,6 +77,50 @@ export async function findExerciseByName(
   return result || null;
 }
 
+export async function findExerciseWithBodyPartById(
+  userId: string,
+  id: number
+): Promise<ExerciseWithBodyPart | null> {
+  const [result] = await db
+    .select({
+      id: exercises.id,
+      name: exercises.name,
+      description: exercises.description,
+      body_part: {
+        id: bodyParts.id,
+        name: bodyParts.name,
+      },
+    })
+    .from(exercises)
+    .innerJoin(bodyParts, eq(exercises.bodyPartId, bodyParts.id))
+    .where(and(eq(exercises.userId, userId), eq(exercises.id, id)))
+    .limit(1);
+
+  return result || null;
+}
+
+export async function findExerciseWithBodyPartByName(
+  userId: string,
+  name: string
+): Promise<ExerciseWithBodyPart | null> {
+  const [result] = await db
+    .select({
+      id: exercises.id,
+      name: exercises.name,
+      description: exercises.description,
+      body_part: {
+        id: bodyParts.id,
+        name: bodyParts.name,
+      },
+    })
+    .from(exercises)
+    .innerJoin(bodyParts, eq(exercises.bodyPartId, bodyParts.id))
+    .where(and(eq(exercises.userId, userId), eq(exercises.name, name)))
+    .limit(1);
+
+  return result || null;
+}
+
 /**
  * 根据身体部位 ID 查找动作
  */

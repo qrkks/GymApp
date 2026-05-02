@@ -4,7 +4,7 @@
  */
 import { db } from '@/lib/db';
 import { workouts, workoutBodyParts, bodyParts, workoutSets, exercises, sets } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 
 export type Workout = typeof workouts.$inferSelect;
 
@@ -40,6 +40,7 @@ export interface ExerciseBlockWithDetails {
     setNumber: number;
     weight: number;
     reps: number;
+    note: string | null;
   }>;
 }
 
@@ -56,6 +57,7 @@ export interface SetSummary {
   id: number;
   reps: number;
   weight: number;
+  note: string | null;
 }
 
 /**
@@ -302,6 +304,62 @@ export async function findExerciseBlockByWorkoutAndExercise(
   return result || null;
 }
 
+export async function findExerciseBlocksByWorkoutAndBodyPartIds(
+  userId: string,
+  workoutId: number,
+  bodyPartIds: number[]
+): Promise<ExerciseBlockWithDetails[]> {
+  if (bodyPartIds.length === 0) {
+    return [];
+  }
+
+  const workoutSetsList = await db
+    .select({
+      id: workoutSets.id,
+      workout: {
+        id: workouts.id,
+        date: workouts.date,
+        startTime: workouts.startTime,
+        endTime: workouts.endTime,
+      },
+      exercise: {
+        id: exercises.id,
+        name: exercises.name,
+        description: exercises.description,
+        body_part: {
+          id: bodyParts.id,
+          name: bodyParts.name,
+        } as any,
+      },
+    })
+    .from(workoutSets)
+    .innerJoin(workouts, eq(workoutSets.workoutId, workouts.id))
+    .innerJoin(exercises, eq(workoutSets.exerciseId, exercises.id))
+    .innerJoin(bodyParts, eq(exercises.bodyPartId, bodyParts.id))
+    .where(and(
+      eq(workoutSets.userId, userId),
+      eq(workoutSets.workoutId, workoutId),
+      inArray(exercises.bodyPartId, bodyPartIds)
+    ));
+
+  return Promise.all(
+    workoutSetsList.map(async (workoutSet) => {
+      const setsList = await db
+        .select()
+        .from(sets)
+        .where(eq(sets.workoutSetId, workoutSet.id))
+        .orderBy(sets.setNumber);
+
+      return {
+        id: workoutSet.id as number,
+        workout: workoutSet.workout as ExerciseBlockWithDetails['workout'],
+        exercise: workoutSet.exercise as ExerciseBlockWithDetails['exercise'],
+        sets: setsList,
+      };
+    })
+  );
+}
+
 // ========== Set Queries ==========
 
 /**
@@ -373,6 +431,7 @@ export async function findSetsByWorkoutDateAndExerciseName(
       id: sets.id,
       reps: sets.reps,
       weight: sets.weight,
+      note: sets.note,
     })
     .from(sets)
     .where(eq(sets.workoutSetId, exerciseBlock.id))

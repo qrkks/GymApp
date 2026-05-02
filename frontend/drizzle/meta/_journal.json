@@ -8,6 +8,13 @@
       "when": 1767344154595,
       "tag": "0000_shiny_iron_lad",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777691993354,
+      "tag": "0001_groovy_black_panther",
+      "breakpoints": true
     }
   ]
 }

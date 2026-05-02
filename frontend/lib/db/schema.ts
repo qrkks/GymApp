@@ -70,6 +70,7 @@ export const sets = pgTable('sets', {
   setNumber: integer('set_number').notNull(),
   weight: real('weight').notNull(),
   reps: integer('reps').notNull(),
+  note: text('note'),
 });
 
 // Relations

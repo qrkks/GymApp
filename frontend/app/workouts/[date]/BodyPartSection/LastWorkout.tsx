@@ -17,7 +17,7 @@ function LastWorkout({ selectedExercise, lastWorkoutData }: LastWorkoutProps) {
   if (lastWorkoutData?.date) {
     const workoutDate = new Date(lastWorkoutData.date);
     const today = new Date();
-    
+
     today.setHours(0, 0, 0, 0);
     workoutDate.setHours(0, 0, 0, 0);
 
@@ -38,6 +38,11 @@ function LastWorkout({ selectedExercise, lastWorkoutData }: LastWorkoutProps) {
             {sets.map((set, index) => (
               <li key={index}>
                 组 {set.setNumber} - 重量: {set.weight}, 次数: {set.reps}
+                {set.note ? (
+                  <div className="text-sm text-muted-foreground">
+                    笔记: {set.note}
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>
@@ -50,4 +55,3 @@ function LastWorkout({ selectedExercise, lastWorkoutData }: LastWorkoutProps) {
 }
 
 export default LastWorkout;
-

@@ -11,9 +11,6 @@ import * as exerciseQueries from '@domain/exercise/repository/queries/exercise.r
 import { Workout as WorkoutEntity } from '@domain/workout/model/workout.entity';
 import { ExerciseBlock as ExerciseBlockEntity } from '@domain/workout/model/exercise-block.entity';
 import { Set as SetEntity } from '@domain/workout/model/set.entity';
-import { db } from '@/lib/db';
-import { exercises, bodyParts, workoutSets } from '@/lib/db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
 
 export type Workout = workoutQueries.WorkoutWithBodyParts;
 export type CreateWorkoutData = workoutCommands.CreateWorkoutData;
@@ -257,31 +254,14 @@ export async function removeBodyPartsFromWorkout(
     }
 
     const bodyPartIds = bodyPartsToRemove.map(bp => bp.id);
+    const exerciseBlocks = await workoutQueries.findExerciseBlocksByWorkoutAndBodyPartIds(
+      userId,
+      workout.id,
+      bodyPartIds
+    );
 
-    // 获取这些身体部位的动作
-    const exercisesToRemove = await db
-      .select()
-      .from(exercises)
-      .where(and(
-        eq(exercises.userId, userId),
-        inArray(exercises.bodyPartId, bodyPartIds)
-      ));
-
-    const exerciseIds = exercisesToRemove.map(e => e.id);
-
-    // 删除相关的 exercise blocks
-    if (exerciseIds.length > 0) {
-      const exerciseBlocks = await db
-        .select()
-        .from(workoutSets)
-        .where(and(
-          eq(workoutSets.workoutId, workout.id),
-          inArray(workoutSets.exerciseId, exerciseIds)
-        ));
-
-      for (const exerciseBlock of exerciseBlocks) {
-        await workoutCommands.deleteExerciseBlock(exerciseBlock.id, userId);
-      }
+    for (const exerciseBlock of exerciseBlocks) {
+      await workoutCommands.deleteExerciseBlock(exerciseBlock.id, userId);
     }
 
     // 从训练中移除身体部位
@@ -435,7 +415,7 @@ export async function createExerciseBlock(
     }
 
     // 添加组（如果提供）- 通过创建 Entity 自动验证
-    let createdSets: Array<{ id: number; setNumber: number; weight: number; reps: number }> = [];
+    let createdSets: Array<{ id: number; setNumber: number; weight: number; reps: number; note: string | null }> = [];
     if (setsData && setsData.length > 0) {
       // 创建 Entity 验证数据（Entity 会自动验证，如果无效会抛出异常）
       const validatedSets = setsData.map((setData, index) => {
@@ -447,6 +427,7 @@ export async function createExerciseBlock(
           setNumber: index + 1, // 临时值，repository 会重新计算
           weight: setData.weight,
           reps: setData.reps,
+          note: setData.note ?? null,
         });
       });
 
@@ -454,6 +435,7 @@ export async function createExerciseBlock(
       const validatedSetsData = validatedSets.map(entity => ({
         weight: entity.weight,
         reps: entity.reps,
+        note: entity.note,
       }));
 
       const newSets = await workoutCommands.addSetsToExerciseBlock(
@@ -466,46 +448,24 @@ export async function createExerciseBlock(
         setNumber: set.setNumber,
         weight: set.weight,
         reps: set.reps,
+        note: set.note,
       }));
     }
 
     // 获取 body part
-    const [bodyPart] = await db
-      .select()
-      .from(bodyParts)
-      .where(eq(bodyParts.id, exercise.bodyPartId))
-      .limit(1);
-
-    if (!bodyPart) {
+    const result = await workoutQueries.findExerciseBlockById(existingExerciseBlock.id, userId);
+    if (!result) {
       return failure(
-        'BODY_PART_NOT_FOUND',
-        'Body part not found'
+        'EXERCISE_BLOCK_NOT_FOUND',
+        'Exercise block not found'
       );
     }
 
-    // 返回完整信息
-    const result: ExerciseBlock & { created: boolean } = {
-      id: existingExerciseBlock.id,
-      workout: {
-        id: workout.id,
-        date: workout.date,
-        startTime: workout.startTime,
-        endTime: workout.endTime,
-      },
-      exercise: {
-        id: exercise.id,
-        name: exercise.name,
-        description: exercise.description,
-        body_part: {
-          id: bodyPart.id,
-          name: bodyPart.name,
-        },
-      },
-      sets: createdSets,
+    return success({
+      ...result,
+      sets: createdSets.length > 0 ? createdSets : result.sets,
       created,
-    };
-
-    return success(result);
+    });
   } catch (error) {
     return failure(
       'INTERNAL_ERROR',
@@ -565,40 +525,25 @@ export async function updateExerciseBlock(
     );
 
     // 获取 body part
-    const [bodyPart] = await db
-      .select()
-      .from(bodyParts)
-      .where(eq(bodyParts.id, exercise.bodyPartId))
-      .limit(1);
+    const result = await workoutQueries.findExerciseBlockById(exerciseBlock.id, userId);
+    if (!result) {
+      return failure(
+        'EXERCISE_BLOCK_NOT_FOUND',
+        'Exercise block not found'
+      );
+    }
 
-    // 返回完整信息
-    const result: ExerciseBlock & { created: boolean } = {
-      id: exerciseBlock.id,
-      workout: {
-        id: workout.id,
-        date: workout.date,
-        startTime: workout.startTime,
-        endTime: workout.endTime,
-      },
-      exercise: {
-        id: exercise.id,
-        name: exercise.name,
-        description: exercise.description,
-        body_part: {
-          id: bodyPart.id,
-          name: bodyPart.name,
-        },
-      },
+    return success({
+      ...result,
       sets: updatedSets.map(set => ({
         id: set.id,
         setNumber: set.setNumber,
         weight: set.weight,
         reps: set.reps,
+        note: set.note,
       })),
       created: false,
-    };
-
-    return success(result);
+    });
   } catch (error) {
     return failure(
       'INTERNAL_ERROR',
@@ -744,15 +689,18 @@ export async function updateSet(
     
     // 使用 Entity 的 update 方法创建新 Entity（自动验证）
     // 如果验证失败，Entity 会抛出异常，外层 catch 会捕获
+    const nextNote = data.note === undefined ? existing.note : data.note;
     const updatedEntity = existing.update(
       data.weight ?? existing.weight,
-      data.reps ?? existing.reps
+      data.reps ?? existing.reps,
+      nextNote
     );
 
     // 从已验证的 Entity 获取数据传给 repository
     const updateData = {
       weight: updatedEntity.weight,
       reps: updatedEntity.reps,
+      note: updatedEntity.note,
     };
 
     // 更新组
@@ -833,4 +781,3 @@ export async function deleteSet(
     );
   }
 }
-

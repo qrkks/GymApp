@@ -24,6 +24,7 @@ function AddButton({ date, set, part, mutateWorkoutSet }: AddButtonProps) {
   const [formData, setFormData] = useState({
     weight: "",
     reps: "",
+    note: "",
   });
 
   const fetcher = (url: string) =>
@@ -33,7 +34,7 @@ function AddButton({ date, set, part, mutateWorkoutSet }: AddButtonProps) {
     fetcher
   );
 
-  function handleChange(event: ChangeEvent<HTMLInputElement>) {
+  function handleChange(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setFormData({
       ...formData,
       [event.target.name]: event.target.value,
@@ -50,7 +51,7 @@ function AddButton({ date, set, part, mutateWorkoutSet }: AddButtonProps) {
     const requestBody: {
       workoutDate: string;
       exerciseName: string;
-      sets?: Array<{ weight: number; reps: number }>;
+      sets?: Array<{ weight: number; reps: number; note?: string | null }>;
     } = {
       workoutDate: date,
       exerciseName: set.exercise.name,
@@ -58,11 +59,12 @@ function AddButton({ date, set, part, mutateWorkoutSet }: AddButtonProps) {
 
     // 不在前端做业务校验：只要用户输入了 reps/weight，就按原样提交
     // 具体规则（例如 weight 是否允许为 0、reps 最小值等）由后端值对象/实体统一校验并返回错误
-    const sets: Array<{ weight: number; reps: number }> = [];
+    const sets: Array<{ weight: number; reps: number; note?: string | null }> = [];
     if (formData.weight !== "" || formData.reps !== "") {
       sets.push({
         weight: formData.weight === "" ? 0 : Number(formData.weight),
         reps: formData.reps === "" ? 0 : Number(formData.reps),
+        note: formData.note.trim() || null,
       });
     }
 
@@ -153,6 +155,14 @@ function AddButton({ date, set, part, mutateWorkoutSet }: AddButtonProps) {
             placeholder="Reps"
             value={formData.reps || ""}
             onChange={handleChange}
+          />
+          <textarea
+            name="note"
+            value={formData.note}
+            onChange={handleChange}
+            className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            maxLength={500}
+            placeholder="记录疼痛、不适、动作感悟..."
           />
           <LastWorkout
             selectedExercise={set.exercise.name}

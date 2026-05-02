@@ -22,6 +22,7 @@ const nonNegativeNumber = z.preprocess(
 const setSchema = z.object({
   weight: nonNegativeNumber,
   reps: positiveNumber,
+  note: z.string().max(500).nullable().optional(),
 });
 
 const exerciseBlockCreateSchema = z.object({

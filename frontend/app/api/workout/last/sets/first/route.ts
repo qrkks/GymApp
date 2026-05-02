@@ -1,19 +1,10 @@
-// 强制动态渲染，因为使用了认证和headers
 export const dynamic = 'force-dynamic';
 
-/**
- * Workout API Routes - Last Workout First Set
- * 仅处理 HTTP 请求/响应，调用 Application Service
- */
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { workoutSets, workouts, sets, exercises } from '@/lib/db/schema';
 import { requireAuth } from '@/lib/auth-helpers';
-import { eq, and, ne, desc } from 'drizzle-orm';
+import { toHttpResponse } from '@domain/shared/error-types';
+import { getLastWorkoutFirstSet } from '@domain/workout/application/last-workout.use-case';
 
-/**
- * GET /api/workout/last/sets/first - Get first set from last workout for an exercise
- */
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth();
@@ -32,69 +23,27 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get today's date
-    const today = new Date().toISOString().split('T')[0];
-
-    // 构建 where 条件
-    const baseConditions = [
-      eq(workoutSets.userId, user.id),
-      ne(workouts.date, today),
-    ];
-
-    if (exerciseId) {
-      baseConditions.push(eq(exercises.id, parseInt(exerciseId)));
-    } else if (exerciseName) {
-      baseConditions.push(eq(exercises.name, exerciseName));
-    }
-
-    const query = db
-      .select({
-        workoutSetId: workoutSets.id,
-        workoutDate: workouts.date,
-        exerciseId: exercises.id,
-        exerciseName: exercises.name,
-      })
-      .from(workoutSets)
-      .innerJoin(workouts, eq(workoutSets.workoutId, workouts.id))
-      .innerJoin(exercises, eq(workoutSets.exerciseId, exercises.id))
-      .where(and(...baseConditions));
-
-    const lastWorkoutSet = await query
-      .orderBy(desc(workouts.date))
-      .limit(1);
-
-    if (lastWorkoutSet.length === 0) {
-      return NextResponse.json(
-        { error: '未找到包含该练习动作的上一次训练数据' },
-        { status: 404 }
-      );
-    }
-
-    // Get first set from last workout
-    const firstSet = await db
-      .select()
-      .from(sets)
-      .where(eq(sets.workoutSetId, lastWorkoutSet[0].workoutSetId))
-      .orderBy(sets.setNumber)
-      .limit(1);
-
-    if (firstSet.length === 0) {
-      return NextResponse.json(
-        { error: '未找到该练习的训练组数据' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      weight: firstSet[0].weight,
-      reps: firstSet[0].reps,
-      date: lastWorkoutSet[0].workoutDate,
+    const result = await getLastWorkoutFirstSet(user.id, {
+      exerciseId: exerciseId ? parseInt(exerciseId, 10) : undefined,
+      exerciseName: exerciseName || undefined,
     });
+
+    const response = toHttpResponse(result);
+    const body = result.success
+      ? {
+          weight: result.data.weight,
+          reps: result.data.reps,
+          date: result.data.date,
+          note: result.data.note,
+        }
+      : response.body;
+
+    return NextResponse.json(body, { status: response.status });
   } catch (error: any) {
     if (error.message === 'Unauthorized') {
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
+
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-

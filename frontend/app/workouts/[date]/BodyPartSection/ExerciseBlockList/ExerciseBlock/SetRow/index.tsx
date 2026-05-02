@@ -27,6 +27,13 @@ function SetRow({item, mutateWorkoutSet, exerciseBlock}: SetRowProps) {
           <SetEditPopover item={item} mutateWorkoutSet={mutateWorkoutSet} />
         </TableCell>
       </TableRow>
+      {item.note ? (
+        <TableRow>
+          <TableCell colSpan={4} className="px-4 py-2 text-sm text-muted-foreground">
+            {item.note}
+          </TableCell>
+        </TableRow>
+      ) : null}
     </>
   );
 }

@@ -1,14 +1,14 @@
 /**
- * Workout Repository Queries 单元测试
+ * Workout Repository Queries unit tests
  */
 import { createTestDb, cleanupTestDb } from '@/tests/setup/test-db';
 import * as workoutQueries from '../workout.repository';
 import * as workoutCommands from '../../commands/workout.repository';
 import * as userCommands from '@domain/user/repository/commands/user.repository';
 import * as bodyPartCommands from '@domain/body-part/repository/commands/body-part.repository';
-import { workouts, users, bodyParts, workoutBodyParts } from '@/lib/db/schema';
+import * as exerciseCommands from '@domain/exercise/repository/commands/exercise.repository';
+import { workouts, users, bodyParts, workoutBodyParts, exercises, workoutSets, sets } from '@/lib/db/schema';
 
-// Mock the database module - 使用独立的schema进行测试隔离
 jest.mock('@/lib/db', () => ({
   db: createTestDb(__filename),
 }));
@@ -18,13 +18,14 @@ describe('Workout Repository - Queries', () => {
   const testUserId = 'test-user-workout-queries';
 
   beforeEach(async () => {
-    // 清理数据库 - 按依赖关系逆序
+    await testDb.delete(sets);
+    await testDb.delete(workoutSets);
+    await testDb.delete(exercises);
     await testDb.delete(workoutBodyParts);
     await testDb.delete(workouts);
     await testDb.delete(bodyParts);
     await testDb.delete(users);
-    
-    // 创建测试用户
+
     await userCommands.insertUser({
       id: testUserId,
       email: 'test@example.com',
@@ -54,12 +55,12 @@ describe('Workout Repository - Queries', () => {
       await workoutCommands.insertWorkout(testUserId, {
         date: '2024-01-16',
       });
-      
+
       const result = await workoutQueries.findWorkouts(testUserId);
-      
+
       expect(result).toHaveLength(2);
-      expect(result.map(w => w.date)).toContain('2024-01-15');
-      expect(result.map(w => w.date)).toContain('2024-01-16');
+      expect(result.map((workout) => workout.date)).toContain('2024-01-15');
+      expect(result.map((workout) => workout.date)).toContain('2024-01-16');
     });
   });
 
@@ -73,9 +74,9 @@ describe('Workout Repository - Queries', () => {
       await workoutCommands.insertWorkout(testUserId, {
         date: '2024-01-15',
       });
-      
+
       const result = await workoutQueries.findWorkoutByDate(testUserId, '2024-01-15');
-      
+
       expect(result).not.toBeNull();
       expect(result?.date).toBe('2024-01-15');
       expect(result?.userId).toBe(testUserId);
@@ -90,11 +91,11 @@ describe('Workout Repository - Queries', () => {
 
     it('should return workout with body parts', async () => {
       const { workout, bodyPart } = await createTestData();
-      
+
       await workoutCommands.addBodyPartsToWorkout(workout.id, [bodyPart.id]);
-      
+
       const result = await workoutQueries.findWorkoutByDateWithBodyParts(testUserId, '2024-01-15');
-      
+
       expect(result).not.toBeNull();
       expect(result?.date).toBe('2024-01-15');
       expect(result?.body_parts).toHaveLength(1);
@@ -102,9 +103,36 @@ describe('Workout Repository - Queries', () => {
     });
   });
 
-  // 清理测试数据库schema
+  describe('findExerciseBlocksByWorkoutAndBodyPartIds', () => {
+    it('should return exercise blocks matching the provided body part ids', async () => {
+      const { workout, bodyPart } = await createTestData();
+      const backBodyPart = await bodyPartCommands.insertBodyPart(testUserId, 'Back');
+
+      const chestExercise = await exerciseCommands.insertExercise(testUserId, {
+        name: 'Bench Press',
+        bodyPartId: bodyPart.id,
+      });
+      const backExercise = await exerciseCommands.insertExercise(testUserId, {
+        name: 'Row',
+        bodyPartId: backBodyPart.id,
+      });
+
+      await workoutCommands.insertExerciseBlock(testUserId, workout.id, chestExercise.id);
+      await workoutCommands.insertExerciseBlock(testUserId, workout.id, backExercise.id);
+
+      const result = await workoutQueries.findExerciseBlocksByWorkoutAndBodyPartIds(
+        testUserId,
+        workout.id,
+        [bodyPart.id]
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0]?.exercise.name).toBe('Bench Press');
+      expect(result[0]?.exercise.body_part.name).toBe('Chest');
+    });
+  });
+
   afterAll(async () => {
     await cleanupTestDb(__filename);
   });
 });
-

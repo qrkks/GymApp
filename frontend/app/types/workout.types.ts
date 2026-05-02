@@ -23,6 +23,7 @@ export interface Set {
   setNumber: number;
   weight: number;
   reps: number;
+  note?: string | null;
   exerciseBlockId?: number;
 }
 

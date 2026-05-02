@@ -17,6 +17,7 @@ import { toHttpResponse } from '@domain/shared/error-types';
 const setUpdateSchema = z.object({
   weight: z.number(),
   reps: z.number(),
+  note: z.string().max(500).nullable().optional(),
 });
 
 /**

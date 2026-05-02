@@ -23,8 +23,9 @@ export default function SetEditPopover({item, mutateWorkoutSet}: SetEditPopoverP
     const formData = new FormData(e.currentTarget);
     const weight = Number(formData.get('weight')) || 0;
     const reps = Number(formData.get('reps')) || 0;
+    const noteValue = String(formData.get('note') || '').trim();
 
-    const body = { weight, reps };
+    const body = { weight, reps, note: noteValue || null };
 
     fetch(`${apiUrl}/set/${item.id}`, {
       method: "PUT",
@@ -72,6 +73,8 @@ export default function SetEditPopover({item, mutateWorkoutSet}: SetEditPopoverP
                 className="h-8 col-span-2"
                 type="number"
                 min="0"
+                step="any"
+                inputMode="decimal"
               />
             </div>
             <div className="grid items-center grid-cols-3 gap-4">
@@ -83,6 +86,19 @@ export default function SetEditPopover({item, mutateWorkoutSet}: SetEditPopoverP
                 className="h-8 col-span-2"
                 type="number"
                 min="0"
+                step="1"
+                inputMode="numeric"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="note">训练笔记</Label>
+              <textarea
+                name="note"
+                id="note"
+                defaultValue={item.note ?? ""}
+                className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                maxLength={500}
+                placeholder="记录疼痛、不适、动作感悟..."
               />
             </div>
           </div>

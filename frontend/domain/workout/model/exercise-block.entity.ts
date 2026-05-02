@@ -51,7 +51,7 @@ export class ExerciseBlock {
   /**
    * 业务规则：添加组
    */
-  addSet(userId: string, weight: number, reps: number): ExerciseBlock {
+  addSet(userId: string, weight: number, reps: number, note: string | null = null): ExerciseBlock {
     const nextSetNumber = this.sets.length > 0
       ? this.sets[this.sets.length - 1].setNumber + 1
       : 1;
@@ -62,7 +62,8 @@ export class ExerciseBlock {
       this.id,
       nextSetNumber,
       weight,
-      reps
+      reps,
+      note
     );
 
     return new ExerciseBlock(
@@ -77,10 +78,10 @@ export class ExerciseBlock {
   /**
    * 业务规则：更新组
    */
-  updateSet(setId: number, weight: number, reps: number): ExerciseBlock {
+  updateSet(setId: number, weight: number, reps: number, note: string | null = null): ExerciseBlock {
     const updatedSets = this.sets.map(set =>
       set.id === setId
-        ? new Set(set.id, set.userId, set.exerciseBlockId, set.setNumber, weight, reps)
+        ? new Set(set.id, set.userId, set.exerciseBlockId, set.setNumber, weight, reps, note)
         : set
     );
 
@@ -99,7 +100,7 @@ export class ExerciseBlock {
   removeSet(setId: number): ExerciseBlock {
     const filteredSets = this.sets.filter(set => set.id !== setId);
     const reorderedSets = filteredSets.map((set, index) =>
-      new Set(set.id, set.userId, set.exerciseBlockId, index + 1, set.weight, set.reps)
+      new Set(set.id, set.userId, set.exerciseBlockId, index + 1, set.weight, set.reps, set.note)
     );
 
     return new ExerciseBlock(

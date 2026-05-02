@@ -18,6 +18,7 @@ export type ExerciseBlock = typeof workoutSets.$inferSelect;
 export interface CreateSetData {
   weight: number;
   reps: number;
+  note?: string | null;
 }
 
 export type Set = typeof sets.$inferSelect;
@@ -25,6 +26,7 @@ export type Set = typeof sets.$inferSelect;
 export interface UpdateSetData {
   weight: number;
   reps: number;
+  note?: string | null;
 }
 
 async function syncWorkoutIdSequence(): Promise<void> {
@@ -96,6 +98,7 @@ async function insertSetWithSequenceRecovery(values: {
   setNumber: number;
   weight: number;
   reps: number;
+  note?: string | null;
 }): Promise<Set> {
   try {
     const [setResult] = await db.insert(sets).values(values).returning();
@@ -296,6 +299,7 @@ export async function addSetsToExerciseBlock(
         setNumber: maxSetNumber + i + 1,
         weight: setData.weight,
         reps: setData.reps,
+        note: setData.note ?? null,
       });
 
     newSets.push(setResult);
@@ -321,7 +325,10 @@ export async function updateExerciseBlockSets(
     if (existingSet.length > 0) {
       const [updatedSet] = await db
         .update(sets)
-        .set({ weight: setData.weight })
+        .set({
+          weight: setData.weight,
+          note: setData.note ?? existingSet[0].note,
+        })
         .where(eq(sets.id, existingSet[0].id))
         .returning();
 
@@ -342,6 +349,7 @@ export async function updateExerciseBlockSets(
           setNumber: nextSetNumber,
           weight: setData.weight,
           reps: setData.reps,
+          note: setData.note ?? null,
         });
 
       updatedSets.push(newSet);
@@ -395,6 +403,7 @@ export async function updateSet(
     .set({
       weight: data.weight,
       reps: data.reps,
+      note: data.note ?? null,
     })
     .where(eq(sets.id, id))
     .returning();
