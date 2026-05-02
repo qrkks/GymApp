@@ -1,7 +1,8 @@
-import {CircleX} from "lucide-react";
-import {useState} from "react";
+import { Trash2 } from "lucide-react";
+import { useState } from "react";
 import config from "@/utils/config";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { Button } from "@/components/ui/button";
 import { showToast } from "@/lib/toast";
 import type { BodyPart, MutateFunction } from "@/app/types/workout.types";
 
@@ -10,7 +11,7 @@ interface RemoveBodyPartButtonProps {
   mutate: MutateFunction;
 }
 
-function RemoveBodyPartButton({ part, mutate}: RemoveBodyPartButtonProps) {
+function RemoveBodyPartButton({ part, mutate }: RemoveBodyPartButtonProps) {
   const { apiUrl } = config;
   const [showDialog, setShowDialog] = useState(false);
 
@@ -38,14 +39,15 @@ function RemoveBodyPartButton({ part, mutate}: RemoveBodyPartButtonProps) {
 
   return (
     <>
-      <button onClick={() => setShowDialog(true)}>
-        <CircleX className="w-4 text-gray-400" />
-      </button>
+      <Button variant="ghost" size="icon" onClick={() => setShowDialog(true)}>
+        <Trash2 className="h-4 w-4" />
+        <span className="sr-only">删除训练部位</span>
+      </Button>
       <ConfirmDialog
         open={showDialog}
         onOpenChange={setShowDialog}
         title="确认删除"
-        description={`确定要删除训练部位 ${part.name} 吗？此操作将删除该部位下的所有动作。`}
+        description={`确定要删除训练部位 ${part.name} 吗？此操作会删除该部位下的所有动作。`}
         confirmText="删除"
         cancelText="取消"
         variant="destructive"

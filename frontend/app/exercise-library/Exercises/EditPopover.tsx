@@ -1,9 +1,9 @@
-import {Pencil} from "lucide-react";
-import {Button} from "@/components/ui/button";
-import {Input} from "@/components/ui/input";
-import {Label} from "@/components/ui/label";
-import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
-import {useState, FormEvent} from "react";
+import { Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useState, FormEvent } from "react";
 import config from "@/utils/config";
 import type { Exercise, MutateFunction } from "@/app/types/workout.types";
 
@@ -12,10 +12,11 @@ interface ExerciseEditPopoverProps {
   mutate: MutateFunction;
 }
 
-export default function ExerciseEditPopover({exercise, mutate}: ExerciseEditPopoverProps) {
-  const {apiUrl} = config;
-  const key = exercise.name;
-  const value = exercise.name;
+export default function ExerciseEditPopover({
+  exercise,
+  mutate,
+}: ExerciseEditPopoverProps) {
+  const { apiUrl } = config;
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -24,8 +25,6 @@ export default function ExerciseEditPopover({exercise, mutate}: ExerciseEditPopo
 
     const formData = new FormData(e.currentTarget);
     const formDataObj = Object.fromEntries(formData);
-
-    console.log(formDataObj);
 
     fetch(`${apiUrl}/exercise/${exercise.id}/patch`, {
       method: "PATCH",
@@ -41,7 +40,7 @@ export default function ExerciseEditPopover({exercise, mutate}: ExerciseEditPopo
         }
         return res.json();
       })
-      .then((data) => {
+      .then(() => {
         mutate();
       })
       .catch((error) => {
@@ -52,33 +51,31 @@ export default function ExerciseEditPopover({exercise, mutate}: ExerciseEditPopo
   return (
     <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
       <PopoverTrigger asChild>
-        <button>
-          <Pencil className="w-4 text-gray-400" />
-        </button>
+        <Button variant="ghost" size="icon">
+          <Pencil className="h-4 w-4" />
+          <span className="sr-only">编辑动作名称</span>
+        </Button>
       </PopoverTrigger>
-      <PopoverContent>
+      <PopoverContent className="w-80">
         <form onSubmit={handleSubmit} className="grid gap-4">
           <div className="space-y-2">
-            <h4 className="font-medium leading-none">修改名称</h4>
-            <p className="text-sm text-muted-foreground"></p>
+            <h4 className="font-medium leading-none">修改动作名称</h4>
+            <p className="text-sm text-muted-foreground">
+              统一动作命名，训练记录会更容易复盘。
+            </p>
           </div>
           <div className="grid gap-2">
-            <div
-              key={key}
-              className="grid items-center grid-cols-3 gap-4"
-            >
-              <Label htmlFor={key}>{key}</Label>
-              <Input
-                name='exercise_name'
-                defaultValue={value}
-                className="h-8 col-span-2"
-                type="text"
-                min="0"
-              />
-            </div>
+            <Label htmlFor="exercise_name">动作名称</Label>
+            <Input
+              id="exercise_name"
+              name="exercise_name"
+              defaultValue={exercise.name}
+              type="text"
+            />
           </div>
           <div className="flex justify-end gap-2">
             <Button
+              type="button"
               variant="outline"
               onClick={() => {
                 setIsPopoverOpen(false);
@@ -93,4 +90,3 @@ export default function ExerciseEditPopover({exercise, mutate}: ExerciseEditPopo
     </Popover>
   );
 }
-
