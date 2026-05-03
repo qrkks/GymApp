@@ -1,7 +1,8 @@
-import {CircleX} from "lucide-react";
-import {useState} from "react";
+import { Trash2 } from "lucide-react";
+import { useState } from "react";
 import config from "@/utils/config";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { Button } from "@/components/ui/button";
 import { showToast } from "@/lib/toast";
 import type { Exercise, MutateFunction } from "@/app/types/workout.types";
 
@@ -10,8 +11,8 @@ interface RemoveExerciseButtonProps {
   mutate: MutateFunction;
 }
 
-function RemoveExerciseButton({exercise, mutate}: RemoveExerciseButtonProps) {
-  const {apiUrl} = config;
+function RemoveExerciseButton({ exercise, mutate }: RemoveExerciseButtonProps) {
+  const { apiUrl } = config;
   const [showDialog, setShowDialog] = useState(false);
 
   function handleConfirm() {
@@ -23,36 +24,28 @@ function RemoveExerciseButton({exercise, mutate}: RemoveExerciseButtonProps) {
       credentials: "include",
     })
       .then(async (res) => {
-        // 检查响应内容类型
         const contentType = res.headers.get("content-type");
         if (!res.ok) {
           let errorMessage = `HTTP error! Status: ${res.status}`;
-          // 只有当响应是 JSON 时才尝试解析
           if (contentType && contentType.includes("application/json")) {
             try {
               const data = await res.json();
               errorMessage = data.error || data.message || errorMessage;
             } catch (e) {
-              // 如果 JSON 解析失败，使用默认错误消息
               errorMessage = `服务器错误 (${res.status})`;
             }
           }
           throw new Error(errorMessage);
         }
-        // 204 No Content 响应没有 body
-        if (res.status === 204) {
-          showToast.success("删除成功", `已删除动作 ${exercise.name}`);
-          mutate();
-          return;
-        }
-        // 其他成功响应尝试解析 JSON
+
         if (contentType && contentType.includes("application/json")) {
           try {
             await res.json();
           } catch (e) {
-            // JSON 解析失败不影响成功状态
+            // Empty JSON response is fine for a successful delete.
           }
         }
+
         showToast.success("删除成功", `已删除动作 ${exercise.name}`);
         mutate();
       })
@@ -64,9 +57,10 @@ function RemoveExerciseButton({exercise, mutate}: RemoveExerciseButtonProps) {
 
   return (
     <>
-      <button onClick={() => setShowDialog(true)}>
-        <CircleX className="w-4 text-gray-400" />
-      </button>
+      <Button variant="ghost" size="icon" onClick={() => setShowDialog(true)}>
+        <Trash2 className="h-4 w-4" />
+        <span className="sr-only">删除动作</span>
+      </Button>
       <ConfirmDialog
         open={showDialog}
         onOpenChange={setShowDialog}

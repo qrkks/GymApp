@@ -1,7 +1,8 @@
 "use client";
-import {useState} from "react";
-import {Button} from "@/components/ui/button";
-import {useRouter} from "next/navigation";
+
+import { CalendarCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 export function getTodayDate(): string {
   const today = new Date();
@@ -15,21 +16,20 @@ interface StartWorkoutProps {
   onStart?: () => void;
 }
 
-function StartWorkout({onStart}: StartWorkoutProps) {
-  const [resData, setResData] = useState<{date?: string}>({});
+function StartWorkout({ onStart }: StartWorkoutProps) {
   const router = useRouter();
 
   const handleClick = () => {
+    onStart?.();
     router.push(`/workouts/${getTodayDate()}`);
   };
-  
+
   return (
-    <>
-      {resData.date && <p>{resData.date}</p>}
-      <Button onClick={handleClick}>前往今日</Button>
-    </>
+    <Button onClick={handleClick} className="gap-2">
+      <CalendarCheck className="h-4 w-4" />
+      今天训练
+    </Button>
   );
 }
 
 export default StartWorkout;
-

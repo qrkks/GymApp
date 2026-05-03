@@ -2,6 +2,7 @@ import {CirclePlus} from "lucide-react";
 import SheetContainer from "@/components/SheetContainer";
 import {useState, ChangeEvent} from "react";
 import {Input} from "@/components/ui/input";
+import {Button} from "@/components/ui/button";
 import LastWorkout from "../../LastWorkout";
 import useSWR from "swr";
 import config from "@/utils/config";
@@ -150,11 +151,12 @@ function AddButton({date, exerciseBlock, part, mutateWorkoutSet}: AddButtonProps
     <>
       <SheetContainer
         title="添加训练组"
-        description="添加训练组"
+        description="填写本组的重量、次数和训练笔记。"
         triggerButton={
-          <button>
-            <CirclePlus className="w-4 text-gray-400" />
-          </button>
+          <Button variant="secondary" size="sm" className="gap-1.5">
+            <CirclePlus className="h-4 w-4" />
+            添加组
+          </Button>
         }
         submitButtonText="确定"
         onHandleSubmit={handleSubmit}

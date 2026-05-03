@@ -1,8 +1,12 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback } from "react";
 import useSWR from "swr";
 import ExerciseBlock from "./ExerciseBlock";
 import config from "@/utils/config";
-import type { BodyPart, ExerciseBlock as ExerciseBlockType, MutateFunction } from "@/app/types/workout.types";
+import type {
+  BodyPart,
+  ExerciseBlock as ExerciseBlockType,
+  MutateFunction,
+} from "@/app/types/workout.types";
 
 interface ExerciseBlockListProps {
   part: BodyPart;
@@ -11,20 +15,24 @@ interface ExerciseBlockListProps {
   setMutateRef: (mutate: MutateFunction) => void;
 }
 
-function ExerciseBlockList({ part, date, addedExercise, setMutateRef }: ExerciseBlockListProps) {
-  const {apiUrl} = config;
+function ExerciseBlockList({
+  part,
+  date,
+  addedExercise,
+  setMutateRef,
+}: ExerciseBlockListProps) {
+  const { apiUrl } = config;
 
   const fetcher = useCallback(async (url: string) => {
-    console.log('🔍 Fetcher called with URL:', url);
     try {
       const response = await fetch(url, {
         credentials: "include",
       });
-      
+
       const data = await response.json();
       return data as ExerciseBlockType[];
     } catch (error) {
-      console.error('❌ Fetch error:', error);
+      console.error("Fetch error:", error);
       throw error;
     }
   }, []);
@@ -46,17 +54,31 @@ function ExerciseBlockList({ part, date, addedExercise, setMutateRef }: Exercise
     if (setMutateRef) {
       setMutateRef(() => mutateWorkoutSet());
     }
-    
+
     if (addedExercise) {
       mutateWorkoutSet();
     }
   }, [addedExercise, mutateWorkoutSet, setMutateRef]);
 
-  if (workoutSetError) return null;
+  if (workoutSetError) {
+    return (
+      <div className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">
+        动作加载失败，请稍后刷新重试。
+      </div>
+    );
+  }
+
+  if (!workoutSetData || workoutSetData.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed p-5 text-sm leading-6 text-muted-foreground">
+        还没有添加动作。点击右上角“添加动作”开始记录。
+      </div>
+    );
+  }
 
   return (
-    <div>
-      {workoutSetData?.map((exerciseBlock) => (
+    <div className="grid gap-4">
+      {workoutSetData.map((exerciseBlock) => (
         <ExerciseBlock
           key={exerciseBlock.id}
           part={part}
@@ -70,4 +92,3 @@ function ExerciseBlockList({ part, date, addedExercise, setMutateRef }: Exercise
 }
 
 export default React.memo(ExerciseBlockList);
-

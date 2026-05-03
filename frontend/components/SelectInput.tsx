@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {useState} from "react";
+import { useState } from "react";
 import config from "@/utils/config";
 
 interface SelectInputProps {
@@ -24,8 +24,9 @@ export default function SelectInput({
   entries,
   mutate,
   onSelectChange,
+  className,
 }: SelectInputProps) {
-  const {apiUrl} = config;
+  const { apiUrl } = config;
   const [selectValue, setSelectValue] = useState("");
 
   function handleValueChange(value: string) {
@@ -55,7 +56,7 @@ export default function SelectInput({
 
   return (
     <Select onValueChange={handleValueChange} value={selectValue}>
-      <SelectTrigger>
+      <SelectTrigger className={className}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
@@ -74,4 +75,3 @@ export default function SelectInput({
     </Select>
   );
 }
-

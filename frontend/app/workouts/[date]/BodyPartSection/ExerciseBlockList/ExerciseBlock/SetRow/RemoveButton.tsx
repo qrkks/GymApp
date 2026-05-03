@@ -1,7 +1,8 @@
-import {CircleX} from "lucide-react";
-import {useState} from "react";
+import { Trash2 } from "lucide-react";
+import { useState } from "react";
 import config from "@/utils/config";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { Button } from "@/components/ui/button";
 import { showToast } from "@/lib/toast";
 import type { Set, MutateFunction } from "@/app/types/workout.types";
 
@@ -10,14 +11,14 @@ interface RemoveSetButtonProps {
   mutateWorkoutSet: MutateFunction;
 }
 
-function RemoveSetButton({item, mutateWorkoutSet}: RemoveSetButtonProps) {
+function RemoveSetButton({ item, mutateWorkoutSet }: RemoveSetButtonProps) {
   const { apiUrl } = config;
   const [showDialog, setShowDialog] = useState(false);
 
   function handleConfirm() {
     fetch(`${apiUrl}/set/${item.id}`, {
       method: "DELETE",
-      headers: {"Content-Type": "application/json"},
+      headers: { "Content-Type": "application/json" },
       credentials: "include",
     })
       .then(async (res) => {
@@ -36,9 +37,10 @@ function RemoveSetButton({item, mutateWorkoutSet}: RemoveSetButtonProps) {
 
   return (
     <>
-      <button onClick={() => setShowDialog(true)}>
-        <CircleX className="w-4 text-gray-400" />
-      </button>
+      <Button variant="ghost" size="icon" onClick={() => setShowDialog(true)}>
+        <Trash2 className="h-4 w-4" />
+        <span className="sr-only">删除组数</span>
+      </Button>
       <ConfirmDialog
         open={showDialog}
         onOpenChange={setShowDialog}

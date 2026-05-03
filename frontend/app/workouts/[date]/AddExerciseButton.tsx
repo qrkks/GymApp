@@ -198,14 +198,14 @@ function AddExerciseButton({
     <>
       <SheetContainer
         title="Add Exercise"
-        description="Add an exercise to your workout"
+        description="选择或创建一个动作，并添加到当前训练部位。"
         triggerButton={
           <Button onClick={() => setCurrentExercise("")} variant="secondary">
-            <CirclePlus className="w-4 text-gray-400" />
-            &nbsp;添加训练动作
+            <CirclePlus className="h-4 w-4" />
+            添加动作
           </Button>
         }
-        submitButtonText="Confirm"
+        submitButtonText="确定"
         onHandleSubmit={handleSubmit}
       >
         <form className="flex flex-col gap-2 items-center space-x-2 w-full">

@@ -1,4 +1,4 @@
-import {Button} from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetClose,
@@ -10,7 +10,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-import {useState, ReactNode} from "react";
+import { useState, ReactNode } from "react";
 
 interface SheetContainerProps {
   triggerButton: ReactNode;
@@ -45,9 +45,7 @@ export default function SheetContainer({
             <SheetDescription className="sr-only">无描述</SheetDescription>
           )}
         </SheetHeader>
-        <div className="grid gap-4 py-4 w-full">
-          {children}
-        </div>
+        <div className="grid w-full gap-4 py-4">{children}</div>
         <SheetFooter>
           <SheetClose asChild>
             <Button
@@ -65,4 +63,3 @@ export default function SheetContainer({
     </Sheet>
   );
 }
-
