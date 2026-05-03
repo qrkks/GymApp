@@ -3,8 +3,8 @@
 import { useState, FormEvent, ChangeEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
@@ -16,7 +16,7 @@ interface FormData {
 
 export default function ChangePasswordPage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [formData, setFormData] = useState<FormData>({
     oldPassword: "",
     newPassword: "",
@@ -26,7 +26,6 @@ export default function ChangePasswordPage() {
   const [success, setSuccess] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
 
-  // 检查登录状态
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/signin");
@@ -48,7 +47,6 @@ export default function ChangePasswordPage() {
     setSuccess("");
     setLoading(true);
 
-    // 客户端验证
     if (formData.newPassword !== formData.confirmPassword) {
       setError("新密码和确认密码不匹配");
       setLoading(false);
@@ -62,7 +60,7 @@ export default function ChangePasswordPage() {
     }
 
     if (formData.oldPassword === formData.newPassword) {
-      setError("新密码不能与旧密码相同");
+      setError("新密码不能与当前密码相同");
       setLoading(false);
       return;
     }
@@ -88,20 +86,18 @@ export default function ChangePasswordPage() {
         return;
       }
 
-      setSuccess("密码修改成功！请使用新密码登录");
-      // 清空表单
+      setSuccess("密码修改成功，请使用新密码登录");
       setFormData({
         oldPassword: "",
         newPassword: "",
         confirmPassword: "",
       });
-      
-      // 3秒后跳转到登录页
+
       setTimeout(() => {
         router.push("/auth/signin");
       }, 3000);
     } catch (err) {
-      console.error("修改密码失败:", err);
+      console.error("Change password request failed:", err);
       setError("网络连接失败，请检查网络后重试");
       setLoading(false);
     }
@@ -109,7 +105,7 @@ export default function ChangePasswordPage() {
 
   if (status === "loading") {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] pt-20">
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center pt-20">
         <div className="text-center">
           <p className="text-muted-foreground">加载中...</p>
         </div>
@@ -118,43 +114,43 @@ export default function ChangePasswordPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 pt-28 max-w-2xl">
+    <div className="container mx-auto max-w-2xl px-4 py-8 pt-28">
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">修改密码</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">修改密码</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             更改你的账户密码
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 rounded-lg border p-6">
+        <form onSubmit={handleSubmit} className="space-y-6 rounded-lg border bg-white p-6 shadow-sm">
           <div>
             <Label htmlFor="oldPassword">当前密码</Label>
-            <Input
+            <PasswordInput
               id="oldPassword"
               name="oldPassword"
-              type="password"
               value={formData.oldPassword}
               onChange={handleChange}
               disabled={loading}
               required
               placeholder="请输入当前密码"
-              className="mt-1"
+              className="mt-1 bg-white"
+              autoComplete="current-password"
             />
           </div>
 
           <div>
             <Label htmlFor="newPassword">新密码</Label>
-            <Input
+            <PasswordInput
               id="newPassword"
               name="newPassword"
-              type="password"
               value={formData.newPassword}
               onChange={handleChange}
               disabled={loading}
               required
               placeholder="至少 6 个字符"
-              className="mt-1"
+              className="mt-1 bg-white"
+              autoComplete="new-password"
             />
             <p className="mt-1 text-xs text-muted-foreground">
               密码长度至少为 6 个字符
@@ -163,31 +159,29 @@ export default function ChangePasswordPage() {
 
           <div>
             <Label htmlFor="confirmPassword">确认新密码</Label>
-            <Input
+            <PasswordInput
               id="confirmPassword"
               name="confirmPassword"
-              type="password"
               value={formData.confirmPassword}
               onChange={handleChange}
               disabled={loading}
               required
               placeholder="再次输入新密码"
-              className="mt-1"
+              className="mt-1 bg-white"
+              autoComplete="new-password"
             />
           </div>
 
           {error && (
-            <div className="rounded bg-red-50 p-3 text-sm text-red-600">
+            <div className="rounded bg-red-50 p-3 text-sm text-red-700">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="rounded bg-green-50 p-3 text-sm text-green-600">
+            <div className="rounded bg-green-50 p-3 text-sm text-green-700">
               {success}
-              <p className="mt-2 text-xs">
-                3 秒后将自动跳转到登录页面...
-              </p>
+              <p className="mt-2 text-xs">3 秒后将自动跳转到登录页面...</p>
             </div>
           )}
 
@@ -200,7 +194,7 @@ export default function ChangePasswordPage() {
               variant="outline"
               onClick={() => router.push("/user/profile")}
               disabled={loading}
-              className="flex-1"
+              className="flex-1 bg-white"
             >
               返回
             </Button>
@@ -216,4 +210,3 @@ export default function ChangePasswordPage() {
     </div>
   );
 }
-

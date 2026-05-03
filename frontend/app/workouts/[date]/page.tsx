@@ -13,18 +13,10 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import { useLoadingState } from "@/hooks/useLoadingState";
 import { showToast } from "@/lib/toast";
 import config from "@/utils/config";
-import type {
-  BodyPart,
-  ExerciseBlock,
-  MutateFunction,
-} from "@/app/types/workout.types";
-
-interface WorkoutBodyPart extends BodyPart {
-  exerciseBlocks?: ExerciseBlock[];
-}
+import type { BodyPart, ExerciseBlock, MutateFunction } from "@/app/types/workout.types";
 
 interface WorkoutData {
-  bodyParts?: WorkoutBodyPart[];
+  bodyParts?: BodyPart[];
   date?: string;
   id?: number;
 }
@@ -94,6 +86,27 @@ function WorkoutById({ params }: WorkoutByIdProps) {
     },
   });
 
+  const exerciseBlockFetcher = async (url: string) => {
+    const response = await fetch(url, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    return response.json() as Promise<ExerciseBlock[]>;
+  };
+
+  const { data: exerciseBlocks, mutate: mutateExerciseBlocks } = useSWR<ExerciseBlock[]>(
+    workoutData ? `${apiUrl}/exercise-block?workout_date=${params.date}` : null,
+    exerciseBlockFetcher,
+    {
+      revalidateOnFocus: false,
+    }
+  );
+
   const { isInitialLoading, isRefreshing, hasError } = useLoadingState(
     workoutData,
     workoutError,
@@ -102,10 +115,7 @@ function WorkoutById({ params }: WorkoutByIdProps) {
   );
 
   const bodyParts = useMemo(() => workoutData?.bodyParts ?? [], [workoutData]);
-  const exerciseCount = useMemo(
-    () => bodyParts.reduce((total, part) => total + (part.exerciseBlocks?.length ?? 0), 0),
-    [bodyParts]
-  );
+  const exerciseCount = exerciseBlocks?.length ?? 0;
 
   useEffect(() => {
     setIsWorkoutCreated(workoutData !== undefined && workoutData !== null);
@@ -141,6 +151,7 @@ function WorkoutById({ params }: WorkoutByIdProps) {
         showToast.success("创建成功", "已创建今天的训练记录");
         setIsWorkoutCreated(true);
         mutateWorkout();
+        mutateExerciseBlocks();
       })
       .catch((error) => {
         console.error("Fetch error:", error);
@@ -173,6 +184,7 @@ function WorkoutById({ params }: WorkoutByIdProps) {
         showToast.success("删除成功", "已删除今天的训练记录");
         setIsWorkoutCreated(false);
         mutateWorkout();
+        mutateExerciseBlocks();
       })
       .catch((error) => {
         console.error("Fetch error:", error);
@@ -186,6 +198,7 @@ function WorkoutById({ params }: WorkoutByIdProps) {
   const handleMutateWorkout: MutateFunction = async () => {
     try {
       await mutateWorkout();
+      await mutateExerciseBlocks();
       console.log("Data revalidation triggered");
     } catch (error) {
       console.error("Failed to update data:", error);

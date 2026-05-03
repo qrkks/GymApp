@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 
 interface FormData {
   email: string;
@@ -38,7 +39,6 @@ export default function SignUp() {
     setError("");
     setLoading(true);
 
-    // 客户端验证
     if (formData.password !== formData.confirmPassword) {
       setError("密码和确认密码不匹配");
       setLoading(false);
@@ -67,29 +67,27 @@ export default function SignUp() {
       const data = await response.json();
 
       if (!response.ok) {
-        // 显示服务器返回的具体错误信息
         const errorMessage = data.error || "注册失败，请检查输入信息后重试";
         setError(errorMessage);
         setLoading(false);
         return;
       }
 
-      // 注册成功，跳转到登录页面
       router.push("/auth/signin?registered=true");
     } catch (err) {
-      console.error('注册请求失败:', err);
+      console.error("Sign up request failed:", err);
       setError("网络连接失败，请检查网络后重试");
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center -mt-20 w-full">
-      <div className="w-full max-w-lg space-y-8 rounded-lg border p-8 mx-auto">
+    <div className="flex min-h-[calc(100vh-4rem)] w-full items-center justify-center -mt-20">
+      <div className="mx-auto w-full max-w-lg space-y-8 rounded-lg border bg-white p-8 shadow-sm">
         <div>
-          <h2 className="text-2xl font-bold">注册</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            创建你的账户以开始使用
+          <h1 className="text-2xl font-semibold tracking-tight">注册</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            创建你的账户以开始记录训练
           </p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -102,8 +100,9 @@ export default function SignUp() {
               value={formData.username}
               onChange={handleChange}
               required
-              placeholder="请输入用户名（唯一）"
-              className="mt-1"
+              placeholder="请输入用户名"
+              className="mt-1 bg-white"
+              autoComplete="username"
             />
           </div>
           <div>
@@ -116,37 +115,38 @@ export default function SignUp() {
               onChange={handleChange}
               required
               placeholder="your@email.com"
-              className="mt-1"
+              className="mt-1 bg-white"
+              autoComplete="email"
             />
           </div>
           <div>
             <Label htmlFor="password">密码</Label>
-            <Input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               value={formData.password}
               onChange={handleChange}
               required
               placeholder="至少 6 个字符"
-              className="mt-1"
+              className="mt-1 bg-white"
+              autoComplete="new-password"
             />
           </div>
           <div>
             <Label htmlFor="confirmPassword">确认密码</Label>
-            <Input
+            <PasswordInput
               id="confirmPassword"
               name="confirmPassword"
-              type="password"
               value={formData.confirmPassword}
               onChange={handleChange}
               required
               placeholder="再次输入密码"
-              className="mt-1"
+              className="mt-1 bg-white"
+              autoComplete="new-password"
             />
           </div>
           {error && (
-            <div className="rounded bg-red-50 p-3 text-sm text-red-600">
+            <div className="rounded bg-red-50 p-3 text-sm text-red-700">
               {error}
             </div>
           )}
@@ -154,7 +154,7 @@ export default function SignUp() {
             {loading ? "注册中..." : "注册"}
           </Button>
         </form>
-        <div className="text-center text-sm text-gray-600">
+        <div className="text-center text-sm text-muted-foreground">
           已有账户？{" "}
           <Link href="/auth/signin" className="text-primary hover:underline">
             立即登录
@@ -164,4 +164,3 @@ export default function SignUp() {
     </div>
   );
 }
-
