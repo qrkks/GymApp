@@ -7,6 +7,7 @@ import useSWR from "swr";
 import config from "@/utils/config";
 import { showToast } from "@/lib/toast";
 import type { ExerciseBlock, BodyPart, MutateFunction } from "@/app/types/workout.types";
+import { clearTrainingNoteAfterSetSubmit } from "../../../set-form-state";
 
 interface AddButtonProps {
   date: string;
@@ -131,6 +132,7 @@ function AddButton({date, exerciseBlock, part, mutateWorkoutSet}: AddButtonProps
         // 后端成功返回不代表一定创建了 sets（可能只是确认 exercise block 存在）
         const createdSetsCount = Array.isArray(data?.sets) ? data.sets.length : 0;
         if (createdSetsCount > 0) {
+          setFormData(clearTrainingNoteAfterSetSubmit);
           showToast.success("添加成功", "已添加训练组");
         } else {
           showToast.error("添加失败", "未创建训练组，请检查 weight/reps 是否符合规则");

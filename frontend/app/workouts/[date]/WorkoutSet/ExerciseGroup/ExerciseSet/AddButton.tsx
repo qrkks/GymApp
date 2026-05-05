@@ -11,6 +11,7 @@ import type {
   BodyPart,
   MutateFunction,
 } from "@/app/types/workout.types";
+import { clearTrainingNoteAfterSetSubmit } from "../../../set-form-state";
 
 interface AddButtonProps {
   date: string;
@@ -117,6 +118,7 @@ function AddButton({ date, set, part, mutateWorkoutSet }: AddButtonProps) {
           throw new Error(errorMessage);
         }
         showToast.success("添加成功", "已添加训练组");
+        setFormData(clearTrainingNoteAfterSetSubmit);
         mutateWorkoutSet();
       })
       .catch((error) => {
