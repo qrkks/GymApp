@@ -52,6 +52,7 @@ function BodyPartSection({ part, date, mutateWorkout }: BodyPartSectionProps) {
           part={part}
           date={date}
           addedExercise={addedExercise}
+          mutateWorkout={mutateWorkout}
           setMutateRef={(mutate) => {
             mutateWorkoutSetRef.current = mutate;
           }}

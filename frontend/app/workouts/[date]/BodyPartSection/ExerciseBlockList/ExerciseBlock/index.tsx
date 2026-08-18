@@ -8,6 +8,7 @@ import type {
   BodyPart,
   MutateFunction,
 } from "@/app/types/workout.types";
+import { calculateExerciseVolume } from "@domain/workout/model/training-volume";
 
 interface ExerciseBlockProps {
   exerciseBlock: ExerciseBlock;
@@ -23,6 +24,10 @@ function ExerciseBlock({
   mutateWorkoutSet,
 }: ExerciseBlockProps) {
   const setCount = exerciseBlock.sets.length;
+  const exerciseVolume = calculateExerciseVolume(exerciseBlock);
+  const formattedExerciseVolume = new Intl.NumberFormat("zh-CN", {
+    maximumFractionDigits: 2,
+  }).format(exerciseVolume);
 
   return (
     <article className="rounded-xl border bg-white shadow-sm">
@@ -33,7 +38,9 @@ function ExerciseBlock({
           </div>
           <div>
             <h3 className="text-base font-semibold">{exerciseBlock.exercise.name}</h3>
-            <p className="text-xs text-muted-foreground">{setCount} 组训练数据</p>
+            <p className="text-xs text-muted-foreground">
+              {setCount} 组 · 训练容量 {formattedExerciseVolume} kg
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">

@@ -3,6 +3,7 @@
  * 训练课中的动作块（包含该动作的所有组）
  */
 import { Set } from './set.entity';
+import { calculateExerciseVolume } from './training-volume';
 
 export interface ExerciseBlockPersistence {
   id: number;
@@ -116,7 +117,7 @@ export class ExerciseBlock {
    * 业务规则：计算总训练量（Volume = 总重量）
    */
   calculateVolume(): number {
-    return this.sets.reduce((total, set) => total + (set.weight * set.reps), 0);
+    return calculateExerciseVolume(this);
   }
 
   /**

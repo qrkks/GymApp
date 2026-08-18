@@ -14,6 +14,7 @@ import { useLoadingState } from "@/hooks/useLoadingState";
 import { showToast } from "@/lib/toast";
 import config from "@/utils/config";
 import type { BodyPart, ExerciseBlock, MutateFunction } from "@/app/types/workout.types";
+import { calculateWorkoutVolume } from "@domain/workout/model/training-volume";
 import {
   fetchJsonWithOfflineCache,
   OFFLINE_SYNC_EVENT,
@@ -100,6 +101,14 @@ function WorkoutById({ params }: WorkoutByIdProps) {
 
   const bodyParts = useMemo(() => workoutData?.bodyParts ?? [], [workoutData]);
   const exerciseCount = exerciseBlocks?.length ?? 0;
+  const workoutVolume = useMemo(
+    () => calculateWorkoutVolume(exerciseBlocks ?? []),
+    [exerciseBlocks]
+  );
+  const formattedWorkoutVolume = useMemo(
+    () => new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 2 }).format(workoutVolume),
+    [workoutVolume]
+  );
 
   useEffect(() => {
     setIsWorkoutCreated(workoutData !== undefined && workoutData !== null);
@@ -235,11 +244,20 @@ function WorkoutById({ params }: WorkoutByIdProps) {
             </p>
             <p className="mt-2 text-2xl font-semibold">{exerciseCount}</p>
           </div>
-          <div className="rounded-lg border bg-slate-50/80 p-4">
+          <div
+            className="rounded-lg border border-primary/20 bg-primary/[0.06] p-4"
+            title="各组重量 × 次数之和"
+          >
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              日期
+              训练容量
             </p>
-            <p className="mt-2 text-2xl font-semibold">{params.date}</p>
+            <p className="mt-2 flex items-baseline gap-1.5">
+              <span className="text-2xl font-semibold tabular-nums">
+                {formattedWorkoutVolume}
+              </span>
+              <span className="text-sm font-medium text-muted-foreground">kg</span>
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">重量 × 次数的总和</p>
           </div>
         </div>
       </section>

@@ -16,6 +16,7 @@ interface ExerciseBlockListProps {
   part: BodyPart;
   date: string;
   addedExercise: string;
+  mutateWorkout: MutateFunction;
   setMutateRef: (mutate: MutateFunction) => void;
 }
 
@@ -23,6 +24,7 @@ function ExerciseBlockList({
   part,
   date,
   addedExercise,
+  mutateWorkout,
   setMutateRef,
 }: ExerciseBlockListProps) {
   const { apiUrl } = config;
@@ -50,6 +52,11 @@ function ExerciseBlockList({
       dedupingInterval: 2000,
     }
   );
+
+  const mutateExerciseBlocks = useCallback(async () => {
+    await mutateWorkoutSet();
+    await mutateWorkout();
+  }, [mutateWorkout, mutateWorkoutSet]);
 
   useEffect(() => {
     if (setMutateRef) {
@@ -91,7 +98,7 @@ function ExerciseBlockList({
           part={part}
           exerciseBlock={exerciseBlock}
           date={date}
-          mutateWorkoutSet={mutateWorkoutSet}
+          mutateWorkoutSet={mutateExerciseBlocks}
         />
       ))}
     </div>

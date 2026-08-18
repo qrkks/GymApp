@@ -2,6 +2,8 @@
  * Set 实体
  * 训练组（连续完成一定次数动作的集合）
  */
+import { calculateSetVolume } from './training-volume';
+
 export interface SetPersistence {
   id: number;
   userId: string;
@@ -74,7 +76,7 @@ export class Set {
    * 业务规则：计算该组的训练量
    */
   calculateVolume(): number {
-    return this.weight * this.reps;
+    return calculateSetVolume(this);
   }
 
   /**
