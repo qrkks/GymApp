@@ -23,6 +23,7 @@ const setSchema = z.object({
   weight: nonNegativeNumber,
   reps: positiveNumber,
   note: z.string().max(500).nullable().optional(),
+  clientMutationId: z.string().uuid().optional(),
 });
 
 const exerciseBlockCreateSchema = z.object({
@@ -68,7 +69,12 @@ export async function POST(request: NextRequest) {
     const normalizedBody = {
       workoutDate: body.workoutDate || body.workout_date,
       exerciseName: body.exerciseName || body.exercise_name,
-      sets: body.sets,
+      sets: Array.isArray(body.sets)
+        ? body.sets.map((set: Record<string, unknown>) => ({
+            ...set,
+            clientMutationId: set.clientMutationId || set.client_mutation_id,
+          }))
+        : body.sets,
     };
 
     console.log('📥 /api/exercise-block POST normalized body:', normalizedBody);

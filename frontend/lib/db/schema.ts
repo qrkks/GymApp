@@ -71,7 +71,10 @@ export const sets = pgTable('sets', {
   weight: real('weight').notNull(),
   reps: integer('reps').notNull(),
   note: text('note'),
-});
+  clientMutationId: text('client_mutation_id'),
+}, (table) => ({
+  uniqueUserClientMutation: unique().on(table.userId, table.clientMutationId),
+}));
 
 // Relations
 export const bodyPartsRelations = relations(bodyParts, ({ one, many }) => ({

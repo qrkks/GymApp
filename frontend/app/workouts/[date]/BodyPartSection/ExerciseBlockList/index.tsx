@@ -7,6 +7,10 @@ import type {
   ExerciseBlock as ExerciseBlockType,
   MutateFunction,
 } from "@/app/types/workout.types";
+import {
+  fetchJsonWithOfflineCache,
+  OFFLINE_SYNC_EVENT,
+} from "@/lib/offline/workout-store";
 
 interface ExerciseBlockListProps {
   part: BodyPart;
@@ -25,12 +29,9 @@ function ExerciseBlockList({
 
   const fetcher = useCallback(async (url: string) => {
     try {
-      const response = await fetch(url, {
-        credentials: "include",
-      });
-
-      const data = await response.json();
-      return data as ExerciseBlockType[];
+      return (
+        (await fetchJsonWithOfflineCache<ExerciseBlockType[]>(url)) ?? []
+      );
     } catch (error) {
       console.error("Fetch error:", error);
       throw error;
@@ -59,6 +60,12 @@ function ExerciseBlockList({
       mutateWorkoutSet();
     }
   }, [addedExercise, mutateWorkoutSet, setMutateRef]);
+
+  useEffect(() => {
+    const handleOfflineSync = () => void mutateWorkoutSet();
+    window.addEventListener(OFFLINE_SYNC_EVENT, handleOfflineSync);
+    return () => window.removeEventListener(OFFLINE_SYNC_EVENT, handleOfflineSync);
+  }, [mutateWorkoutSet]);
 
   if (workoutSetError) {
     return (

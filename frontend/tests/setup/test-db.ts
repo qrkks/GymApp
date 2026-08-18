@@ -147,17 +147,23 @@ export async function initializeTestDb(testPath?: string) {
     await client.query(`CREATE SCHEMA IF NOT EXISTS ${schemaName}`);
     await client.query(`SET search_path TO ${schemaName}`);
 
-    const migrationPath = path.join(__dirname, '../../drizzle/0000_shiny_iron_lad.sql');
-    if (!fs.existsSync(migrationPath)) {
-      console.warn(`Migration file not found: ${migrationPath}`);
+    const migrationDirectory = path.join(__dirname, '../../drizzle');
+    if (!fs.existsSync(migrationDirectory)) {
+      console.warn(`Migration directory not found: ${migrationDirectory}`);
       return;
     }
 
-    const migrationSql = fs.readFileSync(migrationPath, 'utf-8');
-    const statements = migrationSql
-      .split(/--> statement-breakpoint/)
-      .map((statement) => statement.trim())
-      .filter((statement) => statement.length > 0 && !statement.startsWith('--'));
+    const migrationFiles = fs
+      .readdirSync(migrationDirectory)
+      .filter((fileName) => /^\d+_.*\.sql$/.test(fileName))
+      .sort();
+    const statements = migrationFiles.flatMap((fileName) =>
+      fs
+        .readFileSync(path.join(migrationDirectory, fileName), 'utf-8')
+        .split(/--> statement-breakpoint/)
+        .map((statement) => statement.trim())
+        .filter((statement) => statement.length > 0 && !statement.startsWith('--'))
+    );
 
     const createStatements: string[] = [];
     const alterStatements: string[] = [];

@@ -1,6 +1,7 @@
 import RemoveSetButton from "./RemoveButton";
 import SetEditPopover from "./EditPopover";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { Clock3 } from "lucide-react";
 import type {
   Set,
   ExerciseBlock,
@@ -23,8 +24,17 @@ function SetRow({ item, mutateWorkoutSet, exerciseBlock }: SetRowProps) {
         <TableCell className="text-center font-medium">{item.weight}</TableCell>
         <TableCell className="text-center font-medium">{item.reps}</TableCell>
         <TableCell className="flex items-center justify-center gap-1">
-          <SetEditPopover item={item} mutateWorkoutSet={mutateWorkoutSet} />
-          <RemoveSetButton item={item} mutateWorkoutSet={mutateWorkoutSet} />
+          {item.pending ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">
+              <Clock3 className="h-3.5 w-3.5" />
+              待同步
+            </span>
+          ) : (
+            <>
+              <SetEditPopover item={item} mutateWorkoutSet={mutateWorkoutSet} />
+              <RemoveSetButton item={item} mutateWorkoutSet={mutateWorkoutSet} />
+            </>
+          )}
         </TableCell>
       </TableRow>
       {item.note ? (

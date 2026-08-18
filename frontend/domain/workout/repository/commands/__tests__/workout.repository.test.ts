@@ -180,6 +180,39 @@ describe('Workout Repository - Commands', () => {
       expect(secondInsert).not.toBeNull();
       expect(secondInsert?.id).toBe(firstInsert?.id);
     });
+
+    it('should return the existing set when an offline mutation is retried', async () => {
+      const { bodyPart, workout } = await createTestData();
+      const exercise = await exerciseCommands.insertExercise(testUserId, {
+        name: 'Bench Press',
+        bodyPartId: bodyPart.id,
+      });
+      const exerciseBlock = await workoutCommands.insertExerciseBlock(
+        testUserId,
+        workout.id,
+        exercise.id
+      );
+      expect(exerciseBlock).not.toBeNull();
+
+      const clientMutationId = 'f839b9d8-90b8-4232-bfa8-788b074d3528';
+      const firstInsert = await workoutCommands.addSetsToExerciseBlock(
+        testUserId,
+        exerciseBlock!.id,
+        [{ weight: 60, reps: 8, note: 'offline', clientMutationId }]
+      );
+      const retryInsert = await workoutCommands.addSetsToExerciseBlock(
+        testUserId,
+        exerciseBlock!.id,
+        [{ weight: 60, reps: 8, note: 'offline', clientMutationId }]
+      );
+      const storedSets = await workoutQueries.findSetsByExerciseBlockId(
+        exerciseBlock!.id
+      );
+
+      expect(retryInsert[0].id).toBe(firstInsert[0].id);
+      expect(storedSets).toHaveLength(1);
+      expect(storedSets[0].clientMutationId).toBe(clientMutationId);
+    });
   });
 
   // 清理测试数据库schema

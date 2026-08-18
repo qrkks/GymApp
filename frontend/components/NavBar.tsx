@@ -32,6 +32,11 @@ import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import {
+  clearOfflineDataForActiveUser,
+  getPendingMutationCount,
+} from "@/lib/offline/workout-store";
+import { showToast } from "@/lib/toast";
 
 interface NavItem {
   name: string;
@@ -167,6 +172,15 @@ export default function NavBar() {
                 <DropdownMenuItem
                   onClick={async () => {
                     try {
+                      const pendingCount = await getPendingMutationCount();
+                      if (pendingCount > 0) {
+                        showToast.error(
+                          "暂时无法退出",
+                          `还有 ${pendingCount} 条离线训练记录等待同步`
+                        );
+                        return;
+                      }
+                      await clearOfflineDataForActiveUser();
                       await signOut({
                         redirect: true,
                         callbackUrl: "/auth/signin",

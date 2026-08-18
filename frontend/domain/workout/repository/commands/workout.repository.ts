@@ -19,6 +19,7 @@ export interface CreateSetData {
   weight: number;
   reps: number;
   note?: string | null;
+  clientMutationId?: string | null;
 }
 
 export type Set = typeof sets.$inferSelect;
@@ -99,18 +100,51 @@ async function insertSetWithSequenceRecovery(values: {
   weight: number;
   reps: number;
   note?: string | null;
+  clientMutationId?: string | null;
 }): Promise<Set> {
+  const insertSet = async (): Promise<Set> => {
+    const insert = db.insert(sets).values(values);
+    const [setResult] = values.clientMutationId
+      ? await insert
+          .onConflictDoNothing({
+            target: [sets.userId, sets.clientMutationId],
+          })
+          .returning()
+      : await insert.returning();
+
+    if (setResult) {
+      return setResult;
+    }
+
+    if (values.clientMutationId) {
+      const [existingSet] = await db
+        .select()
+        .from(sets)
+        .where(
+          and(
+            eq(sets.userId, values.userId),
+            eq(sets.clientMutationId, values.clientMutationId)
+          )
+        )
+        .limit(1);
+
+      if (existingSet) {
+        return existingSet;
+      }
+    }
+
+    throw new Error('Failed to insert set');
+  };
+
   try {
-    const [setResult] = await db.insert(sets).values(values).returning();
-    return setResult;
+    return await insertSet();
   } catch (error) {
     if (!isDuplicateSetPrimaryKeyError(error)) {
       throw error;
     }
 
     await syncSetIdSequence();
-    const [retriedSetResult] = await db.insert(sets).values(values).returning();
-    return retriedSetResult;
+    return insertSet();
   }
 }
 
@@ -300,6 +334,7 @@ export async function addSetsToExerciseBlock(
         weight: setData.weight,
         reps: setData.reps,
         note: setData.note ?? null,
+        clientMutationId: setData.clientMutationId ?? null,
       });
 
     newSets.push(setResult);
@@ -350,6 +385,7 @@ export async function updateExerciseBlockSets(
           weight: setData.weight,
           reps: setData.reps,
           note: setData.note ?? null,
+          clientMutationId: setData.clientMutationId ?? null,
         });
 
       updatedSets.push(newSet);

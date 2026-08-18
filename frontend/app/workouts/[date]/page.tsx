@@ -14,6 +14,10 @@ import { useLoadingState } from "@/hooks/useLoadingState";
 import { showToast } from "@/lib/toast";
 import config from "@/utils/config";
 import type { BodyPart, ExerciseBlock, MutateFunction } from "@/app/types/workout.types";
+import {
+  fetchJsonWithOfflineCache,
+  OFFLINE_SYNC_EVENT,
+} from "@/lib/offline/workout-store";
 
 interface WorkoutData {
   bodyParts?: BodyPart[];
@@ -35,20 +39,9 @@ function WorkoutById({ params }: WorkoutByIdProps) {
 
   const fetcher = async (url: string) => {
     try {
-      const response = await fetch(url, {
-        method: "GET",
-        credentials: "include",
+      return await fetchJsonWithOfflineCache<WorkoutData>(url, {
+        allowNotFound: true,
       });
-
-      if (response.status === 404) {
-        return null;
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
-      return response.json() as Promise<WorkoutData>;
     } catch (error) {
       if (
         error instanceof Error &&
@@ -87,16 +80,7 @@ function WorkoutById({ params }: WorkoutByIdProps) {
   });
 
   const exerciseBlockFetcher = async (url: string) => {
-    const response = await fetch(url, {
-      method: "GET",
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-
-    return response.json() as Promise<ExerciseBlock[]>;
+    return (await fetchJsonWithOfflineCache<ExerciseBlock[]>(url)) ?? [];
   };
 
   const { data: exerciseBlocks, mutate: mutateExerciseBlocks } = useSWR<ExerciseBlock[]>(
@@ -126,6 +110,15 @@ function WorkoutById({ params }: WorkoutByIdProps) {
       console.error("Workout data fetch error:", workoutError);
     }
   }, [workoutError]);
+
+  useEffect(() => {
+    const handleOfflineSync = () => {
+      void mutateWorkout();
+      void mutateExerciseBlocks();
+    };
+    window.addEventListener(OFFLINE_SYNC_EVENT, handleOfflineSync);
+    return () => window.removeEventListener(OFFLINE_SYNC_EVENT, handleOfflineSync);
+  }, [mutateExerciseBlocks, mutateWorkout]);
 
   function handleCreateWorkout() {
     if (!params?.date || isWorkoutCreated || isCreatingWorkout) {

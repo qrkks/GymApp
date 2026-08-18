@@ -432,10 +432,11 @@ export async function createExerciseBlock(
       });
 
       // 从已验证的 Entity 获取数据传给 repository
-      const validatedSetsData = validatedSets.map(entity => ({
+      const validatedSetsData = validatedSets.map((entity, index) => ({
         weight: entity.weight,
         reps: entity.reps,
         note: entity.note,
+        clientMutationId: setsData[index]?.clientMutationId ?? null,
       }));
 
       const newSets = await workoutCommands.addSetsToExerciseBlock(

@@ -25,6 +25,8 @@ export interface Set {
   reps: number;
   note?: string | null;
   exerciseBlockId?: number;
+  clientMutationId?: string | null;
+  pending?: boolean;
 }
 
 // ExerciseBlock (WorkoutSet) 类型
